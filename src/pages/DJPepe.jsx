@@ -1,19 +1,15 @@
-import { TIMELINE, TRAITS } from '../data/index.js';
+import { TIMELINE, TRAITS, DJPEPE_STATS } from '../data/index.js';
 import './DJPepe.css';
 
 const LINKS = [
-  { label: 'Pepe.WTF Asset Page', url: 'https://pepe.wtf/asset/DJPEPE' },
-  { label: 'XChain Explorer',     url: 'https://xchain.io'              },
-  { label: 'Rare Pepe Directory', url: 'https://rarepepedirectory.com'  },
-  { label: 'Counterparty.io',     url: 'https://counterparty.io'        },
+  { label: 'Pepe.WTF Asset Page', url: 'https://pepe.wtf/asset/DJPEPE'      },
+  { label: 'XChain Explorer',     url: 'https://xchain.io/asset/DJPEPE'      },
+  { label: 'Rare Pepe Directory', url: 'https://rarepepedirectory.com'       },
+  { label: 'Counterparty.io',     url: 'https://counterparty.io'             },
+  { label: 'FAKEDJPEPE on XChain',url: 'https://xchain.io/asset/FAKEDJPEPE'  },
 ];
 
-const STATS = [
-  { label: 'Floor',   value: '14.82', sub: 'ETH equiv.'    },
-  { label: 'Supply',  value: '4',     sub: 'Total minted'  },
-  { label: 'Holders', value: '3',     sub: 'Unique owners' },
-  { label: 'Chain',   value: 'XCP',   sub: 'Counterparty'  },
-];
+const STATS = DJPEPE_STATS;
 
 export default function DJPepe() {
   return (
@@ -30,7 +26,7 @@ export default function DJPepe() {
               <div className="card-name">DJ PEPE</div>
             </div>
             <div className="card-art">
-              <span className="card-frog">🐸</span>
+              <img src="/DJPEPE.jpg" alt="DJ PEPE" className="card-art-img" />
               <div className="card-ability">100% Steals Yer Girl</div>
             </div>
             <div className="card-bottom">
@@ -45,9 +41,9 @@ export default function DJPepe() {
           </div>
 
           <div className="pill-row">
-            <span className="pill pill-green">Mythic Rare</span>
+            <span className="pill pill-green">First Audio NFT</span>
             <span className="pill pill-red">No Requests</span>
-            <span className="pill">Supply: 4</span>
+            <span className="pill">Supply: 169</span>
           </div>
         </div>
 
@@ -58,15 +54,16 @@ export default function DJPepe() {
             DJ PEPE <span className="asset-sub">/ DJPEPE</span>
           </h1>
           <p className="asset-desc">
-            A legendary rare digital asset minted on Bitcoin via Counterparty — predating modern NFTs by years.
-            One of the original blockchain trading cards. Hip-Hop Elements Series, card 1 of 4. Strong hands only.
+            The first audio NFT in history — minted on Bitcoin via Counterparty (XCP) on October 13th, 2016 by RareScrilla, years before Ethereum NFTs existed. One of the original blockchain trading cards. Hip-Hop Elements Series, card 1 of 4. 169 issued. Mostly given away at blockchain conferences from 2017–2019. Strong hands only.
           </p>
 
           <div className="stats-row">
             {STATS.map(s => (
               <div key={s.label} className="stat-box">
                 <div className="stat-label">{s.label}</div>
-                <div className="stat-val">{s.value}</div>
+                <div className={`stat-val ${s.value === null ? 'stat-null' : ''}`}>
+                  {s.value ?? '—'}
+                </div>
                 <div className="stat-sub">{s.sub}</div>
               </div>
             ))}

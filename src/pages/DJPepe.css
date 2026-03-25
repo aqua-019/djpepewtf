@@ -46,14 +46,21 @@
   width: 100%; height: 112px;
   background: linear-gradient(160deg,#061408 0%,#0e2212 50%,#050e06 100%);
   display: flex; align-items: center; justify-content: center;
-  position: relative;
+  position: relative; overflow: hidden;
 }
 .card-frog { font-size: 52px; }
+.card-art-img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center top;
+  display: block;
+}
 .card-ability {
   position: absolute; bottom: 6px; left: 0; right: 0;
   text-align: center; font-size: 7px; font-weight: 700;
   letter-spacing: 0.8px; text-transform: uppercase;
-  color: rgba(61,255,110,0.45);
+  color: rgba(61,255,110,0.65);
+  background: rgba(0,0,0,0.45);
+  padding: 2px 0;
 }
 .card-bottom {
   background: rgba(6,14,8,0.95);
@@ -122,6 +129,7 @@
 .stat-box:hover { border-color: var(--border-g); background: var(--green-dim); }
 .stat-label { font-size: 9px; font-weight: 600; color: var(--txt3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2px; }
 .stat-val   { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--green); line-height: 1; }
+.stat-val.stat-null { color: var(--txt3); font-size: 18px; }
 .stat-sub   { font-size: 9px; color: var(--txt3); margin-top: 1px; }
 
 .btn-row { display: flex; gap: 7px; flex-wrap: wrap; }
