@@ -158,3 +158,59 @@
   animation: pulse 2s infinite;
 }
 .ac-price.dim { color: var(--txt3); font-size: 14px; }
+
+/* ── STATUS BAR ──────────────────────────────────────────── */
+.market-status {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px; margin-bottom: 10px;
+  border-radius: var(--r12);
+  font-size: 10px;
+  border: 1px solid transparent;
+  transition: all 0.3s;
+}
+.market-status.loading { background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--txt2); }
+.market-status.live    { background: rgba(61,255,110,0.05);  border-color: rgba(61,255,110,0.15); color: rgba(61,255,110,0.7); }
+.market-status.stale   { background: rgba(255,200,50,0.05);  border-color: rgba(255,200,50,0.18); color: rgba(255,200,50,0.7); }
+.market-status.error   { background: rgba(255,68,68,0.05);   border-color: rgba(255,68,68,0.18);  color: rgba(255,68,68,0.7); }
+
+.ms-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+.loading .ms-dot { background: var(--txt2); }
+.live    .ms-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.stale   .ms-dot { background: rgba(255,200,50,0.8); }
+.error   .ms-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+.ms-retry {
+  background: none; border: 1px solid rgba(255,68,68,0.35);
+  color: var(--red); padding: 2px 8px; border-radius: var(--r50);
+  font-size: 9px; cursor: pointer; transition: all 0.2s;
+}
+.ms-retry:hover { background: rgba(255,68,68,0.1); }
+
+/* ── LIVE BADGE ──────────────────────────────────────────── */
+.live-badge {
+  display: inline-block;
+  padding: 2px 7px; margin-left: 8px;
+  font-size: 8px; font-weight: 700; letter-spacing: 1px;
+  background: rgba(61,255,110,0.12); color: var(--green);
+  border: 1px solid rgba(61,255,110,0.25); border-radius: var(--r50);
+}
+
+/* ── TX LOADING ──────────────────────────────────────────── */
+.tx-loading {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 24px; color: var(--txt2); font-size: 11px;
+}
+.tx-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(61,255,110,0.2);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── REFRESH BUTTON ──────────────────────────────────────── */
+.sidebar-btn { width: 100%; justify-content: center; text-decoration: none; }

@@ -204,3 +204,164 @@ body {
   from { opacity: 0; transform: scale(0.94) translateY(16px); }
   to   { opacity: 1; transform: none; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   STEP 6 — MOBILE RESPONSIVE
+   ══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Header */
+  .header-tabs .header-tab:nth-child(1)::after { content: 'Gallery'; }
+  header { padding: 0 12px; gap: 8px; }
+  .header-logo { font-size: 16px; }
+  .header-tab  { padding: 5px 10px; font-size: 11px; }
+  .header-right { display: none; }
+
+  /* Sidebar — hidden on mobile, bottom nav instead */
+  .sidebar { display: none; }
+
+  /* Main content fills full width */
+  main {
+    margin-left: 0 !important;
+  }
+
+  /* Gallery grid — 2 columns on mobile */
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  /* Upload zone */
+  .upload-zone { padding: 18px 14px; }
+  .upload-heading { font-size: 12px; }
+
+  /* Gallery page padding */
+  .gallery-page { padding: 10px 10px 60px; }
+
+  /* Market metrics — 2x3 on mobile */
+  .metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+  .metrics-row > :last-child { grid-column: 1 / -1; }
+
+  /* Market layout — stack vertically */
+  .market-layout {
+    grid-template-columns: 1fr;
+  }
+  .asset-sidebar { order: -1; }
+  .market-page { padding: 10px 10px 60px; }
+
+  /* Asset sidebar — horizontal scroll on mobile */
+  .asset-sidebar {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+  .asset-sidebar .sec-label  { display: none; }
+  .asset-sidebar .add-asset  { flex-shrink: 0; min-width: 80px; }
+  .asset-sidebar .sidebar-actions { display: none; }
+  .asset-card { flex-shrink: 0; min-width: 140px; }
+  .ac-footer  { display: none; }
+
+  /* DJPEPE page hero — stack */
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .card-side {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .card-outer { width: 130px; flex-shrink: 0; }
+  .info-side  { padding: 16px; }
+  .asset-title { font-size: 30px; }
+  .stats-row { gap: 5px; }
+  .stat-box  { padding: 7px 10px; min-width: 60px; }
+  .stat-val  { font-size: 18px; }
+  .btn-row   { flex-wrap: wrap; gap: 5px; }
+  .btn       { padding: 7px 14px; font-size: 11px; }
+  .djpepe-page { padding-bottom: 60px; }
+
+  /* History layout — stack */
+  .history-layout {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+  .traits-col {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    margin-top: 4px;
+  }
+
+  /* Modal — full screen on mobile */
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal-box {
+    max-width: 100%;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: var(--r24) var(--r24) 0 0;
+  }
+
+  /* Upload queue panel */
+  .uqp-panel {
+    left: 8px; right: 8px; width: auto;
+    bottom: 48px;
+  }
+
+  /* Market status bar */
+  .market-status { font-size: 9px; }
+
+  /* Transaction table — hide less important cols */
+  .tx-table th:nth-child(4),
+  .tx-table td:nth-child(4),
+  .tx-table th:nth-child(5),
+  .tx-table td:nth-child(5) { display: none; }
+
+  /* Bottom mobile nav */
+  .mobile-nav {
+    display: flex !important;
+  }
+}
+
+/* MOBILE BOTTOM NAV ──────────────────────────────────────── */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 48px;
+  z-index: 150;
+  background: rgba(3, 8, 5, 0.92);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(61,255,110,0.1);
+  padding: 0 8px;
+  align-items: center;
+  justify-content: space-around;
+}
+.mnav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--txt2);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border: none;
+  background: none;
+}
+.mnav-item.active { color: var(--green); }
+.mnav-item svg { width: 18px; height: 18px; }

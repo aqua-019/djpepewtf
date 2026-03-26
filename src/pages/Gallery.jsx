@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GALLERY_FILES, fmtNum } from '../data/index.js';
+import { useUploadQueue } from '../components/useUploadQueue.js';
+import UploadQueuePanel  from '../components/UploadQueuePanel.jsx';
 import './Gallery.css';
 
 // ── LOCAL STORAGE HELPERS ─────────────────────────────────
 const LS_KEY = 'djpepe_gallery_stats';
-
 function loadStats() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); }
-  catch { return {}; }
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
 }
 function saveStats(stats) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(stats)); } catch {}
@@ -21,107 +21,37 @@ function mergeStats(files, stats) {
   }));
 }
 
-// ── TYPE DETECTION ────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────
 const BG_CLASSES = ['g1','g2','g3','g4','g5','g6'];
 
 function extFromMime(mime = '') {
   const map = {
-    'image/png':      'png', 'image/jpeg':  'jpg', 'image/gif':    'gif',
-    'image/svg+xml':  'svg', 'image/webp':  'webp','video/mp4':    'mp4',
-    'video/webm':     'webm','audio/mpeg':  'mp3', 'audio/mp3':    'mp3',
-    'audio/wav':      'wav',
+    'image/png':'png','image/jpeg':'jpg','image/gif':'gif',
+    'image/svg+xml':'svg','image/webp':'webp','video/mp4':'mp4',
+    'video/webm':'webm','audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav',
   };
   return map[mime] || mime.split('/').pop();
 }
 
 // ── COMPONENT ─────────────────────────────────────────────
 export default function Gallery() {
-  const [files, setFiles]         = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [sort, setSort]           = useState('new');
-  const [selected, setSelected]   = useState(null);
-  const [dragging, setDragging]   = useState(false);
-  const [uploadState, setUpState] = useState('idle'); // idle | uploading | success | error-size | error-type | error-net
-  const [upvoted, setUpvoted]     = useState(() => {
+  const [files, setFiles]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [sort, setSort]         = useState('new');
+  const [selected, setSelected] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const [showQueue, setShowQueue] = useState(false);
+  const [upvoted, setUpvoted]   = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('djpepe_upvoted') || '[]')); }
     catch { return new Set(); }
   });
-  const [copied, setCopied]       = useState(false);
-  const fileInput                 = useRef();
-  const stats                     = useRef(loadStats());
+  const [copied, setCopied]     = useState(false);
+  const fileInput               = useRef();
+  const stats                   = useRef(loadStats());
 
-  // ── FETCH GALLERY FROM API ON MOUNT ───────────────────────
-  useEffect(() => {
-    async function fetchGallery() {
-      try {
-        const res  = await fetch('/api/gallery');
-        const data = await res.json();
-
-        // Merge remote files with static seed (static files are shown if API
-        // returns nothing, so the gallery is never empty on first deploy)
-        const remote = (data.files || []).map((f, i) => ({
-          ...f,
-          bg: BG_CLASSES[i % 6],
-        }));
-
-        const combined = remote.length > 0
-          ? remote
-          : GALLERY_FILES; // fallback to static data if blob store is empty
-
-        setFiles(mergeStats(combined, stats.current));
-      } catch {
-        // Network error — fall back to static seed data
-        setFiles(mergeStats(GALLERY_FILES, stats.current));
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchGallery();
-  }, []);
-
-  // ── SORT ──────────────────────────────────────────────────
-  const sorted = [...files].sort((a, b) => {
-    if (sort === 'hot') return (b.upvotes * 3 + b.views) - (a.upvotes * 3 + a.views);
-    if (sort === 'new') return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
-    if (sort === 'top') return b.views - a.views;
-    return 0;
-  });
-
-  // ── UPLOAD ────────────────────────────────────────────────
-  const handleFiles = useCallback(async (incoming) => {
-    const ALLOWED = new Set([
-      'image/png','image/jpeg','image/gif','image/svg+xml','image/webp',
-      'video/mp4','video/webm','audio/mpeg','audio/mp3','audio/wav',
-    ]);
-    const list = [...incoming];
-
-    if (list.some(f => f.size > 50 * 1024 * 1024)) { setUpState('error-size'); return; }
-    if (list.some(f => !ALLOWED.has(f.type)))        { setUpState('error-type'); return; }
-
-    setUpState('uploading');
-
-    const results = await Promise.allSettled(
-      list.map(async (file) => {
-        const res = await fetch('/api/upload', {
-          method:  'POST',
-          headers: {
-            'Content-Type': file.type,
-            'x-filename':   encodeURIComponent(file.name),
-            'x-filesize':   String(file.size),
-          },
-          body: file,
-        });
-        if (!res.ok) throw new Error(await res.text());
-        return res.json();
-      })
-    );
-
-    const succeeded = results.filter(r => r.status === 'fulfilled').map(r => r.value);
-    const failed    = results.filter(r => r.status === 'rejected');
-
-    if (succeeded.length === 0) { setUpState('error-net'); return; }
-
-    const newItems = succeeded.map((data, i) => ({
+  // ── UPLOAD QUEUE ──────────────────────────────────────────
+  const onFileUploaded = useCallback((data) => {
+    const newItem = {
       id:         data.url,
       name:       data.filename,
       type:       extFromMime(data.mimeType),
@@ -130,16 +60,20 @@ export default function Gallery() {
       uploadedAt: data.uploadedAt,
       bg:         BG_CLASSES[Math.floor(Math.random() * BG_CLASSES.length)],
       icon:       '📁',
-      upvotes:    0,
-      comments:   0,
-      views:      0,
-      isNew:      true,
-    }));
-
-    setFiles(prev => [...newItems, ...prev.map(f => ({ ...f, isNew: false }))]);
-    setUpState('success');
-    setTimeout(() => setUpState('idle'), 3000);
+      upvotes: 0, comments: 0, views: 0,
+      isNew: true,
+    };
+    setFiles(prev => [newItem, ...prev.map(f => ({ ...f, isNew: false }))]);
   }, []);
+
+  const { queue, counts, enqueue, clearDone, retryErrors } = useUploadQueue(onFileUploaded);
+
+  const handleFiles = useCallback((incoming) => {
+    const list = [...incoming];
+    if (!list.length) return;
+    setShowQueue(true);
+    enqueue(list);
+  }, [enqueue]);
 
   const onDrop = (e) => {
     e.preventDefault();
@@ -147,34 +81,49 @@ export default function Gallery() {
     handleFiles(e.dataTransfer.files);
   };
 
+  // ── FETCH GALLERY FROM API ON MOUNT ──────────────────────
+  useEffect(() => {
+    async function fetchGallery() {
+      try {
+        const res  = await fetch('/api/gallery');
+        const data = await res.json();
+        const remote = (data.files || []).map((f, i) => ({ ...f, bg: BG_CLASSES[i % 6] }));
+        const combined = remote.length > 0 ? remote : GALLERY_FILES;
+        setFiles(mergeStats(combined, stats.current));
+      } catch {
+        setFiles(mergeStats(GALLERY_FILES, stats.current));
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchGallery();
+  }, []);
+
+  // ── SORT ─────────────────────────────────────────────────
+  const sorted = [...files].sort((a, b) => {
+    if (sort === 'hot') return (b.upvotes * 3 + b.views) - (a.upvotes * 3 + a.views);
+    if (sort === 'new') return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
+    if (sort === 'top') return b.views - a.views;
+    return 0;
+  });
+
   // ── UPVOTE ────────────────────────────────────────────────
   const toggleUpvote = (id) => {
     setUpvoted(prev => {
-      const next = new Set(prev);
+      const next  = new Set(prev);
       const delta = next.has(id) ? -1 : 1;
       next.has(id) ? next.delete(id) : next.add(id);
       try { localStorage.setItem('djpepe_upvoted', JSON.stringify([...next])); } catch {}
-
-      // Persist to stats
-      stats.current[id] = {
-        ...stats.current[id],
-        upvotes: (stats.current[id]?.upvotes ?? 0) + delta,
-      };
+      stats.current[id] = { ...stats.current[id], upvotes: (stats.current[id]?.upvotes ?? 0) + delta };
       saveStats(stats.current);
-
-      setFiles(prev => prev.map(f =>
-        f.id === id ? { ...f, upvotes: f.upvotes + delta } : f
-      ));
+      setFiles(prev => prev.map(f => f.id === id ? { ...f, upvotes: f.upvotes + delta } : f));
       return next;
     });
   };
 
-  // ── INCREMENT VIEW on modal open ─────────────────────────
+  // ── OPEN FILE (increment view) ────────────────────────────
   const openFile = (file) => {
-    stats.current[file.id] = {
-      ...stats.current[file.id],
-      views: (stats.current[file.id]?.views ?? file.views) + 1,
-    };
+    stats.current[file.id] = { ...stats.current[file.id], views: (stats.current[file.id]?.views ?? file.views) + 1 };
     saveStats(stats.current);
     setFiles(prev => prev.map(f => f.id === file.id ? { ...f, views: f.views + 1 } : f));
     setSelected({ ...file, views: file.views + 1 });
@@ -182,54 +131,37 @@ export default function Gallery() {
 
   // ── COPY LINK ─────────────────────────────────────────────
   const copyLink = () => {
-    const url = selected?.url || window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
+    navigator.clipboard.writeText(selected?.url || window.location.href).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
 
   // ── UPLOAD ZONE COPY ──────────────────────────────────────
-  const zoneText = () => {
-    switch (uploadState) {
-      case 'uploading':   return { h: 'Uploading…',                  s: 'Adding to the archive' };
-      case 'success':     return { h: 'Uploaded.',                   s: 'Now live in the gallery' };
-      case 'error-size':  return { h: "That file's too big.",        s: 'Max size is 50MB.' };
-      case 'error-type':  return { h: "That format isn't supported.", s: '' };
-      case 'error-net':   return { h: 'Something went wrong.',       s: 'Try again.' };
-      default:
-        return dragging
-          ? { h: 'Drop it.', s: 'Release to add to the gallery' }
-          : { h: 'Drop files to upload', s: 'or click to browse your device' };
-    }
-  };
-  const { h, s } = zoneText();
-  const isError   = uploadState.startsWith('error');
-  const isSuccess = uploadState === 'success';
+  const isUploading = (counts.uploading || 0) > 0 || (counts.queued || 0) > 0;
+  const zoneCopy    = dragging
+    ? { h: 'Drop it.', s: 'Release to add to the gallery' }
+    : isUploading
+    ? { h: `Uploading ${counts.done || 0} / ${queue.length} files…`, s: 'Queue panel bottom-right' }
+    : { h: 'Drop files to upload', s: 'or click to browse your device' };
 
   return (
     <div className="gallery-page">
 
-      {/* ── UPLOAD ZONE ────────────────────────────────────── */}
+      {/* ── UPLOAD ZONE ──────────────────────────────────── */}
       <div
-        className={[
-          'upload-zone',
-          dragging          ? 'drag-over' : '',
-          uploadState === 'uploading' ? 'uploading' : '',
-          isSuccess         ? 'success'   : '',
-          isError           ? 'errored'   : '',
-        ].join(' ')}
+        className={['upload-zone', dragging ? 'drag-over' : '', isUploading ? 'uploading' : ''].join(' ')}
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        onClick={() => uploadState !== 'uploading' && fileInput.current.click()}
+        onClick={() => !isUploading && fileInput.current.click()}
       >
         <div className="upload-icon-wrap">
-          {uploadState === 'uploading' ? <div className="upload-spinner"/> : <UpArrow/>}
+          {isUploading ? <div className="upload-spinner"/> : <UpArrow/>}
         </div>
-        <div className="upload-heading">{h}</div>
-        {s && <div className="upload-sub">{s}</div>}
-        {uploadState === 'idle' && (
+        <div className="upload-heading">{zoneCopy.h}</div>
+        <div className="upload-sub">{zoneCopy.s}</div>
+        {!isUploading && (
           <div className="upload-formats">
             {['PNG','JPG','GIF','MP4','MP3','SVG','WEBM'].map(f => (
               <span key={f} className="format-pill">{f}</span>
@@ -237,16 +169,14 @@ export default function Gallery() {
           </div>
         )}
         <input
-          ref={fileInput}
-          type="file"
-          multiple
+          ref={fileInput} type="file" multiple
           accept="image/*,video/mp4,video/webm,audio/mpeg,audio/wav"
-          style={{ display: 'none' }}
+          style={{ display:'none' }}
           onChange={e => handleFiles(e.target.files)}
         />
       </div>
 
-      {/* ── GALLERY BAR ────────────────────────────────────── */}
+      {/* ── GALLERY BAR ──────────────────────────────────── */}
       <div className="gallery-bar">
         <div className="gallery-title">
           Viral Archive
@@ -256,18 +186,14 @@ export default function Gallery() {
         </div>
         <div className="sort-tabs">
           {['hot','new','top'].map(s => (
-            <button
-              key={s}
-              className={`sort-tab ${sort === s ? 'active' : ''}`}
-              onClick={() => setSort(s)}
-            >
+            <button key={s} className={`sort-tab ${sort===s?'active':''}`} onClick={() => setSort(s)}>
               {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* ── GRID ───────────────────────────────────────────── */}
+      {/* ── GRID ─────────────────────────────────────────── */}
       {loading ? (
         <div className="gallery-grid">
           {Array.from({ length: 12 }).map((_, i) => (
@@ -284,9 +210,7 @@ export default function Gallery() {
         <div className="empty-state">
           <div className="empty-heading">Nothing here yet.</div>
           <div className="empty-sub">Be the first to upload something.</div>
-          <button className="btn btn-outline" onClick={() => fileInput.current.click()}>
-            Upload a file
-          </button>
+          <button className="btn btn-outline" onClick={() => fileInput.current.click()}>Upload a file</button>
         </div>
       ) : (
         <div className="gallery-grid">
@@ -301,10 +225,10 @@ export default function Gallery() {
                   ? <img src={file.url} alt={file.name} loading="lazy"/>
                   : <span className="cell-icon">{file.icon}</span>
                 }
-                {file.isNew && <span className="tag tag-new cell-badge">New</span>}
-                {!file.isNew && file.type === 'gif'  && <span className="tag tag-red  cell-badge">GIF</span>}
-                {!file.isNew && file.type === 'mp4'  && <span className="tag tag-mp4  cell-badge">MP4</span>}
-                {!file.isNew && file.type === 'mp3'  && <span className="tag tag-mp3  cell-badge">MP3</span>}
+                {file.isNew                   && <span className="tag tag-new cell-badge">New</span>}
+                {!file.isNew && file.type==='gif' && <span className="tag tag-red  cell-badge">GIF</span>}
+                {!file.isNew && file.type==='mp4' && <span className="tag tag-mp4  cell-badge">MP4</span>}
+                {!file.isNew && file.type==='mp3' && <span className="tag tag-mp3  cell-badge">MP3</span>}
               </div>
               <div className="cell-meta">
                 <div className="cell-name">{file.name}</div>
@@ -319,39 +243,34 @@ export default function Gallery() {
         </div>
       )}
 
-      {/* ── MODAL ──────────────────────────────────────────── */}
+      {/* ── MODAL ────────────────────────────────────────── */}
       {selected && (
         <div className="modal-overlay" onClick={() => setSelected(null)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-
             <div className="modal-header">
               <div className="modal-title">{selected.name}</div>
               <button className="modal-close" onClick={() => setSelected(null)}>✕</button>
             </div>
-
             <div className="modal-preview">
               {selected.url ? (
-                selected.type === 'mp4' || selected.type === 'webm' ? (
-                  <video src={selected.url} controls className="modal-media"/>
-                ) : selected.type === 'mp3' || selected.type === 'wav' ? (
-                  <div className="modal-audio-wrap">
-                    <span className="modal-audio-icon">🎵</span>
-                    <audio src={selected.url} controls className="modal-audio"/>
-                  </div>
-                ) : (
-                  <img src={selected.url} alt={selected.name} className="modal-media"/>
-                )
+                (selected.type==='mp4'||selected.type==='webm')
+                  ? <video src={selected.url} controls className="modal-media"/>
+                  : (selected.type==='mp3'||selected.type==='wav')
+                  ? <div className="modal-audio-wrap">
+                      <span className="modal-audio-icon">🎵</span>
+                      <audio src={selected.url} controls className="modal-audio"/>
+                    </div>
+                  : <img src={selected.url} alt={selected.name} className="modal-media"/>
               ) : (
                 <div className="modal-placeholder">{selected.icon}</div>
               )}
             </div>
-
             <div className="modal-body">
               <div className="modal-stats">
                 {[
-                  { label: 'Upvotes',  val: fmtNum(selected.upvotes + (upvoted.has(selected.id) ? 1 : 0)), cls: 'green' },
-                  { label: 'Views',    val: fmtNum(selected.views),    cls: '' },
-                  { label: 'Comments', val: fmtNum(selected.comments), cls: '' },
+                  { label:'Upvotes',  val: fmtNum(selected.upvotes + (upvoted.has(selected.id)?1:0)), cls:'green' },
+                  { label:'Views',    val: fmtNum(selected.views),    cls:'' },
+                  { label:'Comments', val: fmtNum(selected.comments), cls:'' },
                 ].map(s => (
                   <div key={s.label} className="modal-stat">
                     <span className="ms-label">{s.label}</span>
@@ -359,51 +278,39 @@ export default function Gallery() {
                   </div>
                 ))}
               </div>
-
               <div className="modal-details">
                 <div className="detail-row"><span>Format</span><span>{selected.type?.toUpperCase()}</span></div>
-                {selected.size  && <div className="detail-row"><span>Size</span><span>{(selected.size / 1024).toFixed(1)} KB</span></div>}
-                {selected.uploadedAt && (
-                  <div className="detail-row">
-                    <span>Added</span>
-                    <span>{new Date(selected.uploadedAt).toLocaleDateString()}</span>
-                  </div>
-                )}
-                {selected.url && (
-                  <div className="detail-row">
-                    <span>CDN URL</span>
-                    <a href={selected.url} target="_blank" rel="noreferrer" className="detail-link">Open ↗</a>
-                  </div>
-                )}
+                {selected.size && <div className="detail-row"><span>Size</span><span>{(selected.size/1024).toFixed(1)} KB</span></div>}
+                {selected.uploadedAt && <div className="detail-row"><span>Added</span><span>{new Date(selected.uploadedAt).toLocaleDateString()}</span></div>}
+                {selected.url && <div className="detail-row"><span>CDN URL</span><a href={selected.url} target="_blank" rel="noreferrer" className="detail-link">Open ↗</a></div>}
               </div>
-
               <div className="modal-actions">
                 <button
                   className={`btn ${upvoted.has(selected.id) ? 'btn-green' : 'btn-outline'}`}
                   onClick={() => {
                     toggleUpvote(selected.id);
-                    setSelected(prev => ({
-                      ...prev,
-                      upvotes: prev.upvotes + (upvoted.has(prev.id) ? -1 : 1),
-                    }));
+                    setSelected(prev => ({ ...prev, upvotes: prev.upvotes + (upvoted.has(prev.id)?-1:1) }));
                   }}
                 >
                   {upvoted.has(selected.id) ? '▲ Upvoted' : '▲ Upvote'}
                 </button>
-
-                {selected.url && (
-                  <a href={selected.url} download={selected.name} className="btn btn-outline">
-                    Download
-                  </a>
-                )}
-
-                <button className="btn btn-outline" onClick={copyLink}>
-                  {copied ? 'Link copied.' : 'Copy link'}
-                </button>
+                {selected.url && <a href={selected.url} download={selected.name} className="btn btn-outline">Download</a>}
+                <button className="btn btn-outline" onClick={copyLink}>{copied ? 'Link copied.' : 'Copy link'}</button>
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── UPLOAD QUEUE PANEL ───────────────────────────── */}
+      {showQueue && queue.length > 0 && (
+        <UploadQueuePanel
+          queue={queue}
+          counts={counts}
+          onClear={clearDone}
+          onRetry={retryErrors}
+          onClose={() => setShowQueue(false)}
+        />
       )}
     </div>
   );
