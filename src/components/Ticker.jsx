@@ -1,17 +1,10 @@
-export default function Ticker() {
+export default function Ticker({ floor, supply, fileCount }) {
   const segments = [
-    { text: '▲ DJPEPE floor 14.82 ETH', cls: 'tg' },
+    { text: `DJPEPE floor ${floor != null ? floor + ' BTC' : '—'}`, cls: 'tg' },
     { text: '·', cls: 'sep' },
-    { text: 'Last sale: ', cls: '' },
-    { text: '14.02 ETH', cls: 'tg' },
-    { text: ' · 2hr ago', cls: '' },
+    { text: `Supply: ${supply ?? 169}`, cls: '' },
     { text: '·', cls: 'sep' },
-    { text: 'Open offer: 12.50 ETH pending', cls: 'tr' },
-    { text: '·', cls: 'sep' },
-    { text: 'Total items: ', cls: '' },
-    { text: '428', cls: 'tg' },
-    { text: '·', cls: 'sep' },
-    { text: '31 people online', cls: '' },
+    { text: `${fileCount != null ? fileCount : '—'} files in archive`, cls: '' },
     { text: '·', cls: 'sep' },
     { text: 'No requests. Strong hands only.', cls: '' },
   ];
