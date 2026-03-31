@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { TIMELINE, TRAITS, DJPEPE_STATS } from '../data/index.js';
 import './DJPepe.css';
 
@@ -9,9 +10,33 @@ const LINKS = [
   { label: 'FAKEDJPEPE on XChain',url: 'https://xchain.io/asset/FAKEDJPEPE'  },
 ];
 
-const STATS = DJPEPE_STATS;
-
 export default function DJPepe() {
+  const [liveStats, setLiveStats] = useState(null);
+
+  useEffect(() => {
+    async function fetchLive() {
+      try {
+        const res = await fetch('/api/market?asset=DJPEPE');
+        if (!res.ok) return;
+        const json = await res.json();
+        setLiveStats(json.assets?.DJPEPE ?? null);
+      } catch { /* use static fallback */ }
+    }
+    fetchLive();
+  }, []);
+
+  // Merge live data into static stats
+  const stats = DJPEPE_STATS.map(s => {
+    if (!liveStats) return s;
+    if (s.label === 'Floor' && liveStats.floor != null)
+      return { ...s, value: `${liveStats.floor} BTC`, sub: 'Counterparty dispenser' };
+    if (s.label === 'Holders' && liveStats.holders != null)
+      return { ...s, value: String(liveStats.holders), sub: `of ${liveStats.supply ?? 169} minted` };
+    if (s.label === 'Supply' && liveStats.supply != null)
+      return { ...s, value: String(liveStats.supply) };
+    return s;
+  });
+
   return (
     <div className="djpepe-page">
 
@@ -43,7 +68,7 @@ export default function DJPepe() {
           <div className="pill-row">
             <span className="pill pill-green">First Audio NFT</span>
             <span className="pill pill-red">No Requests</span>
-            <span className="pill">Supply: 169</span>
+            <span className="pill">Supply: {liveStats?.supply ?? 169}</span>
           </div>
         </div>
 
@@ -58,7 +83,7 @@ export default function DJPepe() {
           </p>
 
           <div className="stats-row">
-            {STATS.map(s => (
+            {stats.map(s => (
               <div key={s.label} className="stat-box">
                 <div className="stat-label">{s.label}</div>
                 <div className={`stat-val ${s.value === null ? 'stat-null' : ''}`}>
@@ -73,10 +98,9 @@ export default function DJPepe() {
             <a href="https://pepe.wtf/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-green">
               Buy on Pepe.WTF ↗
             </a>
-            <a href="https://xchain.io" target="_blank" rel="noreferrer" className="btn btn-outline">
+            <a href="https://xchain.io/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-outline">
               View on Chain ↗
             </a>
-            <button className="btn btn-red">Make Offer</button>
           </div>
         </div>
       </div>

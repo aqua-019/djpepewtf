@@ -1,6 +1,6 @@
 import './Header.css';
 
-export default function Header({ page, setPage }) {
+export default function Header({ page, setPage, fileCount, status }) {
   const tabs = ['gallery', 'djpepe', 'market'];
   const labels = { gallery: 'Meme Gallery', djpepe: 'DJPEPE', market: 'Asset Market' };
 
@@ -24,9 +24,11 @@ export default function Header({ page, setPage }) {
 
       <div className="header-right">
         <span className="live-dot" />
-        <span className="header-stat">Live</span>
+        <span className="header-stat">{status === 'live' ? 'Live' : 'Offline'}</span>
         <span className="header-sep">·</span>
-        <span className="header-stat green">428 files</span>
+        <span className="header-stat green">
+          {fileCount != null ? `${fileCount} files` : '—'}
+        </span>
       </div>
     </header>
   );

@@ -6,21 +6,20 @@ import Ticker  from './components/Ticker.jsx';
 import Gallery from './pages/Gallery.jsx';
 import DJPepe  from './pages/DJPepe.jsx';
 import Market  from './pages/Market.jsx';
-
-const PAGE_MAP = {
-  gallery: 'gallery', trending: 'gallery', favs: 'gallery', uploads: 'gallery',
-  djpepe:  'djpepe',
-  market:  'market',
-};
+import { GridIcon, FrogIcon, ChartIcon } from './components/Icons.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 export default function App() {
   const [page, setPage] = useState('gallery');
-  const handleNav = (id) => setPage(PAGE_MAP[id] ?? id);
+
+  // Lifted state so Header and Ticker can show real data
+  const [fileCount, setFileCount]         = useState(null);
+  const [marketSummary, setMarketSummary] = useState({ floor: null, supply: null, status: 'loading' });
 
   return (
     <>
-      <Header page={page} setPage={setPage} />
-      <Sidebar page={page} setPage={handleNav} />
+      <Header page={page} setPage={setPage} fileCount={fileCount} status={marketSummary.status} />
+      <Sidebar page={page} setPage={setPage} />
 
       <main style={{
         marginLeft: 'var(--sidebar-w)',
@@ -28,12 +27,14 @@ export default function App() {
         height:     'calc(100vh - var(--header-h) - 32px)',
         overflowY:  'auto',
       }}>
-        {page === 'gallery' && <Gallery />}
-        {page === 'djpepe'  && <DJPepe  />}
-        {page === 'market'  && <Market  />}
+        <ErrorBoundary>
+          {page === 'gallery' && <Gallery onFileCount={setFileCount} />}
+          {page === 'djpepe'  && <DJPepe  />}
+          {page === 'market'  && <Market onMarketUpdate={setMarketSummary} />}
+        </ErrorBoundary>
       </main>
 
-      <Ticker />
+      <Ticker floor={marketSummary.floor} supply={marketSummary.supply} fileCount={fileCount} />
 
       {/* Mobile bottom nav */}
       <nav className="mobile-nav">
@@ -46,6 +47,7 @@ export default function App() {
             key={item.id}
             className={`mnav-item ${page === item.id ? 'active' : ''}`}
             onClick={() => setPage(item.id)}
+            aria-label={item.label}
           >
             {item.icon}
             {item.label}
@@ -54,14 +56,4 @@ export default function App() {
       </nav>
     </>
   );
-}
-
-function GridIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>;
-}
-function FrogIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.5" fill="currentColor"/><circle cx="15" cy="10" r="1.5" fill="currentColor"/><path d="M9 15s1 2 3 2 3-2 3-2"/></svg>;
-}
-function ChartIcon() {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
 }

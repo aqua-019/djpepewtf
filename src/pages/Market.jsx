@@ -1,25 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MARKET_ASSETS, PRICE_HISTORY } from '../data/index.js';
+import { MARKET_ASSETS } from '../data/index.js';
+import { CACHE_TTL } from '../lib/constants.js';
 import './Market.css';
 
 const TYPE_TAG   = { transfer:'tag-grey', offer:'tag-red', bid:'tag-green', sale:'tag-green', list:'tag-grey' };
 const TYPE_LABEL = { transfer:'Transfer', offer:'Offer',   bid:'Bid',       sale:'Sale',      list:'List' };
 
-const d  = v => (v !== null && v !== undefined) ? String(v) : '—';
-const de = v => (v !== null && v !== undefined) ? `${v} BTC` : '—';
+const displayVal = v => (v !== null && v !== undefined) ? String(v) : '—';
+const displayBtc = v => (v !== null && v !== undefined) ? `${v} BTC` : '—';
 
 const ASSET_TICKERS = MARKET_ASSETS.map(a => a.ticker).join(',');
 
-// Cache TTL: 60 seconds
+// Cache
 let cache = null;
 let cacheTime = 0;
 
-export default function Market() {
+export default function Market({ onMarketUpdate }) {
   const [selectedId, setSelectedId] = useState(MARKET_ASSETS[0].id);
-  const [liveData,   setLiveData]   = useState(null);   // { DJPEPE: {...}, FAKEDJPEPE: {...} }
+  const [liveData,   setLiveData]   = useState(null);
   const [txFilter,   setTxFilter]   = useState('all');
-  const [timeRange,  setTimeRange]  = useState('all');
-  const [status,     setStatus]     = useState('loading'); // loading | live | error | stale
+  const [status,     setStatus]     = useState('loading');
 
   // Merge static asset config with live API data
   const buildAsset = useCallback((staticAsset) => {
@@ -29,8 +29,8 @@ export default function Market() {
       floor:     live?.floor     ?? staticAsset.floor,
       supply:    live?.supply    ?? staticAsset.supply,
       holders:   live?.holders   ?? staticAsset.holders,
-      volume:    staticAsset.volume,   // not in XCP API, keep static
-      lastSale:  staticAsset.lastSale, // pepe.wtf only, keep static for now
+      volume:    staticAsset.volume,
+      lastSale:  staticAsset.lastSale,
       bestOffer: staticAsset.bestOffer,
       description: live?.description ?? '',
       locked:    live?.locked    ?? false,
@@ -42,14 +42,11 @@ export default function Market() {
   const assets   = MARKET_ASSETS.map(buildAsset);
   const selected = assets.find(a => a.id === selectedId) ?? assets[0];
 
-  // Live transactions — prefer API, fall back to static placeholder
+  // Live transactions
   const liveTxs = liveData?.[selected.ticker]?.transactions ?? [];
-
   const allTxs = liveTxs.length > 0
     ? liveTxs
-    : [
-        { id:'p1', asset:selected.ticker, type:'transfer', value:null, from:'—', to:'—', time:'—', xcUrl:selected.xcUrl },
-      ];
+    : [{ id:'p1', asset:selected.ticker, type:'transfer', value:null, from:'—', to:'—', time:'—', xcUrl:selected.xcUrl }];
 
   const txShown = txFilter === 'selected'
     ? allTxs.filter(t => t.asset === selected.ticker)
@@ -58,7 +55,7 @@ export default function Market() {
   // Fetch live data
   const fetchMarket = useCallback(async (force = false) => {
     const now = Date.now();
-    if (!force && cache && now - cacheTime < 60_000) {
+    if (!force && cache && now - cacheTime < CACHE_TTL) {
       setLiveData(cache);
       setStatus('live');
       return;
@@ -80,28 +77,20 @@ export default function Market() {
   }, []);
 
   useEffect(() => { fetchMarket(); }, [fetchMarket]);
-  // Refresh every 60s while tab is open
   useEffect(() => {
-    const id = setInterval(() => fetchMarket(true), 60_000);
+    const id = setInterval(() => fetchMarket(true), CACHE_TTL);
     return () => clearInterval(id);
   }, [fetchMarket]);
 
-  /* ── CHART ────────────────────────────────────────────── */
-  const W = 440, H = 120, PAD = 28;
-  const vals  = PRICE_HISTORY.map(p => p.value);
-  const minV  = Math.min(...vals), maxV = Math.max(...vals);
-  const rng   = maxV - minV || 1;
-  const pts   = PRICE_HISTORY.map((p, i) => ({
-    x: PAD + (i / (PRICE_HISTORY.length - 1)) * (W - PAD * 2),
-    y: H - PAD - ((p.value - minV) / rng) * (H - PAD * 2 - 10),
-    ...p,
-  }));
-  const line  = pts.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-  const area  = line + ` L${pts[pts.length-1].x},${H} L${pts[0].x},${H} Z`;
-  const yLbls = [maxV,(maxV+minV)/2,minV].map(v => ({
-    y: H - PAD - ((v - minV) / rng) * (H - PAD * 2 - 10),
-    v: v.toFixed(1),
-  }));
+  // Report market summary to App for Ticker/Header
+  useEffect(() => {
+    const djpepe = liveData?.DJPEPE;
+    onMarketUpdate?.({
+      floor: djpepe?.floor ?? null,
+      supply: djpepe?.supply ?? 169,
+      status,
+    });
+  }, [liveData, status, onMarketUpdate]);
 
   const pctCls = selected.change > 0 ? 'green' : selected.change < 0 ? 'red' : '';
   const pctTxt = selected.change != null
@@ -124,10 +113,10 @@ export default function Market() {
       <div className="metrics-row">
         {[
           { label: 'Floor price', val: selected.floor ? `${selected.floor} BTC` : '—', chg: pctTxt, cls: pctCls },
-          { label: 'Supply',      val: d(selected.supply),     chg: 'Total issued',                                      cls: '' },
-          { label: 'Last sale',   val: de(selected.lastSale),  chg: selected.lastSale ? 'pepe.wtf' : 'See pepe.wtf',    cls: '' },
-          { label: 'Holders',     val: d(selected.holders),    chg: selected.supply ? `of ${selected.supply} minted` : '—', cls: '' },
-          { label: 'Best offer',  val: de(selected.bestOffer), chg: selected.bestOffer ? '● Pending' : 'No open offers', cls: selected.bestOffer ? 'red' : '' },
+          { label: 'Supply',      val: displayVal(selected.supply),     chg: 'Total issued',                                      cls: '' },
+          { label: 'Last sale',   val: displayBtc(selected.lastSale),   chg: selected.lastSale ? 'pepe.wtf' : 'See pepe.wtf',    cls: '' },
+          { label: 'Holders',     val: displayVal(selected.holders),    chg: selected.supply ? `of ${selected.supply} minted` : '—', cls: '' },
+          { label: 'Best offer',  val: displayBtc(selected.bestOffer),  chg: selected.bestOffer ? '● Pending' : 'No open offers', cls: selected.bestOffer ? 'red' : '' },
         ].map(m => (
           <div key={m.label} className="metric-box">
             <div className="metric-label">{m.label}</div>
@@ -140,48 +129,19 @@ export default function Market() {
       <div className="market-layout">
         <div className="market-left">
 
-          {/* CHART */}
+          {/* PRICE HISTORY — link to external source */}
           <div className="panel">
             <div className="panel-head">
               <div className="panel-title">
-                DJPEPE price history
-                <span className="panel-sub">all time · illustrative</span>
-              </div>
-              <div className="filter-tabs">
-                {['7D','30D','All'].map(t => (
-                  <button key={t}
-                    className={`filter-tab ${timeRange===t.toLowerCase()?'active':''}`}
-                    onClick={() => setTimeRange(t.toLowerCase())}
-                  >{t}</button>
-                ))}
+                Price history
+                <span className="panel-sub">view on pepe.wtf</span>
               </div>
             </div>
-            <div className="chart-wrap">
-              <svg viewBox={`0 0 ${W} ${H}`} xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor="#3dff6e" stopOpacity="0.2"/>
-                    <stop offset="100%" stopColor="#3dff6e" stopOpacity="0"/>
-                  </linearGradient>
-                </defs>
-                {yLbls.map((l,i) => (
-                  <g key={i}>
-                    <line x1={PAD} y1={l.y} x2={W-4} y2={l.y} stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
-                    <text x="2" y={l.y+4} fill="rgba(200,210,200,0.22)" fontSize="8" fontFamily="DM Sans">{l.v}</text>
-                  </g>
-                ))}
-                <path d={area} fill="url(#cg)"/>
-                <path d={line} fill="none" stroke="#3dff6e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx={pts[pts.length-1].x} cy={pts[pts.length-1].y} r="3.5" fill="#3dff6e"/>
-                {pts.filter(p=>p.label).map((p,i)=>(
-                  <text key={i} x={p.x} y={H-2} fill="rgba(200,210,200,0.2)" fontSize="8" fontFamily="DM Sans" textAnchor="middle">{p.label}</text>
-                ))}
-                {selected.floor && (
-                  <text x={pts[pts.length-1].x+6} y={pts[pts.length-1].y+4} fill="#3dff6e" fontSize="9" fontFamily="Syne" fontWeight="700">
-                    {selected.floor} BTC
-                  </text>
-                )}
-              </svg>
+            <div className="price-history-placeholder">
+              <p>Real-time price charts are not yet available.</p>
+              <a href={selected.buyUrl} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm-inline">
+                View on Pepe.WTF ↗
+              </a>
             </div>
           </div>
 
@@ -260,14 +220,12 @@ export default function Market() {
                 </div>
               </div>
               <div className="ac-footer">
-                <span>Supply: {d(a.supply)}</span>
-                <span>Holders: {d(a.holders)}</span>
+                <span>Supply: {displayVal(a.supply)}</span>
+                <span>Holders: {displayVal(a.holders)}</span>
                 <span>Floor: {a.floor ?? '—'}</span>
               </div>
             </div>
           ))}
-
-          <div className="add-asset">+ Add asset</div>
 
           <div className="sidebar-actions">
             <a href={selected.buyUrl}  target="_blank" rel="noreferrer" className="btn btn-green sidebar-btn">Buy on Pepe.WTF ↗</a>

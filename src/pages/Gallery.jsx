@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { GALLERY_FILES, fmtNum } from '../data/index.js';
+import { fmtNum } from '../data/index.js';
 import { useUploadQueue } from '../components/useUploadQueue.js';
 import UploadQueuePanel  from '../components/UploadQueuePanel.jsx';
 import './Gallery.css';
@@ -10,7 +10,7 @@ function loadStats() {
   try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
 }
 function saveStats(stats) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(stats)); } catch {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify(stats)); } catch { /* localStorage unavailable */ }
 }
 function mergeStats(files, stats) {
   return files.map(f => ({
@@ -34,7 +34,7 @@ function extFromMime(mime = '') {
 }
 
 // ── COMPONENT ─────────────────────────────────────────────
-export default function Gallery() {
+export default function Gallery({ onFileCount }) {
   const [files, setFiles]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [sort, setSort]         = useState('new');
@@ -63,8 +63,12 @@ export default function Gallery() {
       upvotes: 0, comments: 0, views: 0,
       isNew: true,
     };
-    setFiles(prev => [newItem, ...prev.map(f => ({ ...f, isNew: false }))]);
-  }, []);
+    setFiles(prev => {
+      const next = [newItem, ...prev.map(f => ({ ...f, isNew: false }))];
+      onFileCount?.(next.length);
+      return next;
+    });
+  }, [onFileCount]);
 
   const { queue, counts, enqueue, clearDone, retryErrors } = useUploadQueue(onFileUploaded);
 
@@ -88,16 +92,17 @@ export default function Gallery() {
         const res  = await fetch('/api/gallery');
         const data = await res.json();
         const remote = (data.files || []).map((f, i) => ({ ...f, bg: BG_CLASSES[i % 6] }));
-        const combined = remote.length > 0 ? remote : GALLERY_FILES;
-        setFiles(mergeStats(combined, stats.current));
+        setFiles(mergeStats(remote, stats.current));
+        onFileCount?.(remote.length);
       } catch {
-        setFiles(mergeStats(GALLERY_FILES, stats.current));
+        setFiles([]);
+        onFileCount?.(0);
       } finally {
         setLoading(false);
       }
     }
     fetchGallery();
-  }, []);
+  }, [onFileCount]);
 
   // ── SORT ─────────────────────────────────────────────────
   const sorted = [...files].sort((a, b) => {
@@ -113,7 +118,7 @@ export default function Gallery() {
       const next  = new Set(prev);
       const delta = next.has(id) ? -1 : 1;
       next.has(id) ? next.delete(id) : next.add(id);
-      try { localStorage.setItem('djpepe_upvoted', JSON.stringify([...next])); } catch {}
+      try { localStorage.setItem('djpepe_upvoted', JSON.stringify([...next])); } catch { /* localStorage unavailable */ }
       stats.current[id] = { ...stats.current[id], upvotes: (stats.current[id]?.upvotes ?? 0) + delta };
       saveStats(stats.current);
       setFiles(prev => prev.map(f => f.id === id ? { ...f, upvotes: f.upvotes + delta } : f));
@@ -249,7 +254,7 @@ export default function Gallery() {
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title">{selected.name}</div>
-              <button className="modal-close" onClick={() => setSelected(null)}>✕</button>
+              <button className="modal-close" onClick={() => setSelected(null)} aria-label="Close">✕</button>
             </div>
             <div className="modal-preview">
               {selected.url ? (

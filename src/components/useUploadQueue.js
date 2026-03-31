@@ -4,23 +4,19 @@
  * Safe for 300+ files — runs N uploads at a time, never hammers the API.
  */
 
-import { useState, useRef, useCallback } from 'react';
-
-const CONCURRENCY  = 4;   // simultaneous uploads
-const MAX_BYTES    = 50 * 1024 * 1024;
-const ALLOWED_MIME = new Set([
-  'image/png','image/jpeg','image/gif','image/svg+xml','image/webp',
-  'video/mp4','video/webm','audio/mpeg','audio/mp3','audio/wav',
-]);
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE, MAX_CONCURRENT_UPLOADS } from '../lib/constants.js';
 
 // Statuses: queued | uploading | done | error-size | error-type | error-net
 export function useUploadQueue(onFileUploaded) {
-  const [queue, setQueue]   = useState([]);   // { id, file, name, status, url?, error? }
+  const [queue, setQueue]   = useState([]);
   const [active, setActive] = useState(false);
   const queueRef            = useRef([]);
   const runningRef          = useRef(0);
   const onDone              = useRef(onFileUploaded);
-  onDone.current            = onFileUploaded;
+  const drainRef            = useRef(null);
+
+  useEffect(() => { onDone.current = onFileUploaded; }, [onFileUploaded]);
 
   const updateItem = useCallback((id, patch) => {
     setQueue(prev => prev.map(item => item.id === id ? { ...item, ...patch } : item));
@@ -54,7 +50,7 @@ export function useUploadQueue(onFileUploaded) {
 
   const drainQueue = useCallback(async () => {
     const next = queueRef.current.find(i => i.status === 'queued');
-    if (!next || runningRef.current >= CONCURRENCY) return;
+    if (!next || runningRef.current >= MAX_CONCURRENT_UPLOADS) return;
 
     runningRef.current++;
     await uploadOne(next);
@@ -62,16 +58,18 @@ export function useUploadQueue(onFileUploaded) {
 
     // Keep draining
     const remaining = queueRef.current.filter(i => i.status === 'queued');
-    if (remaining.length > 0) drainQueue();
+    if (remaining.length > 0) drainRef.current?.();
     else if (runningRef.current === 0) setActive(false);
   }, [uploadOne]);
+
+  useEffect(() => { drainRef.current = drainQueue; }, [drainQueue]);
 
   const enqueue = useCallback((files) => {
     const items = [...files].map(file => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       let status = 'queued';
-      if (!ALLOWED_MIME.has(file.type))  status = 'error-type';
-      if (file.size > MAX_BYTES)         status = 'error-size';
+      if (!ALLOWED_MIME_TYPES.has(file.type)) status = 'error-type';
+      if (file.size > MAX_FILE_SIZE)          status = 'error-size';
       return { id, file, name: file.name, status };
     });
 
@@ -79,9 +77,9 @@ export function useUploadQueue(onFileUploaded) {
     setQueue(queueRef.current.slice());
     setActive(true);
 
-    // Kick off up to CONCURRENCY workers
-    for (let i = 0; i < CONCURRENCY; i++) drainQueue();
-  }, [drainQueue]);
+    // Kick off up to N workers
+    for (let i = 0; i < MAX_CONCURRENT_UPLOADS; i++) drainRef.current?.();
+  }, []);
 
   const clearDone = useCallback(() => {
     queueRef.current = queueRef.current.filter(i => i.status === 'queued' || i.status === 'uploading');
@@ -93,8 +91,8 @@ export function useUploadQueue(onFileUploaded) {
       i.status === 'error-net' ? { ...i, status: 'queued' } : i
     );
     setQueue(queueRef.current.slice());
-    for (let i = 0; i < CONCURRENCY; i++) drainQueue();
-  }, [drainQueue]);
+    for (let i = 0; i < MAX_CONCURRENT_UPLOADS; i++) drainRef.current?.();
+  }, []);
 
   const counts = queue.reduce((acc, i) => {
     acc[i.status] = (acc[i.status] || 0) + 1;
