@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   if (req.method !== 'GET')    return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const limit  = Math.min(parseInt(req.query.limit) || 50, 200);
+    const limit  = Math.min(parseInt(req.query.limit) || 500, 1000);
     const cursor = req.query.cursor || undefined;
 
     const { blobs, hasMore, cursor: nextCursor } = await list({
