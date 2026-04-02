@@ -5,7 +5,6 @@ const STATUS_LABEL = {
   uploading:   { txt: 'Uploading…', cls: 'green' },
   done:        { txt: 'Done',       cls: 'done'  },
   'error-size':{ txt: 'Too large',  cls: 'red'   },
-  'error-type':{ txt: 'Unsupported', cls: 'red'  },
   'error-net': { txt: 'Failed',     cls: 'red'   },
 };
 
@@ -20,7 +19,7 @@ export default function UploadQueuePanel({ queue, counts, onClear, onRetry, onCl
 
   const total    = queue.length;
   const done     = counts.done       || 0;
-  const errors   = (counts['error-net'] || 0) + (counts['error-size'] || 0) + (counts['error-type'] || 0);
+  const errors   = (counts['error-net'] || 0) + (counts['error-size'] || 0);
   const uploading= counts.uploading  || 0;
   const queued   = counts.queued     || 0;
   const pct      = total > 0 ? Math.round((done / total) * 100) : 0;
