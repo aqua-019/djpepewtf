@@ -135,6 +135,13 @@ body {
   border: 1.5px solid var(--border-r);
   color: var(--red);
 }
+.btn-danger {
+  background: var(--red-dim);
+  border: 1.5px solid var(--border-r);
+  color: var(--red);
+}
+.btn-danger:hover { background: rgba(224, 85, 85, 0.18); }
+.btn-danger:disabled { opacity: 0.5; cursor: wait; }
 .btn-red:hover { background: var(--red-dim); }
 
 /* ── TAGS ────────────────────────────────────────────────── */

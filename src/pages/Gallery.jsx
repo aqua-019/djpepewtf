@@ -53,6 +53,10 @@ export default function Gallery({ onFileCount }) {
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [adminToken] = useState(() => {
+    try { return localStorage.getItem('djpepe_admin_token') || ''; } catch { return ''; }
+  });
   const [upvoted, setUpvoted]   = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('djpepe_upvoted') || '[]')); }
     catch { return new Set(); }
@@ -224,6 +228,36 @@ export default function Gallery({ onFileCount }) {
     saveStats(stats.current);
     setFiles(prev => prev.map(f => f.id === file.id ? { ...f, views: f.views + 1 } : f));
     setSelected({ ...file, views: file.views + 1 });
+  };
+
+  // ── DELETE FILE ────────────────────────────────────────────
+  const deleteFile = async (file) => {
+    const token = adminToken || prompt('Enter admin token:');
+    if (!token) return;
+    try { localStorage.setItem('djpepe_admin_token', token); } catch {}
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/gallery-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+        body: JSON.stringify({ url: file.url }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Delete failed');
+        return;
+      }
+      setFiles(prev => {
+        const next = prev.filter(f => f.id !== file.id);
+        onFileCount?.(next.length);
+        return next;
+      });
+      setSelected(null);
+    } catch {
+      alert('Delete failed — network error');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // ── COPY LINK ─────────────────────────────────────────────
@@ -439,6 +473,13 @@ export default function Gallery({ onFileCount }) {
                 </button>
                 {selected.url && <a href={selected.url} download={selected.name} className="btn btn-outline">Download</a>}
                 <button className="btn btn-outline" onClick={copyLink}>{copied ? 'Link copied.' : 'Copy link'}</button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => deleteFile(selected)}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
               </div>
             </div>
           </div>
