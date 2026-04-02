@@ -37,14 +37,14 @@ export function useUploadQueue(onFileUploaded) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Upload failed.' }));
-        updateItem(item.id, { status: 'error-net', error: err.error });
+        updateItem(item.id, { status: 'error-net', error: err.error, errorDetail: err.error });
         return;
       }
       const data = await res.json();
       updateItem(item.id, { status: 'done', url: data.url, ...data });
       onDone.current?.(data);
     } catch {
-      updateItem(item.id, { status: 'error-net', error: 'Something went wrong.' });
+      updateItem(item.id, { status: 'error-net', error: 'Something went wrong.', errorDetail: 'Network error' });
     }
   }, [updateItem]);
 
@@ -65,14 +65,22 @@ export function useUploadQueue(onFileUploaded) {
   useEffect(() => { drainRef.current = drainQueue; }, [drainQueue]);
 
   const enqueue = useCallback((files) => {
+    const fmtSize = (b) => b >= 1048576 ? `${(b/1048576).toFixed(1)}MB` : `${(b/1024).toFixed(0)}KB`;
     const items = [...files].map(file => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      let status = 'queued';
       const ext = file.name.split('.').pop().toLowerCase();
+      let status = 'queued';
+      let errorDetail = null;
       // Accept if MIME matches OR extension is known (browsers send empty/wrong MIME for HEIC, MOV, etc.)
-      if (!ALLOWED_MIME_TYPES.has(file.type) && !ALLOWED_EXTENSIONS.has(ext)) status = 'error-type';
-      if (file.size > MAX_FILE_SIZE) status = 'error-size';
-      return { id, file, name: file.name, status };
+      if (!ALLOWED_MIME_TYPES.has(file.type) && !ALLOWED_EXTENSIONS.has(ext)) {
+        status = 'error-type';
+        errorDetail = `.${ext} not supported`;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        status = 'error-size';
+        errorDetail = `${fmtSize(file.size)} exceeds ${fmtSize(MAX_FILE_SIZE)} limit`;
+      }
+      return { id, file, name: file.name, ext, status, errorDetail };
     });
 
     queueRef.current = [...queueRef.current, ...items];
