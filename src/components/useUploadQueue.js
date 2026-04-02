@@ -5,7 +5,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE, MAX_CONCURRENT_UPLOADS } from '../lib/constants.js';
+import { ALLOWED_MIME_TYPES, ALLOWED_EXTENSIONS, MAX_FILE_SIZE, MAX_CONCURRENT_UPLOADS } from '../lib/constants.js';
 
 // Statuses: queued | uploading | done | error-size | error-type | error-net
 export function useUploadQueue(onFileUploaded) {
@@ -68,8 +68,10 @@ export function useUploadQueue(onFileUploaded) {
     const items = [...files].map(file => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       let status = 'queued';
-      if (!ALLOWED_MIME_TYPES.has(file.type)) status = 'error-type';
-      if (file.size > MAX_FILE_SIZE)          status = 'error-size';
+      const ext = file.name.split('.').pop().toLowerCase();
+      // Accept if MIME matches OR extension is known (browsers send empty/wrong MIME for HEIC, MOV, etc.)
+      if (!ALLOWED_MIME_TYPES.has(file.type) && !ALLOWED_EXTENSIONS.has(ext)) status = 'error-type';
+      if (file.size > MAX_FILE_SIZE) status = 'error-size';
       return { id, file, name: file.name, status };
     });
 

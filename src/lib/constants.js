@@ -11,7 +11,13 @@ export const ALLOWED_MIME_TYPES = new Set([
   'audio/aac', 'audio/x-m4a',
 ]);
 
-export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+export const ALLOWED_EXTENSIONS = new Set([
+  'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'tiff', 'bmp', 'avif', 'heic', 'heif',
+  'mp4', 'webm', 'mov', 'qt', 'avi', 'ogv',
+  'mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a',
+]);
+
+export const MAX_FILE_SIZE = 150 * 1024 * 1024; // 150 MB (raised for MOV/video)
 
 export const MAX_CONCURRENT_UPLOADS = 4;
 

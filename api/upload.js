@@ -12,9 +12,22 @@ const ALLOWED_TYPES = new Set([
   'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/ogg',
   'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/flac',
   'audio/aac', 'audio/x-m4a',
+  'application/octet-stream', // fallback — validated by extension below
 ]);
 
-const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+// Extension → MIME fallback for files browsers can't detect (HEIC, MOV, etc.)
+const EXT_MIME = {
+  heic: 'image/heic', heif: 'image/heif',
+  mov: 'video/quicktime', qt: 'video/quicktime',
+  mp4: 'video/mp4', webm: 'video/webm', avi: 'video/x-msvideo', ogv: 'video/ogg',
+  mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', flac: 'audio/flac',
+  aac: 'audio/aac', m4a: 'audio/x-m4a',
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+  svg: 'image/svg+xml', webp: 'image/webp', tiff: 'image/tiff', bmp: 'image/bmp',
+  avif: 'image/avif',
+};
+
+const MAX_BYTES = 150 * 1024 * 1024; // 150 MB (raised for MOV/video files)
 
 // Simple in-memory rate limiter (resets on cold start)
 const RATE_WINDOW = 60_000; // 1 minute
@@ -50,18 +63,26 @@ export default async function handler(req, res) {
   // ── Validate headers ──────────────────────────────────────
   const rawName    = req.headers['x-filename'];
   const rawSize    = req.headers['x-filesize'];
-  const mimeType   = req.headers['content-type'] || 'application/octet-stream';
+  let   mimeType   = req.headers['content-type'] || 'application/octet-stream';
 
   if (!rawName) return res.status(400).json({ error: 'Missing x-filename header' });
 
   const filename = decodeURIComponent(rawName).replace(/[^a-zA-Z0-9._-]/g, '_');
   const filesize = rawSize ? parseInt(rawSize, 10) : 0;
+  const ext = filename.split('.').pop().toLowerCase();
 
-  if (!ALLOWED_TYPES.has(mimeType)) {
-    return res.status(400).json({ error: `Unsupported file type: ${mimeType}` });
+  // Browsers often send empty or generic MIME for HEIC, MOV, etc. — resolve from extension
+  if (!mimeType || mimeType === 'application/octet-stream' || !ALLOWED_TYPES.has(mimeType)) {
+    const resolved = EXT_MIME[ext];
+    if (resolved) {
+      mimeType = resolved;
+    } else {
+      return res.status(400).json({ error: `Unsupported file type: ${mimeType} (.${ext})` });
+    }
   }
+
   if (filesize > MAX_BYTES) {
-    return res.status(400).json({ error: "That file's too big. Max size is 50MB." });
+    return res.status(400).json({ error: "That file's too big. Max size is 150MB." });
   }
 
   // ── Stream to Vercel Blob ─────────────────────────────────
