@@ -91,9 +91,47 @@ export default function Gallery({ onFileCount }) {
     enqueue(list);
   }, [enqueue]);
 
-  const onDrop = (e) => {
+  // Recursively extract files from dropped folders
+  const getFilesFromEntry = (entry) => {
+    return new Promise((resolve) => {
+      if (entry.isFile) {
+        entry.file(f => resolve([f]), () => resolve([]));
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const allEntries = [];
+        const readBatch = () => {
+          reader.readEntries(entries => {
+            if (entries.length === 0) {
+              Promise.all(allEntries.map(getFilesFromEntry)).then(arrs => resolve(arrs.flat()));
+            } else {
+              allEntries.push(...entries);
+              readBatch();
+            }
+          }, () => resolve([]));
+        };
+        readBatch();
+      } else {
+        resolve([]);
+      }
+    });
+  };
+
+  const onDrop = async (e) => {
     e.preventDefault();
     setDragging(false);
+
+    // Check for folder drops via webkitGetAsEntry
+    const items = e.dataTransfer.items;
+    if (items && items.length > 0 && items[0].webkitGetAsEntry) {
+      const entries = [...items].map(i => i.webkitGetAsEntry()).filter(Boolean);
+      const hasDir = entries.some(e => e.isDirectory);
+      if (hasDir) {
+        const allFiles = await Promise.all(entries.map(getFilesFromEntry));
+        handleFiles(allFiles.flat());
+        return;
+      }
+    }
+
     handleFiles(e.dataTransfer.files);
   };
 
@@ -202,7 +240,7 @@ export default function Gallery({ onFileCount }) {
     ? { h: 'Drop it.', s: 'Release to add to the gallery' }
     : isUploading
     ? { h: `Uploading ${counts.done || 0} / ${queue.length} files…`, s: 'Queue panel bottom-right' }
-    : { h: 'Drop files to upload', s: 'or click to browse your device' };
+    : { h: 'Drop files or folders to upload', s: 'or click to browse — supports entire folders' };
 
   return (
     <div className="gallery-page">

@@ -18,7 +18,7 @@ const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 
 // Simple in-memory rate limiter (resets on cold start)
 const RATE_WINDOW = 60_000; // 1 minute
-const RATE_LIMIT  = 10;     // max uploads per IP per window
+const RATE_LIMIT  = 60;     // max uploads per IP per window (raised for bulk uploads)
 const ipLog = new Map();
 
 function isRateLimited(ip) {
