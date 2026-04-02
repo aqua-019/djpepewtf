@@ -6,6 +6,7 @@ export const MARKET_ASSETS = [
     ticker:    'DJPEPE',
     chain:     'XCP',
     icon:      '🐸',
+    image:     '/DJPEPE.jpg',
     bg:        'g1',
     floor:     null,
     change:    null,
@@ -41,18 +42,48 @@ export const MARKET_ASSETS = [
 export const TIMELINE = [
   {
     year: '2016',
-    heading: 'Origin — Minted on Bitcoin',
-    body: 'DJPEPE created on October 13th, 2016 by RareScrilla on the Counterparty (XCP) protocol — years before Ethereum NFTs existed. 169 cards issued. Part of a four-card Hip-Hop series alongside MCPEPE, BBOYPEPE, and PEPEONE.',
+    heading: 'Rare Pepe Project Launches',
+    body: 'The Rare Pepe project launches on the Counterparty (XCP) protocol, built on Bitcoin. A new era of blockchain art begins.',
   },
   {
     year: '2016',
-    heading: 'The First Audio NFT',
-    body: 'DJPEPE is the first audio NFT in history — tokenized crypto art meets music. Holders using Rare Pepe Wallet gained access to a private SoundCloud link with exclusive music by RareScrilla.',
+    heading: 'DJPEPE Minted — First Audio NFT',
+    body: 'On October 13th, DJPEPE is created by RareScrilla on Counterparty. 169 cards issued. The first audio NFT in history — holders got access to exclusive music. Part of the Hip-Hop Elements series alongside MCPEPE, BBOYPEPE, and PEPEONE.',
+  },
+  {
+    year: '2016',
+    heading: 'Rare Pepe Wallet Launches',
+    body: 'Joe Looney creates Rare Pepe Wallet, enabling users to trade and collect Rare Pepe cards on the Counterparty protocol.',
   },
   {
     year: '2017',
     heading: 'Given Away at Blockchain Conferences',
-    body: 'DJPEPE cards were mostly given away at blockchain conferences and events from 2017 through 2019, making them highly sought-after originals and one of the earliest crypto art pieces with unlockable bonus content.',
+    body: 'DJPEPE cards are distributed at blockchain conferences and events from 2017 through 2019, making them highly sought-after originals with unlockable bonus content.',
+  },
+  {
+    year: '2018',
+    heading: 'First Rare Pepe Auction',
+    body: 'January 2018: Homer Pepe sells for $39,000 at the first live Rare Pepe auction in New York, establishing Rare Pepes as valuable digital art.',
+  },
+  {
+    year: '2018',
+    heading: 'Rare Pepe Foundation Established',
+    body: 'The Rare Pepe Foundation is established to curate and preserve the Rare Pepe collection, ensuring the historical integrity of the project.',
+  },
+  {
+    year: '2021',
+    heading: 'NFT Boom — Rare Pepes Rediscovered',
+    body: 'The mainstream NFT explosion brings renewed attention to Rare Pepes as the original crypto art. Collectors recognize their historical significance.',
+  },
+  {
+    year: '2021',
+    heading: 'Homer Pepe Resells for $312K',
+    body: 'October 2021: Homer Pepe resells for $312,000 at a Sotheby\'s-adjacent event, cementing Rare Pepes as blue-chip digital collectibles.',
+  },
+  {
+    year: '2023',
+    heading: 'Fake Rares Emerge',
+    body: 'Fake Rare Pepes begin appearing on XCP, including FAKEDJPEPE — homage tokens that reference the originals while creating their own collector communities.',
   },
   {
     year: 'NOW',

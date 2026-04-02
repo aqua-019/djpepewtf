@@ -50,6 +50,9 @@ export default function Gallery({ onFileCount }) {
   });
   const [filterType, setFilterType] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [cursor, setCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [upvoted, setUpvoted]   = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('djpepe_upvoted') || '[]')); }
     catch { return new Set(); }
@@ -94,15 +97,23 @@ export default function Gallery({ onFileCount }) {
     handleFiles(e.dataTransfer.files);
   };
 
-  // ── FETCH GALLERY FROM API ON MOUNT ──────────────────────
+  // ── FETCH GALLERY FROM API ─────────────────────────────────
+  const fetchPage = useCallback(async (pageCursor) => {
+    const url = pageCursor ? `/api/gallery?cursor=${encodeURIComponent(pageCursor)}` : '/api/gallery';
+    const res  = await fetch(url);
+    const data = await res.json();
+    const remote = (data.files || []).map((f, i) => ({ ...f, bg: BG_CLASSES[i % 6] }));
+    return { items: mergeStats(remote, stats.current), hasMore: data.hasMore || false, cursor: data.cursor || null };
+  }, []);
+
   useEffect(() => {
     async function fetchGallery() {
       try {
-        const res  = await fetch('/api/gallery');
-        const data = await res.json();
-        const remote = (data.files || []).map((f, i) => ({ ...f, bg: BG_CLASSES[i % 6] }));
-        setFiles(mergeStats(remote, stats.current));
-        onFileCount?.(remote.length);
+        const { items, hasMore: more, cursor: next } = await fetchPage(null);
+        setFiles(items);
+        setHasMore(more);
+        setCursor(next);
+        onFileCount?.(items.length);
       } catch {
         setFiles([]);
         onFileCount?.(0);
@@ -111,7 +122,25 @@ export default function Gallery({ onFileCount }) {
       }
     }
     fetchGallery();
-  }, [onFileCount]);
+  }, [onFileCount, fetchPage]);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const { items, hasMore: more, cursor: next } = await fetchPage(cursor);
+      setFiles(prev => {
+        const existingIds = new Set(prev.map(f => f.id));
+        const newItems = items.filter(f => !existingIds.has(f.id));
+        const all = [...prev, ...newItems];
+        onFileCount?.(all.length);
+        return all;
+      });
+      setHasMore(more);
+      setCursor(next);
+    } catch { /* silently fail */ }
+    finally { setLoadingMore(false); }
+  }, [hasMore, loadingMore, cursor, fetchPage, onFileCount]);
 
   // ── FILTER + SORT ──────────────────────────────────────────
   const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','svg','webp','tiff','bmp','avif','heic','heif']);
@@ -280,34 +309,43 @@ export default function Gallery({ onFileCount }) {
           <button className="btn btn-outline" onClick={() => fileInput.current.click()}>Upload a file</button>
         </div>
       ) : (
-        <div className="gallery-grid" style={{ '--cell-min': cellSize + 'px' }}>
-          {sorted.map(file => (
-            <div
-              key={file.id}
-              className={`cell ${file.isNew ? 'cell-new' : ''}`}
-              onClick={() => openFile(file)}
-            >
-              <div className={`cell-thumb ${file.bg}`}>
-                {file.url && IMAGE_EXTS.has(file.type)
-                  ? <img src={file.url} alt={file.name} loading="lazy"/>
-                  : <span className="cell-icon">{file.icon}</span>
-                }
-                {file.isNew                        && <span className="tag tag-new cell-badge">New</span>}
-                {!file.isNew && file.type==='gif'  && <span className="tag tag-red  cell-badge">GIF</span>}
-                {!file.isNew && VIDEO_EXTS.has(file.type) && <span className="tag tag-mp4  cell-badge">{file.type.toUpperCase()}</span>}
-                {!file.isNew && AUDIO_EXTS.has(file.type) && <span className="tag tag-mp3  cell-badge">{file.type.toUpperCase()}</span>}
-              </div>
-              <div className="cell-meta">
-                <div className="cell-name">{file.name}</div>
-                <div className="cell-stats">
-                  <span className="stat-up">▲ {fmtNum(file.upvotes + (upvoted.has(file.id) ? 1 : 0))}</span>
-                  <span>💬 {fmtNum(file.comments)}</span>
-                  <span>👁 {fmtNum(file.views)}</span>
+        <>
+          <div className="gallery-grid" style={{ '--cell-min': cellSize + 'px' }}>
+            {sorted.map(file => (
+              <div
+                key={file.id}
+                className={`cell ${file.isNew ? 'cell-new' : ''}`}
+                onClick={() => openFile(file)}
+              >
+                <div className={`cell-thumb ${file.bg}`}>
+                  {file.url && IMAGE_EXTS.has(file.type)
+                    ? <img src={file.url} alt={file.name} loading="lazy"/>
+                    : <span className="cell-icon">{file.icon}</span>
+                  }
+                  {file.isNew                        && <span className="tag tag-new cell-badge">New</span>}
+                  {!file.isNew && file.type==='gif'  && <span className="tag tag-red  cell-badge">GIF</span>}
+                  {!file.isNew && VIDEO_EXTS.has(file.type) && <span className="tag tag-mp4  cell-badge">{file.type.toUpperCase()}</span>}
+                  {!file.isNew && AUDIO_EXTS.has(file.type) && <span className="tag tag-mp3  cell-badge">{file.type.toUpperCase()}</span>}
+                </div>
+                <div className="cell-meta">
+                  <div className="cell-name">{file.name}</div>
+                  <div className="cell-stats">
+                    <span className="stat-up">▲ {fmtNum(file.upvotes + (upvoted.has(file.id) ? 1 : 0))}</span>
+                    <span>💬 {fmtNum(file.comments)}</span>
+                    <span>👁 {fmtNum(file.views)}</span>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+          {hasMore && (
+            <div className="load-more-wrap">
+              <button className="btn btn-outline load-more-btn" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* ── MODAL ────────────────────────────────────────── */}
