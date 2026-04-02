@@ -32,8 +32,8 @@ export default class ErrorBoundary extends Component {
               padding: '6px 16px',
               fontSize: 11,
               background: 'transparent',
-              border: '1px solid rgba(61,255,110,0.25)',
-              color: 'var(--green, #3dff6e)',
+              border: '1px solid oklch(0.62 0.12 152 / 0.25)',
+              color: 'var(--accent)',
               borderRadius: 20,
               cursor: 'pointer',
             }}

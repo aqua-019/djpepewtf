@@ -15,7 +15,7 @@
 .sidebar-inner {
   width: var(--sidebar-w-open);
   height: 100%;
-  background: rgba(3, 8, 5, 0.55);
+  background: oklch(0.12 0.015 150 / 0.55);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
@@ -47,13 +47,13 @@
   width: 100%;
 }
 .si-item:hover {
-  background: var(--green-dim);
-  color: var(--green);
+  background: var(--accent-dim);
+  color: var(--accent);
 }
 .si-item.active {
-  background: var(--green-dim);
-  color: var(--green);
-  border: 1px solid rgba(61, 255, 110, 0.14);
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid oklch(0.62 0.12 152 / 0.14);
 }
 
 .si-item svg {

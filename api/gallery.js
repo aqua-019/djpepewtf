@@ -53,10 +53,10 @@ export default async function handler(req, res) {
 
 function iconForType(ext) {
   const map = {
-    gif: '🎞', mp4: '📼', webm: '📼',
-    mp3: '🎵', wav: '🎵',
-    jpg: '🐸', jpeg: '🐸', png: '🎴',
-    svg: '✏️', webp: '🖼',
+    gif: '🎞', mp4: '📼', webm: '📼', mov: '📼', avi: '📼', ogv: '📼',
+    mp3: '🎵', wav: '🎵', ogg: '🎵', flac: '🎵', aac: '🎵', m4a: '🎵',
+    jpg: '🐸', jpeg: '🐸', png: '🎴', tiff: '🖼', bmp: '🖼',
+    svg: '✏️', webp: '🖼', avif: '🖼', heic: '🖼', heif: '🖼',
   };
   return map[ext] || '📁';
 }

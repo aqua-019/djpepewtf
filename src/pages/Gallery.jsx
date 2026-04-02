@@ -27,8 +27,12 @@ const BG_CLASSES = ['g1','g2','g3','g4','g5','g6'];
 function extFromMime(mime = '') {
   const map = {
     'image/png':'png','image/jpeg':'jpg','image/gif':'gif',
-    'image/svg+xml':'svg','image/webp':'webp','video/mp4':'mp4',
-    'video/webm':'webm','audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav',
+    'image/svg+xml':'svg','image/webp':'webp','image/tiff':'tiff',
+    'image/bmp':'bmp','image/avif':'avif','image/heic':'heic','image/heif':'heif',
+    'video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov',
+    'video/x-msvideo':'avi','video/ogg':'ogv',
+    'audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav',
+    'audio/ogg':'ogg','audio/flac':'flac','audio/aac':'aac','audio/x-m4a':'m4a',
   };
   return map[mime] || mime.split('/').pop();
 }
@@ -41,6 +45,11 @@ export default function Gallery({ onFileCount }) {
   const [selected, setSelected] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
+  const [cellSize, setCellSize] = useState(() => {
+    try { return parseInt(localStorage.getItem('gallery-cell-size')) || 180; } catch { return 180; }
+  });
+  const [filterType, setFilterType] = useState('all');
+  const [filterYear, setFilterYear] = useState('all');
   const [upvoted, setUpvoted]   = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('djpepe_upvoted') || '[]')); }
     catch { return new Set(); }
@@ -104,8 +113,24 @@ export default function Gallery({ onFileCount }) {
     fetchGallery();
   }, [onFileCount]);
 
-  // ── SORT ─────────────────────────────────────────────────
-  const sorted = [...files].sort((a, b) => {
+  // ── FILTER + SORT ──────────────────────────────────────────
+  const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','svg','webp','tiff','bmp','avif','heic','heif']);
+  const VIDEO_EXTS = new Set(['mp4','webm','mov','avi','ogv']);
+  const AUDIO_EXTS = new Set(['mp3','wav','ogg','flac','aac','m4a']);
+
+  const years = [...new Set(files.map(f => f.uploadedAt ? new Date(f.uploadedAt).getFullYear() : null).filter(Boolean))].sort((a,b) => b - a);
+
+  const filtered = files.filter(f => {
+    if (filterType === 'image' && !IMAGE_EXTS.has(f.type)) return false;
+    if (filterType === 'video' && !VIDEO_EXTS.has(f.type)) return false;
+    if (filterType === 'audio' && !AUDIO_EXTS.has(f.type)) return false;
+    if (filterYear !== 'all' && f.uploadedAt) {
+      if (new Date(f.uploadedAt).getFullYear() !== Number(filterYear)) return false;
+    }
+    return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
     if (sort === 'hot') return (b.upvotes * 3 + b.views) - (a.upvotes * 3 + a.views);
     if (sort === 'new') return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
     if (sort === 'top') return b.views - a.views;
@@ -168,14 +193,14 @@ export default function Gallery({ onFileCount }) {
         <div className="upload-sub">{zoneCopy.s}</div>
         {!isUploading && (
           <div className="upload-formats">
-            {['PNG','JPG','GIF','MP4','MP3','SVG','WEBM'].map(f => (
+            {['PNG','JPG','GIF','SVG','WEBP','AVIF','MP4','MOV','WEBM','MP3','WAV','FLAC','OGG'].map(f => (
               <span key={f} className="format-pill">{f}</span>
             ))}
           </div>
         )}
         <input
           ref={fileInput} type="file" multiple
-          accept="image/*,video/mp4,video/webm,audio/mpeg,audio/wav"
+          accept="image/*,video/*,audio/*"
           style={{ display:'none' }}
           onChange={e => handleFiles(e.target.files)}
         />
@@ -186,7 +211,7 @@ export default function Gallery({ onFileCount }) {
         <div className="gallery-title">
           Viral Archive
           <span className="gallery-count">
-            {loading ? 'loading…' : `${files.length} items`}
+            {loading ? 'loading…' : `${filtered.length} items`}
           </span>
         </div>
         <div className="sort-tabs">
@@ -195,6 +220,43 @@ export default function Gallery({ onFileCount }) {
               {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* ── FILTER BAR ───────────────────────────────────── */}
+      <div className="filter-bar">
+        <div className="filter-group">
+          {['all','image','video','audio'].map(t => (
+            <button key={t} className={`filter-pill ${filterType===t?'active':''}`} onClick={() => setFilterType(t)}>
+              {t === 'all' ? 'All' : t.charAt(0).toUpperCase() + t.slice(1) + 's'}
+            </button>
+          ))}
+          {years.length > 0 && (
+            <select
+              className="filter-year-select"
+              value={filterYear}
+              onChange={e => setFilterYear(e.target.value)}
+            >
+              <option value="all">All years</option>
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="size-slider-wrap">
+          <span className="size-label">Size</span>
+          <input
+            type="range"
+            className="size-slider"
+            min="80"
+            max="400"
+            step="1"
+            value={cellSize}
+            onChange={e => {
+              const v = Number(e.target.value);
+              setCellSize(v);
+              try { localStorage.setItem('gallery-cell-size', String(v)); } catch {}
+            }}
+          />
         </div>
       </div>
 
@@ -218,7 +280,7 @@ export default function Gallery({ onFileCount }) {
           <button className="btn btn-outline" onClick={() => fileInput.current.click()}>Upload a file</button>
         </div>
       ) : (
-        <div className="gallery-grid">
+        <div className="gallery-grid" style={{ '--cell-min': cellSize + 'px' }}>
           {sorted.map(file => (
             <div
               key={file.id}
@@ -226,14 +288,14 @@ export default function Gallery({ onFileCount }) {
               onClick={() => openFile(file)}
             >
               <div className={`cell-thumb ${file.bg}`}>
-                {file.url && ['jpg','jpeg','png','gif','webp','svg'].includes(file.type)
+                {file.url && IMAGE_EXTS.has(file.type)
                   ? <img src={file.url} alt={file.name} loading="lazy"/>
                   : <span className="cell-icon">{file.icon}</span>
                 }
-                {file.isNew                   && <span className="tag tag-new cell-badge">New</span>}
-                {!file.isNew && file.type==='gif' && <span className="tag tag-red  cell-badge">GIF</span>}
-                {!file.isNew && file.type==='mp4' && <span className="tag tag-mp4  cell-badge">MP4</span>}
-                {!file.isNew && file.type==='mp3' && <span className="tag tag-mp3  cell-badge">MP3</span>}
+                {file.isNew                        && <span className="tag tag-new cell-badge">New</span>}
+                {!file.isNew && file.type==='gif'  && <span className="tag tag-red  cell-badge">GIF</span>}
+                {!file.isNew && VIDEO_EXTS.has(file.type) && <span className="tag tag-mp4  cell-badge">{file.type.toUpperCase()}</span>}
+                {!file.isNew && AUDIO_EXTS.has(file.type) && <span className="tag tag-mp3  cell-badge">{file.type.toUpperCase()}</span>}
               </div>
               <div className="cell-meta">
                 <div className="cell-name">{file.name}</div>
@@ -258,9 +320,9 @@ export default function Gallery({ onFileCount }) {
             </div>
             <div className="modal-preview">
               {selected.url ? (
-                (selected.type==='mp4'||selected.type==='webm')
+                VIDEO_EXTS.has(selected.type)
                   ? <video src={selected.url} controls className="modal-media"/>
-                  : (selected.type==='mp3'||selected.type==='wav')
+                  : AUDIO_EXTS.has(selected.type)
                   ? <div className="modal-audio-wrap">
                       <span className="modal-audio-icon">🎵</span>
                       <audio src={selected.url} controls className="modal-audio"/>
