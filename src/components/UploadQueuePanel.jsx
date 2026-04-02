@@ -5,9 +5,15 @@ const STATUS_LABEL = {
   uploading:   { txt: 'Uploading…', cls: 'green' },
   done:        { txt: 'Done',       cls: 'done'  },
   'error-size':{ txt: 'Too large',  cls: 'red'   },
-  'error-type':{ txt: 'Bad format', cls: 'red'   },
+  'error-type':{ txt: 'Unsupported', cls: 'red'  },
   'error-net': { txt: 'Failed',     cls: 'red'   },
 };
+
+function statusText(item) {
+  const base = STATUS_LABEL[item.status] ?? { txt: item.status, cls: 'grey' };
+  if (item.errorDetail) return { ...base, txt: item.errorDetail };
+  return base;
+}
 
 export default function UploadQueuePanel({ queue, counts, onClear, onRetry, onClose }) {
   if (queue.length === 0) return null;
@@ -58,7 +64,7 @@ export default function UploadQueuePanel({ queue, counts, onClear, onRetry, onCl
       {/* File list — virtualised-ish: only show first 120 */}
       <div className="uqp-list">
         {queue.slice(0, 120).map(item => {
-          const s = STATUS_LABEL[item.status] ?? { txt: item.status, cls: 'grey' };
+          const s = statusText(item);
           return (
             <div key={item.id} className={`uqp-row ${s.cls}`}>
               <span className="uqp-dot"/>
