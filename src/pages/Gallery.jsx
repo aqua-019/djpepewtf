@@ -27,8 +27,12 @@ const BG_CLASSES = ['g1','g2','g3','g4','g5','g6'];
 function extFromMime(mime = '') {
   const map = {
     'image/png':'png','image/jpeg':'jpg','image/gif':'gif',
-    'image/svg+xml':'svg','image/webp':'webp','video/mp4':'mp4',
-    'video/webm':'webm','audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav',
+    'image/svg+xml':'svg','image/webp':'webp','image/tiff':'tiff',
+    'image/bmp':'bmp','image/avif':'avif','image/heic':'heic','image/heif':'heif',
+    'video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov',
+    'video/x-msvideo':'avi','video/ogg':'ogv',
+    'audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav',
+    'audio/ogg':'ogg','audio/flac':'flac','audio/aac':'aac','audio/x-m4a':'m4a',
   };
   return map[mime] || mime.split('/').pop();
 }
@@ -41,6 +45,18 @@ export default function Gallery({ onFileCount }) {
   const [selected, setSelected] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
+  const [cellSize, setCellSize] = useState(() => {
+    try { return parseInt(localStorage.getItem('gallery-cell-size')) || 180; } catch { return 180; }
+  });
+  const [filterType, setFilterType] = useState('all');
+  const [filterYear, setFilterYear] = useState('all');
+  const [cursor, setCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [adminToken] = useState(() => {
+    try { return localStorage.getItem('djpepe_admin_token') || ''; } catch { return ''; }
+  });
   const [upvoted, setUpvoted]   = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('djpepe_upvoted') || '[]')); }
     catch { return new Set(); }
@@ -79,21 +95,67 @@ export default function Gallery({ onFileCount }) {
     enqueue(list);
   }, [enqueue]);
 
-  const onDrop = (e) => {
+  // Recursively extract files from dropped folders
+  const getFilesFromEntry = (entry) => {
+    return new Promise((resolve) => {
+      if (entry.isFile) {
+        entry.file(f => resolve([f]), () => resolve([]));
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const allEntries = [];
+        const readBatch = () => {
+          reader.readEntries(entries => {
+            if (entries.length === 0) {
+              Promise.all(allEntries.map(getFilesFromEntry)).then(arrs => resolve(arrs.flat()));
+            } else {
+              allEntries.push(...entries);
+              readBatch();
+            }
+          }, () => resolve([]));
+        };
+        readBatch();
+      } else {
+        resolve([]);
+      }
+    });
+  };
+
+  const onDrop = async (e) => {
     e.preventDefault();
     setDragging(false);
+
+    // Check for folder drops via webkitGetAsEntry
+    const items = e.dataTransfer.items;
+    if (items && items.length > 0 && items[0].webkitGetAsEntry) {
+      const entries = [...items].map(i => i.webkitGetAsEntry()).filter(Boolean);
+      const hasDir = entries.some(e => e.isDirectory);
+      if (hasDir) {
+        const allFiles = await Promise.all(entries.map(getFilesFromEntry));
+        handleFiles(allFiles.flat());
+        return;
+      }
+    }
+
     handleFiles(e.dataTransfer.files);
   };
 
-  // ── FETCH GALLERY FROM API ON MOUNT ──────────────────────
+  // ── FETCH GALLERY FROM API ─────────────────────────────────
+  const fetchPage = useCallback(async (pageCursor) => {
+    const url = pageCursor ? `/api/gallery?cursor=${encodeURIComponent(pageCursor)}` : '/api/gallery';
+    const res  = await fetch(url);
+    const data = await res.json();
+    const remote = (data.files || []).map((f, i) => ({ ...f, bg: BG_CLASSES[i % 6] }));
+    return { items: mergeStats(remote, stats.current), hasMore: data.hasMore || false, cursor: data.cursor || null };
+  }, []);
+
   useEffect(() => {
     async function fetchGallery() {
       try {
-        const res  = await fetch('/api/gallery');
-        const data = await res.json();
-        const remote = (data.files || []).map((f, i) => ({ ...f, bg: BG_CLASSES[i % 6] }));
-        setFiles(mergeStats(remote, stats.current));
-        onFileCount?.(remote.length);
+        const { items, hasMore: more, cursor: next } = await fetchPage(null);
+        setFiles(items);
+        setHasMore(more);
+        setCursor(next);
+        onFileCount?.(items.length);
       } catch {
         setFiles([]);
         onFileCount?.(0);
@@ -102,10 +164,44 @@ export default function Gallery({ onFileCount }) {
       }
     }
     fetchGallery();
-  }, [onFileCount]);
+  }, [onFileCount, fetchPage]);
 
-  // ── SORT ─────────────────────────────────────────────────
-  const sorted = [...files].sort((a, b) => {
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const { items, hasMore: more, cursor: next } = await fetchPage(cursor);
+      setFiles(prev => {
+        const existingIds = new Set(prev.map(f => f.id));
+        const newItems = items.filter(f => !existingIds.has(f.id));
+        const all = [...prev, ...newItems];
+        onFileCount?.(all.length);
+        return all;
+      });
+      setHasMore(more);
+      setCursor(next);
+    } catch { /* silently fail */ }
+    finally { setLoadingMore(false); }
+  }, [hasMore, loadingMore, cursor, fetchPage, onFileCount]);
+
+  // ── FILTER + SORT ──────────────────────────────────────────
+  const IMAGE_EXTS = new Set(['jpg','jpeg','png','gif','svg','webp','tiff','bmp','avif','heic','heif']);
+  const VIDEO_EXTS = new Set(['mp4','webm','mov','avi','ogv']);
+  const AUDIO_EXTS = new Set(['mp3','wav','ogg','flac','aac','m4a']);
+
+  const years = [...new Set(files.map(f => f.uploadedAt ? new Date(f.uploadedAt).getFullYear() : null).filter(Boolean))].sort((a,b) => b - a);
+
+  const filtered = files.filter(f => {
+    if (filterType === 'image' && !IMAGE_EXTS.has(f.type)) return false;
+    if (filterType === 'video' && !VIDEO_EXTS.has(f.type)) return false;
+    if (filterType === 'audio' && !AUDIO_EXTS.has(f.type)) return false;
+    if (filterYear !== 'all' && f.uploadedAt) {
+      if (new Date(f.uploadedAt).getFullYear() !== Number(filterYear)) return false;
+    }
+    return true;
+  });
+
+  const sorted = [...filtered].sort((a, b) => {
     if (sort === 'hot') return (b.upvotes * 3 + b.views) - (a.upvotes * 3 + a.views);
     if (sort === 'new') return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
     if (sort === 'top') return b.views - a.views;
@@ -134,6 +230,36 @@ export default function Gallery({ onFileCount }) {
     setSelected({ ...file, views: file.views + 1 });
   };
 
+  // ── DELETE FILE ────────────────────────────────────────────
+  const deleteFile = async (file) => {
+    const token = adminToken || prompt('Enter admin token:');
+    if (!token) return;
+    try { localStorage.setItem('djpepe_admin_token', token); } catch {}
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/gallery-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+        body: JSON.stringify({ url: file.url }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Delete failed');
+        return;
+      }
+      setFiles(prev => {
+        const next = prev.filter(f => f.id !== file.id);
+        onFileCount?.(next.length);
+        return next;
+      });
+      setSelected(null);
+    } catch {
+      alert('Delete failed — network error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // ── COPY LINK ─────────────────────────────────────────────
   const copyLink = () => {
     navigator.clipboard.writeText(selected?.url || window.location.href).then(() => {
@@ -148,7 +274,7 @@ export default function Gallery({ onFileCount }) {
     ? { h: 'Drop it.', s: 'Release to add to the gallery' }
     : isUploading
     ? { h: `Uploading ${counts.done || 0} / ${queue.length} files…`, s: 'Queue panel bottom-right' }
-    : { h: 'Drop files to upload', s: 'or click to browse your device' };
+    : { h: 'Drop files or folders to upload', s: 'or click to browse — supports entire folders' };
 
   return (
     <div className="gallery-page">
@@ -168,14 +294,14 @@ export default function Gallery({ onFileCount }) {
         <div className="upload-sub">{zoneCopy.s}</div>
         {!isUploading && (
           <div className="upload-formats">
-            {['PNG','JPG','GIF','MP4','MP3','SVG','WEBM'].map(f => (
+            {['PNG','JPG','GIF','SVG','WEBP','AVIF','MP4','MOV','WEBM','MP3','WAV','FLAC','OGG'].map(f => (
               <span key={f} className="format-pill">{f}</span>
             ))}
           </div>
         )}
         <input
           ref={fileInput} type="file" multiple
-          accept="image/*,video/mp4,video/webm,audio/mpeg,audio/wav"
+          accept="image/*,video/*,audio/*"
           style={{ display:'none' }}
           onChange={e => handleFiles(e.target.files)}
         />
@@ -186,7 +312,7 @@ export default function Gallery({ onFileCount }) {
         <div className="gallery-title">
           Viral Archive
           <span className="gallery-count">
-            {loading ? 'loading…' : `${files.length} items`}
+            {loading ? 'loading…' : `${filtered.length} items`}
           </span>
         </div>
         <div className="sort-tabs">
@@ -195,6 +321,43 @@ export default function Gallery({ onFileCount }) {
               {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* ── FILTER BAR ───────────────────────────────────── */}
+      <div className="filter-bar">
+        <div className="filter-group">
+          {['all','image','video','audio'].map(t => (
+            <button key={t} className={`filter-pill ${filterType===t?'active':''}`} onClick={() => setFilterType(t)}>
+              {t === 'all' ? 'All' : t.charAt(0).toUpperCase() + t.slice(1) + 's'}
+            </button>
+          ))}
+          {years.length > 0 && (
+            <select
+              className="filter-year-select"
+              value={filterYear}
+              onChange={e => setFilterYear(e.target.value)}
+            >
+              <option value="all">All years</option>
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          )}
+        </div>
+        <div className="size-slider-wrap">
+          <span className="size-label">Size</span>
+          <input
+            type="range"
+            className="size-slider"
+            min="80"
+            max="400"
+            step="1"
+            value={cellSize}
+            onChange={e => {
+              const v = Number(e.target.value);
+              setCellSize(v);
+              try { localStorage.setItem('gallery-cell-size', String(v)); } catch {}
+            }}
+          />
         </div>
       </div>
 
@@ -218,34 +381,43 @@ export default function Gallery({ onFileCount }) {
           <button className="btn btn-outline" onClick={() => fileInput.current.click()}>Upload a file</button>
         </div>
       ) : (
-        <div className="gallery-grid">
-          {sorted.map(file => (
-            <div
-              key={file.id}
-              className={`cell ${file.isNew ? 'cell-new' : ''}`}
-              onClick={() => openFile(file)}
-            >
-              <div className={`cell-thumb ${file.bg}`}>
-                {file.url && ['jpg','jpeg','png','gif','webp','svg'].includes(file.type)
-                  ? <img src={file.url} alt={file.name} loading="lazy"/>
-                  : <span className="cell-icon">{file.icon}</span>
-                }
-                {file.isNew                   && <span className="tag tag-new cell-badge">New</span>}
-                {!file.isNew && file.type==='gif' && <span className="tag tag-red  cell-badge">GIF</span>}
-                {!file.isNew && file.type==='mp4' && <span className="tag tag-mp4  cell-badge">MP4</span>}
-                {!file.isNew && file.type==='mp3' && <span className="tag tag-mp3  cell-badge">MP3</span>}
-              </div>
-              <div className="cell-meta">
-                <div className="cell-name">{file.name}</div>
-                <div className="cell-stats">
-                  <span className="stat-up">▲ {fmtNum(file.upvotes + (upvoted.has(file.id) ? 1 : 0))}</span>
-                  <span>💬 {fmtNum(file.comments)}</span>
-                  <span>👁 {fmtNum(file.views)}</span>
+        <>
+          <div className="gallery-grid" style={{ '--cell-min': cellSize + 'px' }}>
+            {sorted.map(file => (
+              <div
+                key={file.id}
+                className={`cell ${file.isNew ? 'cell-new' : ''}`}
+                onClick={() => openFile(file)}
+              >
+                <div className={`cell-thumb ${file.bg}`}>
+                  {file.url && IMAGE_EXTS.has(file.type)
+                    ? <img src={file.url} alt={file.name} loading="lazy"/>
+                    : <span className="cell-icon">{file.icon}</span>
+                  }
+                  {file.isNew                        && <span className="tag tag-new cell-badge">New</span>}
+                  {!file.isNew && file.type==='gif'  && <span className="tag tag-red  cell-badge">GIF</span>}
+                  {!file.isNew && VIDEO_EXTS.has(file.type) && <span className="tag tag-mp4  cell-badge">{file.type.toUpperCase()}</span>}
+                  {!file.isNew && AUDIO_EXTS.has(file.type) && <span className="tag tag-mp3  cell-badge">{file.type.toUpperCase()}</span>}
+                </div>
+                <div className="cell-meta">
+                  <div className="cell-name">{file.name}</div>
+                  <div className="cell-stats">
+                    <span className="stat-up">▲ {fmtNum(file.upvotes + (upvoted.has(file.id) ? 1 : 0))}</span>
+                    <span>💬 {fmtNum(file.comments)}</span>
+                    <span>👁 {fmtNum(file.views)}</span>
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+          {hasMore && (
+            <div className="load-more-wrap">
+              <button className="btn btn-outline load-more-btn" onClick={loadMore} disabled={loadingMore}>
+                {loadingMore ? 'Loading…' : 'Load more'}
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* ── MODAL ────────────────────────────────────────── */}
@@ -258,9 +430,9 @@ export default function Gallery({ onFileCount }) {
             </div>
             <div className="modal-preview">
               {selected.url ? (
-                (selected.type==='mp4'||selected.type==='webm')
+                VIDEO_EXTS.has(selected.type)
                   ? <video src={selected.url} controls className="modal-media"/>
-                  : (selected.type==='mp3'||selected.type==='wav')
+                  : AUDIO_EXTS.has(selected.type)
                   ? <div className="modal-audio-wrap">
                       <span className="modal-audio-icon">🎵</span>
                       <audio src={selected.url} controls className="modal-audio"/>
@@ -301,6 +473,13 @@ export default function Gallery({ onFileCount }) {
                 </button>
                 {selected.url && <a href={selected.url} download={selected.name} className="btn btn-outline">Download</a>}
                 <button className="btn btn-outline" onClick={copyLink}>{copied ? 'Link copied.' : 'Copy link'}</button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => deleteFile(selected)}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
               </div>
             </div>
           </div>

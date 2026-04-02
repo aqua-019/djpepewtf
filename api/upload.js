@@ -5,17 +5,20 @@ export const config = {
   api: { bodyParser: false },
 };
 
+// Keep in sync with src/lib/constants.js ALLOWED_MIME_TYPES
 const ALLOWED_TYPES = new Set([
   'image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp',
-  'video/mp4', 'video/webm',
-  'audio/mpeg', 'audio/mp3', 'audio/wav',
+  'image/tiff', 'image/bmp', 'image/avif', 'image/heic', 'image/heif',
+  'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/ogg',
+  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/flac',
+  'audio/aac', 'audio/x-m4a',
 ]);
 
 const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 
 // Simple in-memory rate limiter (resets on cold start)
 const RATE_WINDOW = 60_000; // 1 minute
-const RATE_LIMIT  = 10;     // max uploads per IP per window
+const RATE_LIMIT  = 60;     // max uploads per IP per window (raised for bulk uploads)
 const ipLog = new Map();
 
 function isRateLimited(ip) {

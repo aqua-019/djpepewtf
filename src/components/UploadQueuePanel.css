@@ -2,9 +2,9 @@
   position: fixed;
   bottom: 40px; right: 16px;
   width: 340px;
-  background: rgba(7, 15, 9, 0.96);
+  background: oklch(0.14 0.02 150 / 0.96);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(61,255,110,0.18);
+  border: 1px solid oklch(0.62 0.12 152 / 0.18);
   border-radius: var(--r16);
   z-index: 300;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6);
@@ -37,8 +37,8 @@
 }
 .uqp-btn.retry { background: rgba(255,68,68,0.1);  border-color: rgba(255,68,68,0.3);  color: #ff7777; }
 .uqp-btn.retry:hover { background: rgba(255,68,68,0.2); }
-.uqp-btn.clear { background: var(--green-dim); border-color: var(--border-g); color: var(--green); }
-.uqp-btn.clear:hover { background: var(--green-mid); }
+.uqp-btn.clear { background: var(--accent-dim); border-color: var(--border-a); color: var(--accent); }
+.uqp-btn.clear:hover { background: var(--accent-mid); }
 .uqp-btn.close { background: var(--glass); border-color: var(--border); color: var(--txt2); }
 .uqp-btn.close:hover { color: var(--txt); }
 
@@ -51,7 +51,7 @@
 }
 .uqp-bar {
   position: absolute; left: 0; top: 0; height: 100%;
-  background: var(--green);
+  background: var(--accent);
   transition: width 0.3s ease;
   border-radius: 0 2px 2px 0;
 }
@@ -65,7 +65,7 @@
   font-size: 9px; color: var(--txt3);
   flex-shrink: 0;
 }
-.uqp-uploading { color: var(--green); }
+.uqp-uploading { color: var(--accent); }
 .uqp-err-count { color: var(--red); }
 
 /* FILE LIST */
@@ -87,8 +87,8 @@
   width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
 }
 .uqp-row.grey   .uqp-dot { background: var(--txt3); }
-.uqp-row.green  .uqp-dot { background: var(--green); box-shadow: 0 0 4px var(--green); animation: pulse 1.5s infinite; }
-.uqp-row.done   .uqp-dot { background: var(--green); opacity: 0.5; }
+.uqp-row.green  .uqp-dot { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+.uqp-row.done   .uqp-dot { background: var(--accent); opacity: 0.5; }
 .uqp-row.red    .uqp-dot { background: var(--red); }
 
 .uqp-name {
@@ -101,13 +101,13 @@
 .uqp-status {
   color: var(--txt3); flex-shrink: 0; font-size: 8px;
 }
-.uqp-row.green  .uqp-status { color: var(--green); }
+.uqp-row.green  .uqp-status { color: var(--accent); }
 .uqp-row.red    .uqp-status { color: var(--red); }
 
 .uqp-spinner {
   width: 10px; height: 10px; flex-shrink: 0;
-  border: 1.5px solid rgba(61,255,110,0.2);
-  border-top-color: var(--green);
+  border: 1.5px solid oklch(0.62 0.12 152 / 0.20);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }

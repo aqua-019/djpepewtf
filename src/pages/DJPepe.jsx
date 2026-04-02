@@ -25,7 +25,6 @@ export default function DJPepe() {
     fetchLive();
   }, []);
 
-  // Merge live data into static stats
   const stats = DJPEPE_STATS.map(s => {
     if (!liveStats) return s;
     if (s.label === 'Floor' && liveStats.floor != null)
@@ -40,68 +39,45 @@ export default function DJPepe() {
   return (
     <div className="djpepe-page">
 
-      {/* ── HERO ────────────────────────────────────────── */}
-      <div className="hero">
+      {/* ── HERO ART ──────────────────────────────────────── */}
+      <div className="hero-art">
+        <img src="/DJPEPE.jpg" alt="DJ PEPE" className="hero-art-img" />
+        <div className="hero-art-overlay">
+          <span className="pill pill-green">First Audio NFT</span>
+          <span className="pill pill-red">No Requests</span>
+        </div>
+      </div>
 
-        {/* Card */}
-        <div className="card-side">
-          <div className="card-outer">
-            <div className="card-top">
-              <div className="card-series">Hip-Hop Elements</div>
-              <div className="card-name">DJ PEPE</div>
-            </div>
-            <div className="card-art">
-              <img src="/DJPEPE.jpg" alt="DJ PEPE" className="card-art-img" />
-              <div className="card-ability">100% Steals Yer Girl</div>
-            </div>
-            <div className="card-bottom">
-              <div className="card-stat-row">
-                <span>Series</span><b>1 of 4</b>
-              </div>
-              <div className="card-stat-row">
-                <span>Chain</span><b>XCP</b>
-              </div>
-              <div className="card-footer">INVISBL SKRATCH PIKLZ · 2016</div>
-            </div>
-          </div>
+      {/* ── HERO INFO ─────────────────────────────────────── */}
+      <div className="hero-info">
+        <div className="eyebrow">Rare Pepe · Blockchain Asset · 2016</div>
+        <h1 className="asset-title">
+          DJ PEPE <span className="asset-sub">/ DJPEPE</span>
+        </h1>
+        <p className="asset-desc-compact">
+          The first audio NFT in history — minted on Bitcoin via Counterparty (XCP), Oct 13 2016.
+          169 issued. Hip-Hop Elements series, card 1 of 4. Strong hands only.
+        </p>
 
-          <div className="pill-row">
-            <span className="pill pill-green">First Audio NFT</span>
-            <span className="pill pill-red">No Requests</span>
-            <span className="pill">Supply: {liveStats?.supply ?? 169}</span>
-          </div>
+        <div className="stats-row">
+          {stats.map(s => (
+            <div key={s.label} className="stat-box">
+              <div className="stat-label">{s.label}</div>
+              <div className={`stat-val ${s.value === null ? 'stat-null' : ''}`}>
+                {s.value ?? '—'}
+              </div>
+              <div className="stat-sub">{s.sub}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Info */}
-        <div className="info-side">
-          <div className="eyebrow">Rare Pepe · Blockchain Asset · 2016</div>
-          <h1 className="asset-title">
-            DJ PEPE <span className="asset-sub">/ DJPEPE</span>
-          </h1>
-          <p className="asset-desc">
-            The first audio NFT in history — minted on Bitcoin via Counterparty (XCP) on October 13th, 2016 by RareScrilla, years before Ethereum NFTs existed. One of the original blockchain trading cards. Hip-Hop Elements Series, card 1 of 4. 169 issued. Mostly given away at blockchain conferences from 2017–2019. Strong hands only.
-          </p>
-
-          <div className="stats-row">
-            {stats.map(s => (
-              <div key={s.label} className="stat-box">
-                <div className="stat-label">{s.label}</div>
-                <div className={`stat-val ${s.value === null ? 'stat-null' : ''}`}>
-                  {s.value ?? '—'}
-                </div>
-                <div className="stat-sub">{s.sub}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="btn-row">
-            <a href="https://pepe.wtf/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-green">
-              Buy on Pepe.WTF ↗
-            </a>
-            <a href="https://xchain.io/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-outline">
-              View on Chain ↗
-            </a>
-          </div>
+        <div className="btn-row">
+          <a href="https://pepe.wtf/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-green">
+            Buy on Pepe.WTF ↗
+          </a>
+          <a href="https://xchain.io/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-outline">
+            View on Chain ↗
+          </a>
         </div>
       </div>
 

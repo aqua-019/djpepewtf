@@ -45,14 +45,21 @@ async function getFloor(asset) {
 
 async function getAssetData(asset) {
   // Run all requests in parallel
-  const [info, holdersRes, sendsRes, ordersRes] = await Promise.all([
+  const [info, holdersRes, sendsRes, ordersRes, dispensersRes] = await Promise.all([
     xcp(`/assets/${asset}`),
     xcp(`/assets/${asset}/holders?limit=100`),
     xcp(`/assets/${asset}/sends?limit=20`),
     xcp(`/assets/${asset}/orders?status=open&limit=10`),
+    xcp(`/assets/${asset}/dispensers?limit=50`),
   ]);
 
   const floor = await getFloor(asset);
+
+  // Build price history from all dispensers (open + closed)
+  const priceHistory = (dispensersRes?.result || [])
+    .filter(d => d.satoshirate && d.block_time)
+    .map(d => ({ time: d.block_time, price: d.satoshirate / 1e8 }))
+    .sort((a, b) => a.time - b.time);
 
   const supply   = info?.result?.supply    ?? null;
   const locked   = info?.result?.locked    ?? false;
@@ -102,6 +109,7 @@ async function getAssetData(asset) {
     floorXcp:     floor?.xcpPrice ?? null,
     dispenserAddr:floor?.dispenser ?? null,
     transactions,
+    priceHistory,
     fetchedAt:    new Date().toISOString(),
   };
 }
