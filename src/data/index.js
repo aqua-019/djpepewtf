@@ -1,11 +1,12 @@
-// ── MARKET ASSETS ─────────────────────────────────────────
+// ── MARKET ASSETS ─────────────────────────────────────
+// Hip-Hop Elements series (4 cards) + FAKEDJPEPE
 export const MARKET_ASSETS = [
   {
     id:        'djpepe',
     name:      'DJ PEPE',
     ticker:    'DJPEPE',
     chain:     'XCP',
-    icon:      '🐸',
+    icon:      '🎧',
     image:     '/DJPEPE.jpg',
     bg:        'g1',
     floor:     null,
@@ -15,8 +16,63 @@ export const MARKET_ASSETS = [
     volume:    null,
     lastSale:  null,
     bestOffer: null,
+    series:    'Hip-Hop Elements 1/4',
     buyUrl:    'https://pepe.wtf/asset/DJPEPE',
     xcUrl:     'https://xchain.io/asset/DJPEPE',
+  },
+  {
+    id:        'mcpepe',
+    name:      'MC PEPE',
+    ticker:    'MCPEPE',
+    chain:     'XCP',
+    icon:      '🎤',
+    bg:        'g2',
+    floor:     null,
+    change:    null,
+    supply:    200,
+    holders:   null,
+    volume:    null,
+    lastSale:  null,
+    bestOffer: null,
+    series:    'Hip-Hop Elements 2/4',
+    buyUrl:    'https://pepe.wtf/asset/MCPEPE',
+    xcUrl:     'https://xchain.io/asset/MCPEPE',
+  },
+  {
+    id:        'bboypepe',
+    name:      'BBOY PEPE',
+    ticker:    'BBOYPEPE',
+    chain:     'XCP',
+    icon:      '🕺',
+    bg:        'g3',
+    floor:     null,
+    change:    null,
+    supply:    200,
+    holders:   null,
+    volume:    null,
+    lastSale:  null,
+    bestOffer: null,
+    series:    'Hip-Hop Elements 3/4',
+    buyUrl:    'https://pepe.wtf/asset/BBOYPEPE',
+    xcUrl:     'https://xchain.io/asset/BBOYPEPE',
+  },
+  {
+    id:        'pepeone',
+    name:      'PEPE ONE',
+    ticker:    'PEPEONE',
+    chain:     'XCP',
+    icon:      '🎨',
+    bg:        'g4',
+    floor:     null,
+    change:    null,
+    supply:    200,
+    holders:   null,
+    volume:    null,
+    lastSale:  null,
+    bestOffer: null,
+    series:    'Hip-Hop Elements 4/4',
+    buyUrl:    'https://pepe.wtf/asset/PEPEONE',
+    xcUrl:     'https://xchain.io/asset/PEPEONE',
   },
   {
     id:        'fakedjpepe',
@@ -24,7 +80,7 @@ export const MARKET_ASSETS = [
     ticker:    'FAKEDJPEPE',
     chain:     'XCP',
     icon:      '🐸',
-    bg:        'g2',
+    bg:        'g5',
     floor:     null,
     change:    null,
     supply:    null,
@@ -38,7 +94,7 @@ export const MARKET_ASSETS = [
   },
 ];
 
-// ── DJPEPE TIMELINE ───────────────────────────────────────
+// ── DJPEPE TIMELINE ───────────────────────────────────
 export const TIMELINE = [
   {
     year: '2016',
@@ -92,7 +148,7 @@ export const TIMELINE = [
   },
 ];
 
-// ── DJPEPE TRAITS ─────────────────────────────────────────
+// ── DJPEPE TRAITS ─────────────────────────────────────
 export const TRAITS = [
   { name: 'Creator',   value: 'RareScrilla'  },
   { name: 'Minted',    value: 'Oct 13, 2016' },
@@ -103,7 +159,7 @@ export const TRAITS = [
   { name: 'Requests',  value: 'NO', red: true },
 ];
 
-// ── DJPEPE HERO STATS ─────────────────────────────────────
+// ── DJPEPE HERO STATS ─────────────────────────────────
 export const DJPEPE_STATS = [
   { label: 'Floor',   value: null,   sub: 'See pepe.wtf'       },
   { label: 'Supply',  value: '169',  sub: 'Total minted'       },
@@ -113,7 +169,7 @@ export const DJPEPE_STATS = [
   { label: 'Series',  value: 'HH',   sub: 'Hip-Hop, card 1/4'  },
 ];
 
-// ── FORMAT HELPERS ────────────────────────────────────────
+// ── FORMAT HELPERS ────────────────────────────────────
 export function fmtNum(n) {
   if (n === null || n === undefined) return '—';
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
