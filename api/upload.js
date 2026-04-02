@@ -5,16 +5,6 @@ export const config = {
   api: { bodyParser: false },
 };
 
-// Keep in sync with src/lib/constants.js ALLOWED_MIME_TYPES
-const ALLOWED_TYPES = new Set([
-  'image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp',
-  'image/tiff', 'image/bmp', 'image/avif', 'image/heic', 'image/heif',
-  'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/ogg',
-  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/flac',
-  'audio/aac', 'audio/x-m4a',
-  'application/octet-stream', // fallback — validated by extension below
-]);
-
 // Extension → MIME fallback for files browsers can't detect (HEIC, MOV, etc.)
 const EXT_MIME = {
   heic: 'image/heic', heif: 'image/heif',
@@ -24,14 +14,14 @@ const EXT_MIME = {
   aac: 'audio/aac', m4a: 'audio/x-m4a',
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
   svg: 'image/svg+xml', webp: 'image/webp', tiff: 'image/tiff', bmp: 'image/bmp',
-  avif: 'image/avif',
+  avif: 'image/avif', pdf: 'application/pdf',
 };
 
-const MAX_BYTES = 150 * 1024 * 1024; // 150 MB (raised for MOV/video files)
+const MAX_BYTES = 150 * 1024 * 1024; // 150 MB
 
 // Simple in-memory rate limiter (resets on cold start)
 const RATE_WINDOW = 60_000; // 1 minute
-const RATE_LIMIT  = 60;     // max uploads per IP per window (raised for bulk uploads)
+const RATE_LIMIT  = 600;    // raised for bulk uploads (340+ files)
 const ipLog = new Map();
 
 function isRateLimited(ip) {
@@ -57,13 +47,14 @@ export default async function handler(req, res) {
   // ── Rate limit ────────────────────────────────────────────
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
   if (isRateLimited(ip)) {
-    return res.status(429).json({ error: 'Too many uploads. Try again in a minute.' });
+    res.setHeader('Retry-After', '10');
+    return res.status(429).json({ error: 'Too many uploads. Try again shortly.' });
   }
 
   // ── Validate headers ──────────────────────────────────────
   const rawName    = req.headers['x-filename'];
   const rawSize    = req.headers['x-filesize'];
-  let   mimeType   = req.headers['content-type'] || 'application/octet-stream';
+  let   mimeType   = req.headers['content-type'] || '';
 
   if (!rawName) return res.status(400).json({ error: 'Missing x-filename header' });
 
@@ -71,14 +62,9 @@ export default async function handler(req, res) {
   const filesize = rawSize ? parseInt(rawSize, 10) : 0;
   const ext = filename.split('.').pop().toLowerCase();
 
-  // Browsers often send empty or generic MIME for HEIC, MOV, etc. — resolve from extension
-  if (!mimeType || mimeType === 'application/octet-stream' || !ALLOWED_TYPES.has(mimeType)) {
-    const resolved = EXT_MIME[ext];
-    if (resolved) {
-      mimeType = resolved;
-    } else {
-      return res.status(400).json({ error: `Unsupported file type: ${mimeType} (.${ext})` });
-    }
+  // Resolve MIME: use browser-provided type, fall back to extension map, then octet-stream
+  if (!mimeType || mimeType === 'application/octet-stream') {
+    mimeType = EXT_MIME[ext] || 'application/octet-stream';
   }
 
   if (filesize > MAX_BYTES) {

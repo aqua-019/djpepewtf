@@ -2,12 +2,13 @@
  * useUploadQueue.js
  * Manages a queue of files with concurrency-limited uploads to /api/upload.
  * Safe for 300+ files — runs N uploads at a time, never hammers the API.
+ * Auto-retries on 429 (rate limit) with exponential backoff.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { ALLOWED_MIME_TYPES, ALLOWED_EXTENSIONS, MAX_FILE_SIZE, MAX_CONCURRENT_UPLOADS } from '../lib/constants.js';
+import { MAX_FILE_SIZE, MAX_CONCURRENT_UPLOADS, EXT_TO_MIME, RETRY_BACKOFF_MS, MAX_RETRIES } from '../lib/constants.js';
 
-// Statuses: queued | uploading | done | error-size | error-type | error-net
+// Statuses: queued | uploading | done | error-size | error-net
 export function useUploadQueue(onFileUploaded) {
   const [queue, setQueue]   = useState([]);
   const [active, setActive] = useState(false);
@@ -23,28 +24,41 @@ export function useUploadQueue(onFileUploaded) {
     queueRef.current = queueRef.current.map(item => item.id === id ? { ...item, ...patch } : item);
   }, []);
 
-  const uploadOne = useCallback(async (item) => {
+  const uploadOne = useCallback(async (item, attempt = 0) => {
     updateItem(item.id, { status: 'uploading' });
     try {
+      const ext = item.file.name.split('.').pop().toLowerCase();
+      const contentType = item.file.type || EXT_TO_MIME[ext] || 'application/octet-stream';
+
       const res = await fetch('/api/upload', {
         method:  'POST',
         headers: {
-          'Content-Type': item.file.type,
+          'Content-Type': contentType,
           'x-filename':   encodeURIComponent(item.file.name),
           'x-filesize':   String(item.file.size),
         },
         body: item.file,
       });
+
+      // Auto-retry on rate limit (429)
+      if (res.status === 429 && attempt < MAX_RETRIES) {
+        const retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10) * 1000;
+        const backoff = Math.max(retryAfter, RETRY_BACKOFF_MS * Math.pow(2, attempt));
+        updateItem(item.id, { status: 'queued', errorDetail: `Rate limited, retrying in ${Math.round(backoff/1000)}s…` });
+        await new Promise(r => setTimeout(r, backoff));
+        return uploadOne(item, attempt + 1);
+      }
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Upload failed.' }));
         updateItem(item.id, { status: 'error-net', error: err.error, errorDetail: err.error });
         return;
       }
       const data = await res.json();
-      updateItem(item.id, { status: 'done', url: data.url, ...data });
+      updateItem(item.id, { status: 'done', url: data.url, errorDetail: null, ...data });
       onDone.current?.(data);
     } catch {
-      updateItem(item.id, { status: 'error-net', error: 'Something went wrong.', errorDetail: 'Network error' });
+      updateItem(item.id, { status: 'error-net', error: 'Network error', errorDetail: 'Network error' });
     }
   }, [updateItem]);
 
@@ -71,11 +85,6 @@ export function useUploadQueue(onFileUploaded) {
       const ext = file.name.split('.').pop().toLowerCase();
       let status = 'queued';
       let errorDetail = null;
-      // Accept if MIME matches OR extension is known (browsers send empty/wrong MIME for HEIC, MOV, etc.)
-      if (!ALLOWED_MIME_TYPES.has(file.type) && !ALLOWED_EXTENSIONS.has(ext)) {
-        status = 'error-type';
-        errorDetail = `.${ext} not supported`;
-      }
       if (file.size > MAX_FILE_SIZE) {
         status = 'error-size';
         errorDetail = `${fmtSize(file.size)} exceeds ${fmtSize(MAX_FILE_SIZE)} limit`;
@@ -98,7 +107,7 @@ export function useUploadQueue(onFileUploaded) {
 
   const retryErrors = useCallback(() => {
     queueRef.current = queueRef.current.map(i =>
-      i.status === 'error-net' ? { ...i, status: 'queued' } : i
+      i.status === 'error-net' ? { ...i, status: 'queued', errorDetail: null } : i
     );
     setQueue(queueRef.current.slice());
     for (let i = 0; i < MAX_CONCURRENT_UPLOADS; i++) drainRef.current?.();

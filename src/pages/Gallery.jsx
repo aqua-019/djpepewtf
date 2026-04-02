@@ -99,7 +99,10 @@ export default function Gallery({ onFileCount }) {
   const getFilesFromEntry = (entry) => {
     return new Promise((resolve) => {
       if (entry.isFile) {
-        entry.file(f => resolve([f]), () => resolve([]));
+        entry.file(f => resolve([f]), (err) => {
+          console.warn('[folder-reader] skipped file:', entry.fullPath, err);
+          resolve([]);
+        });
       } else if (entry.isDirectory) {
         const reader = entry.createReader();
         const allEntries = [];
@@ -111,7 +114,10 @@ export default function Gallery({ onFileCount }) {
               allEntries.push(...entries);
               readBatch();
             }
-          }, () => resolve([]));
+          }, (err) => {
+            console.warn('[folder-reader] directory read error:', entry.fullPath, err);
+            resolve([]);
+          });
         };
         readBatch();
       } else {
@@ -294,14 +300,12 @@ export default function Gallery({ onFileCount }) {
         <div className="upload-sub">{zoneCopy.s}</div>
         {!isUploading && (
           <div className="upload-formats">
-            {['PNG','JPG','GIF','SVG','WEBP','AVIF','MP4','MOV','WEBM','MP3','WAV','FLAC','OGG'].map(f => (
-              <span key={f} className="format-pill">{f}</span>
-            ))}
+            <span className="format-pill">All file types accepted</span>
           </div>
         )}
         <input
           ref={fileInput} type="file" multiple
-          accept="image/*,video/*,audio/*"
+          accept="*/*"
           style={{ display:'none' }}
           onChange={e => handleFiles(e.target.files)}
         />
