@@ -3,10 +3,13 @@ import { MARKET_ASSETS } from '../data/index.js';
 import { CACHE_TTL } from '../lib/constants.js';
 import './Market.css';
 
-const TYPE_TAG   = { transfer:'tag-grey', offer:'tag-red', bid:'tag-green', sale:'tag-green' };
-const TYPE_LABEL = { transfer:'Transfer', offer:'Offer',   bid:'Bid',       sale:'Sale' };
+const TYPE_TAG   = { sale:'tag-green', transfer:'tag-grey', offer:'tag-red', bid:'tag-green', 'opensea-sale':'tag-blue' };
+const TYPE_LABEL = { sale:'Sale', transfer:'Transfer', offer:'Offer', bid:'Bid', 'opensea-sale':'OpenSea' };
 
 const displayVal = v => (v !== null && v !== undefined) ? String(v) : '—';
+const fmtBtc = v => v != null ? `${v} BTC` : '—';
+const fmtSats = v => v != null ? `${Math.round(v * 1e8).toLocaleString()} sats` : '—';
+const fmtDate = v => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
 const ASSET_TICKERS = MARKET_ASSETS.map(a => a.ticker).join(',');
 const hiphopAssets = MARKET_ASSETS.filter(a => a.seriesGroup === 'hiphop');
@@ -19,49 +22,53 @@ export default function Market({ onMarketUpdate }) {
   const [expandedId, setExpandedId] = useState(null);
   const [liveData,   setLiveData]   = useState(null);
   const [txFilter,   setTxFilter]   = useState('all');
+  const [txExpanded, setTxExpanded] = useState(false);
   const [status,     setStatus]     = useState('loading');
 
   const buildAsset = useCallback((staticAsset) => {
     const live = liveData?.[staticAsset.ticker];
     return {
       ...staticAsset,
-      floor:       live?.floor       ?? staticAsset.floor,
-      supply:      live?.supply      ?? staticAsset.supply,
-      holders:     live?.holders     ?? staticAsset.holders,
-      description: live?.description ?? '',
-      locked:      live?.locked      ?? false,
-      issuer:      live?.issuer      ?? null,
-      dispensers:  live?.dispensers   ?? [],
-      fetchedAt:   live?.fetchedAt   ?? null,
+      floor:          live?.floor          ?? staticAsset.floor,
+      floorSats:      live?.floorSats      ?? null,
+      supply:         live?.supply         ?? staticAsset.supply,
+      holders:        live?.holders        ?? staticAsset.holders,
+      description:    live?.description    ?? '',
+      locked:         live?.locked         ?? false,
+      divisible:      live?.divisible      ?? false,
+      issuer:         live?.issuer         ?? null,
+      owner:          live?.owner          ?? null,
+      imageUrl:       live?.imageUrl       ?? null,
+      dispensers:     live?.dispensers      ?? [],
+      dispenserCount: live?.dispenserCount  ?? 0,
+      dispenses:      live?.dispenses       ?? [],
+      totalSales:     live?.totalSales      ?? 0,
+      lastSale:       live?.lastSale        ?? null,
+      transactions:   live?.transactions    ?? [],
+      openseaSales:   live?.openseaSales    ?? [],
+      fetchedAt:      live?.fetchedAt       ?? null,
     };
   }, [liveData]);
 
-  const assets   = MARKET_ASSETS.map(buildAsset);
-  const expanded = expandedId ? assets.find(a => a.id === expandedId) : null;
+  const assets = MARKET_ASSETS.map(buildAsset);
 
-  // All transactions across assets
-  const allTxs = assets.flatMap(a => liveData?.[a.ticker]?.transactions ?? []);
-  const txShown = txFilter === 'all'
-    ? allTxs
-    : allTxs.filter(t => t.asset === txFilter);
+  // All transactions across assets for bottom panel
+  const allTxs = assets.flatMap(a => a.transactions);
+  const txShown = txFilter === 'all' ? allTxs : allTxs.filter(t => t.asset === txFilter);
+  const txLimit = txExpanded ? 50 : 20;
 
-  // Fetch
   const fetchMarket = useCallback(async (force = false) => {
     const now = Date.now();
     if (!force && cache && now - cacheTime < CACHE_TTL) {
-      setLiveData(cache);
-      setStatus('live');
-      return;
+      setLiveData(cache); setStatus('live'); return;
     }
     setStatus('loading');
     try {
       const res  = await fetch(`/api/market?asset=${ASSET_TICKERS}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      cache     = json.assets;
-      cacheTime = now;
-      setLiveData(json.assets);
-      setStatus('live');
+      cache = json.assets; cacheTime = now;
+      setLiveData(json.assets); setStatus('live');
     } catch (err) {
       console.warn('[market fetch]', err);
       setStatus(cache ? 'stale' : 'error');
@@ -77,176 +84,196 @@ export default function Market({ onMarketUpdate }) {
 
   useEffect(() => {
     const djpepe = liveData?.DJPEPE;
-    onMarketUpdate?.({
-      floor: djpepe?.floor ?? null,
-      supply: djpepe?.supply ?? 169,
-      status,
-    });
+    onMarketUpdate?.({ floor: djpepe?.floor ?? null, supply: djpepe?.supply ?? 169, status });
   }, [liveData, status, onMarketUpdate]);
 
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
+  const getImgSrc = (a) => a.imageUrl || a.imageFallback || null;
 
   return (
     <div className="market-page">
 
-      {/* ── STATUS BAR ──────────────────────────────────── */}
+      {/* ── STATUS BAR ───────────────────────────────── */}
       <div className={`market-status ${status}`}>
         <span className="ms-dot"/>
         {status === 'loading' && 'Fetching live data from Counterparty…'}
-        {status === 'live'    && `Live · Counterparty API · refreshes every 60s`}
+        {status === 'live'    && 'Live · Counterparty API · refreshes every 60s'}
         {status === 'stale'   && 'Using cached data · API unreachable'}
-        {status === 'error'   && <>Could not reach Counterparty API · <button className="ms-retry" onClick={() => fetchMarket(true)}>retry</button></>}
+        {status === 'error'   && <>API unreachable · <button className="ms-retry" onClick={() => fetchMarket(true)}>retry</button></>}
       </div>
 
-      {/* ── ASSET COMPARISON GRID ───────────────────────── */}
+      {/* ── ASSET SECTIONS ───────────────────────────── */}
       <div className="asset-table">
-
-        {/* Hip-Hop Elements Series */}
-        <div className="series-section">
-          <div className="series-header">Hip-Hop Elements Series</div>
-          <div className="asset-grid-header">
-            <span></span>
-            <span>Asset</span>
-            <span>Floor</span>
-            <span>Supply</span>
-            <span>Holders</span>
-            <span></span>
-          </div>
-          {hiphopAssets.map(sa => {
-            const a = buildAsset(sa);
-            const isExpanded = expandedId === a.id;
-            return (
-              <div key={a.id}>
-                <div className={`asset-grid-row ${isExpanded ? 'expanded' : ''}`} onClick={() => toggleExpand(a.id)}>
-                  <div className="ag-icon">
-                    {a.image ? <img src={a.image} alt={a.name} className="ag-icon-img"/> : <span className="ag-icon-emoji">{a.icon}</span>}
-                  </div>
-                  <div className="ag-name">
-                    <span className="ag-name-main">{a.name}</span>
-                    <span className="ag-name-sub">{a.ticker} · {a.series}</span>
-                  </div>
-                  <div className="ag-floor">
-                    {a.floor != null ? <><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span></> : <span className="ag-null">—</span>}
-                  </div>
-                  <div className="ag-stat">{displayVal(a.supply)}</div>
-                  <div className="ag-stat">{displayVal(a.holders)}</div>
-                  <div className="ag-actions">
-                    <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-accent" onClick={e => e.stopPropagation()}>Buy</a>
-                    <span className="ag-expand-arrow">{isExpanded ? '▾' : '▸'}</span>
-                  </div>
-                </div>
-
-                {/* Detail panel */}
-                {isExpanded && <DetailPanel asset={a} onRefresh={() => fetchMarket(true)} />}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Homage Section */}
-        <div className="series-section series-homage">
-          <div className="series-header">Homage Collection</div>
-          {homageAssets.map(sa => {
-            const a = buildAsset(sa);
-            const isExpanded = expandedId === a.id;
-            return (
-              <div key={a.id}>
-                <div className={`asset-grid-row ${isExpanded ? 'expanded' : ''}`} onClick={() => toggleExpand(a.id)}>
-                  <div className="ag-icon">
-                    <span className="ag-icon-emoji">{a.icon}</span>
-                  </div>
-                  <div className="ag-name">
-                    <span className="ag-name-main">{a.name}</span>
-                    <span className="ag-name-sub">{a.ticker}</span>
-                  </div>
-                  <div className="ag-floor">
-                    {a.floor != null ? <><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span></> : <span className="ag-null">—</span>}
-                  </div>
-                  <div className="ag-stat">{displayVal(a.supply)}</div>
-                  <div className="ag-stat">{displayVal(a.holders)}</div>
-                  <div className="ag-actions">
-                    <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-accent" onClick={e => e.stopPropagation()}>Buy</a>
-                    <span className="ag-expand-arrow">{isExpanded ? '▾' : '▸'}</span>
-                  </div>
-                </div>
-                {isExpanded && <DetailPanel asset={a} onRefresh={() => fetchMarket(true)} />}
-              </div>
-            );
-          })}
-        </div>
+        <AssetSection
+          label="Hip-Hop Elements Series"
+          assets={hiphopAssets}
+          buildAsset={buildAsset}
+          expandedId={expandedId}
+          toggleExpand={toggleExpand}
+          getImgSrc={getImgSrc}
+          fetchMarket={fetchMarket}
+        />
+        <AssetSection
+          label="Homage Collection"
+          className="series-homage"
+          assets={homageAssets}
+          buildAsset={buildAsset}
+          expandedId={expandedId}
+          toggleExpand={toggleExpand}
+          getImgSrc={getImgSrc}
+          fetchMarket={fetchMarket}
+        />
       </div>
 
-      {/* ── RECENT TRANSFERS ────────────────────────────── */}
-      <div className="panel tx-panel">
-        <div className="panel-head">
+      {/* ── BOTTOM TX PANEL (collapsed by default) ──── */}
+      <div className={`panel tx-bottom-panel ${txExpanded ? '' : 'collapsed'}`}>
+        <div className="panel-head panel-toggle" onClick={() => setTxExpanded(!txExpanded)}>
           <div className="panel-title">
-            Recent Transfers
+            All Recent Activity
+            <span className="tx-count-badge">{allTxs.length}</span>
             {status === 'live' && <span className="live-badge">LIVE</span>}
+            <span className="toggle-arrow">{txExpanded ? '▾' : '▸'}</span>
           </div>
-          <div className="filter-tabs">
-            <button className={`filter-tab ${txFilter==='all'?'active':''}`} onClick={() => setTxFilter('all')}>All assets</button>
-            {MARKET_ASSETS.map(a => (
-              <button key={a.ticker} className={`filter-tab ${txFilter===a.ticker?'active':''}`} onClick={() => setTxFilter(a.ticker)}>{a.ticker}</button>
-            ))}
-          </div>
-        </div>
-        <div className="tx-table-wrap">
-          {status === 'loading' ? (
-            <div className="tx-loading"><div className="tx-spinner"/><span>Fetching transactions…</span></div>
-          ) : txShown.length === 0 ? (
-            <div className="tx-empty">No transactions found.</div>
-          ) : (
-            <table className="tx-table">
-              <thead>
-                <tr><th>Asset</th><th>Type</th><th>From</th><th>To</th><th>TX</th><th></th></tr>
-              </thead>
-              <tbody>
-                {txShown.map((tx, i) => (
-                  <tr key={tx.id ?? i} className="tx-row">
-                    <td className="tx-asset">{tx.asset}</td>
-                    <td><span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span></td>
-                    <td className="tx-addr">{tx.from}</td>
-                    <td className="tx-addr">{tx.to || '—'}</td>
-                    <td className="tx-hash">{tx.txHash?.slice(0,8)}…</td>
-                    <td><a href={tx.xcUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-outline">View ↗</a></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {txExpanded && (
+            <div className="filter-tabs" onClick={e => e.stopPropagation()}>
+              <button className={`filter-tab ${txFilter==='all'?'active':''}`} onClick={() => setTxFilter('all')}>All</button>
+              {MARKET_ASSETS.map(a => (
+                <button key={a.ticker} className={`filter-tab ${txFilter===a.ticker?'active':''}`} onClick={() => setTxFilter(a.ticker)}>{a.ticker}</button>
+              ))}
+            </div>
           )}
         </div>
+        {txExpanded && (
+          <div className="tx-table-wrap">
+            {txShown.length === 0 ? (
+              <div className="tx-empty">No transactions found.</div>
+            ) : (
+              <>
+                <table className="tx-table">
+                  <thead>
+                    <tr><th>Asset</th><th>Type</th><th>Price</th><th>From</th><th>To</th><th>TX</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                    {txShown.slice(0, txLimit).map((tx, i) => (
+                      <tr key={tx.id ?? i} className="tx-row">
+                        <td className="tx-asset">{tx.asset}</td>
+                        <td><span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span></td>
+                        <td className="tx-price">{tx.btcPrice ? `${tx.btcPrice} BTC` : tx.ethPrice ? `${tx.ethPrice.toFixed(4)} ETH` : '—'}</td>
+                        <td className="tx-addr">{tx.from}</td>
+                        <td className="tx-addr">{tx.to || '—'}</td>
+                        <td className="tx-hash">{tx.txHash?.slice(0,8)}…</td>
+                        <td className="tx-links">
+                          <a href={tx.xcUrl} target="_blank" rel="noreferrer">XChain</a>
+                          <a href={tx.tsUrl} target="_blank" rel="noreferrer">TokenScan</a>
+                          {tx.openseaUrl && <a href={tx.openseaUrl} target="_blank" rel="noreferrer">OpenSea</a>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {txShown.length > txLimit && (
+                  <button className="tx-show-more" onClick={() => setTxExpanded(true)}>
+                    Show all {txShown.length} transactions
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ── DETAIL PANEL (inline) ─────────────────────────────────
-function DetailPanel({ asset, onRefresh }) {
-  const a = asset;
+// ── ASSET SECTION ─────────────────────────────────────────
+function AssetSection({ label, className, assets, buildAsset, expandedId, toggleExpand, getImgSrc, fetchMarket }) {
   return (
-    <div className="asset-detail">
+    <div className={`series-section ${className || ''}`}>
+      <div className="series-header">{label}</div>
+      <div className="asset-grid-header">
+        <span></span><span>Asset</span><span>Floor Price</span><span>Supply</span><span>Holders</span><span></span>
+      </div>
+      {assets.map(sa => {
+        const a = buildAsset(sa);
+        const isOpen = expandedId === a.id;
+        const imgSrc = getImgSrc(a);
+        return (
+          <div key={a.id}>
+            <div className={`asset-grid-row ${isOpen ? 'expanded' : ''}`} onClick={() => toggleExpand(a.id)}>
+              <div className="ag-icon">
+                {imgSrc ? <img src={imgSrc} alt={a.name} className="ag-icon-img"/>
+                        : <div className="ag-icon-placeholder">{a.ticker.slice(0,2)}</div>}
+              </div>
+              <div className="ag-name">
+                <span className="ag-name-main">{a.name}</span>
+                <span className="ag-name-sub">{a.ticker} · {a.series || a.chain}</span>
+              </div>
+              <div className="ag-floor">
+                {a.floor != null
+                  ? <><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span></>
+                  : <span className="ag-null">—</span>}
+              </div>
+              <div className="ag-stat">{displayVal(a.supply)}</div>
+              <div className="ag-stat">{displayVal(a.holders)}</div>
+              <div className="ag-actions">
+                <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-accent" onClick={e => e.stopPropagation()}>Buy</a>
+                <span className="ag-expand-arrow">{isOpen ? '▾' : '▸'}</span>
+              </div>
+            </div>
+            <div className={`asset-detail ${isOpen ? 'open' : ''}`}>
+              {isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} />}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────
+function DetailPanel({ asset, imgSrc, onRefresh }) {
+  const a = asset;
+  const [showAllTx, setShowAllTx] = useState(false);
+  const txList = [...(a.dispenses || []), ...(a.openseaSales || [])];
+  const txVisible = showAllTx ? txList.slice(0, 50) : txList.slice(0, 15);
+
+  return (
+    <>
+      {/* Header: large image + info */}
       <div className="ad-header">
         <div className="ad-visual">
-          {a.image
-            ? <img src={a.image} alt={a.name} className="ad-img"/>
-            : <span className="ad-icon-large">{a.icon}</span>
-          }
+          {imgSrc
+            ? <img src={imgSrc} alt={a.name} className="ad-img"/>
+            : <div className="ad-img-placeholder">{a.ticker}</div>}
         </div>
         <div className="ad-info">
           <h3 className="ad-title">{a.name} <span className="ad-ticker">/ {a.ticker}</span></h3>
           {a.description && <p className="ad-desc">{a.description}</p>}
-          {a.issuer && <div className="ad-issuer">Issuer: <span className="ad-addr">{a.issuer.slice(0,10)}…{a.issuer.slice(-6)}</span></div>}
-          <div className="ad-chain">{a.chain} · {a.locked ? 'Locked' : 'Unlocked'} · {a.series || 'Homage'}</div>
+          {a.issuer && <div className="ad-meta">Issuer: <span className="ad-mono">{a.issuer.slice(0,12)}…{a.issuer.slice(-6)}</span></div>}
+          {a.owner && a.owner !== a.issuer && <div className="ad-meta">Owner: <span className="ad-mono">{a.owner.slice(0,12)}…{a.owner.slice(-6)}</span></div>}
+          <div className="ad-meta">{a.chain} · {a.locked ? 'Locked' : 'Unlocked'} · {a.divisible ? 'Divisible' : 'Indivisible'} · {a.series || 'Homage'}</div>
         </div>
       </div>
 
-      {/* Stats */}
+      {/* 4x4 Stats Grid */}
       <div className="ad-stats">
         {[
-          { label: 'Floor', value: a.floor != null ? `${a.floor} BTC` : '—' },
-          { label: 'Supply', value: displayVal(a.supply) },
-          { label: 'Holders', value: displayVal(a.holders) },
-          { label: 'Locked', value: a.locked ? 'Yes' : 'No' },
+          { label: 'Floor',          value: fmtBtc(a.floor) },
+          { label: 'Floor (sats)',   value: fmtSats(a.floor) },
+          { label: 'Supply',         value: displayVal(a.supply) },
+          { label: 'Holders',        value: displayVal(a.holders) },
+          { label: 'Locked',         value: a.locked ? 'Yes' : 'No' },
+          { label: 'Divisible',      value: a.divisible ? 'Yes' : 'No' },
+          { label: 'Chain',          value: a.chain },
+          { label: 'Series',         value: a.series || '—' },
+          { label: 'Dispensers',     value: String(a.dispenserCount) },
+          { label: 'Total Sales',    value: String(a.totalSales) },
+          { label: 'Last Sale',      value: a.lastSale ? fmtBtc(a.lastSale.price) : '—' },
+          { label: 'Last Sale Date', value: a.lastSale ? fmtDate(a.lastSale.timestamp) : '—' },
+          { label: 'OpenSea Sales',  value: String(a.openseaSales.length) },
+          { label: 'Issuer',         value: a.issuer ? `${a.issuer.slice(0,8)}…` : '—' },
+          { label: 'Asset Type',     value: a.subasset ? 'Subasset' : 'Named' },
+          { label: 'Updated',        value: a.fetchedAt ? fmtDate(a.fetchedAt) : '—' },
         ].map(s => (
           <div key={s.label} className="ad-stat-box">
             <div className="ad-stat-label">{s.label}</div>
@@ -271,12 +298,40 @@ function DetailPanel({ asset, onRefresh }) {
         </div>
       )}
 
-      {/* Actions */}
+      {/* Per-asset sales/tx history */}
+      {txList.length > 0 && (
+        <div className="ad-tx-section">
+          <div className="ad-section-label">Sales & Activity ({txList.length})</div>
+          <div className="ad-tx-list">
+            {txVisible.map((tx, i) => (
+              <div key={tx.id ?? i} className="tx-item">
+                <span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span>
+                <span className="tx-price-inline">{tx.btcPrice ? `${tx.btcPrice} BTC` : tx.ethPrice ? `${tx.ethPrice.toFixed(4)} ETH` : '—'}</span>
+                <span className="tx-qty">×{tx.quantity}</span>
+                <span className="tx-addr-short">{tx.from} → {tx.to || '—'}</span>
+                {tx.timestamp && <span className="tx-time">{fmtDate(tx.timestamp)}</span>}
+                <span className="tx-item-links">
+                  {tx.xcUrl && <a href={tx.xcUrl} target="_blank" rel="noreferrer">XChain</a>}
+                  {tx.tsUrl && <a href={tx.tsUrl} target="_blank" rel="noreferrer">TokenScan</a>}
+                  {tx.openseaUrl && <a href={tx.openseaUrl} target="_blank" rel="noreferrer">OpenSea</a>}
+                </span>
+              </div>
+            ))}
+          </div>
+          {txList.length > 15 && !showAllTx && (
+            <button className="tx-show-more" onClick={() => setShowAllTx(true)}>
+              Show all {txList.length} transactions
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Action buttons */}
       <div className="ad-actions">
         <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn btn-green">Buy on Pepe.WTF ↗</a>
         <a href={a.xcUrl} target="_blank" rel="noreferrer" className="btn btn-outline">XChain Explorer ↗</a>
         <button className="btn btn-outline" onClick={onRefresh}>Refresh</button>
       </div>
-    </div>
+    </>
   );
 }
