@@ -1,16 +1,12 @@
 /**
  * /api/market.js
  * Server-side proxy for Counterparty API v2.
- * Fetches asset info, holders, dispensers (floor price) and recent sends
- * for one or more XCP assets, returns normalised JSON to the frontend.
- *
- * Endpoint: GET /api/market?asset=DJPEPE
- *           GET /api/market?asset=DJPEPE,FAKEDJPEPE   (comma-separated)
+ * Fetches asset info, holders, dispensers (floor price + open listings)
+ * and recent sends for one or more XCP assets.
  */
 
 const BASE = 'https://api.counterparty.io:4000/v2';
 
-// Fetch helper — returns parsed JSON or null on failure
 async function xcp(path) {
   try {
     const res = await fetch(`${BASE}${path}`, {
@@ -24,42 +20,41 @@ async function xcp(path) {
   }
 }
 
-// Pull the cheapest open dispenser price for an asset (= floor price in BTC/XCP)
 async function getFloor(asset) {
   const data = await xcp(`/assets/${asset}/dispensers?status=open&limit=50`);
-  if (!data?.result?.length) return null;
+  if (!data?.result?.length) return { floor: null, dispensers: [] };
 
-  // Find lowest satoshi rate
   const dispensers = data.result;
   const best = dispensers.reduce((min, d) =>
     d.satoshirate < (min?.satoshirate ?? Infinity) ? d : min
   , null);
 
-  if (!best) return null;
+  const openDispensers = dispensers.map(d => ({
+    address: shortAddr(d.source),
+    addressFull: d.source,
+    btcPrice: d.satoshirate / 1e8,
+    giveRemaining: d.give_remaining ?? null,
+  })).sort((a, b) => a.btcPrice - b.btcPrice);
+
   return {
-    btcPrice:  best.satoshirate / 1e8,
-    xcpPrice:  best.give_quantity,
-    dispenser: best.source,
+    floor: best ? {
+      btcPrice:  best.satoshirate / 1e8,
+      xcpPrice:  best.give_quantity,
+      dispenser: best.source,
+    } : null,
+    dispensers: openDispensers,
   };
 }
 
 async function getAssetData(asset) {
-  // Run all requests in parallel
-  const [info, holdersRes, sendsRes, ordersRes, dispensersRes] = await Promise.all([
+  const [info, holdersRes, sendsRes, ordersRes] = await Promise.all([
     xcp(`/assets/${asset}`),
     xcp(`/assets/${asset}/holders?limit=100`),
     xcp(`/assets/${asset}/sends?limit=20`),
     xcp(`/assets/${asset}/orders?status=open&limit=10`),
-    xcp(`/assets/${asset}/dispensers?limit=50`),
   ]);
 
-  const floor = await getFloor(asset);
-
-  // Build price history from all dispensers (open + closed)
-  const priceHistory = (dispensersRes?.result || [])
-    .filter(d => d.satoshirate && d.block_time)
-    .map(d => ({ time: d.block_time, price: d.satoshirate / 1e8 }))
-    .sort((a, b) => a.time - b.time);
+  const { floor, dispensers } = await getFloor(asset);
 
   const supply   = info?.result?.supply    ?? null;
   const locked   = info?.result?.locked    ?? false;
@@ -75,10 +70,9 @@ async function getAssetData(asset) {
     id:     s.tx_hash,
     asset:  asset,
     type:   'transfer',
-    value:  null,
     from:   shortAddr(s.source),
     to:     shortAddr(s.destination),
-    time:   timeAgo(s.block_time),
+    blockIndex: s.block_index ?? null,
     txHash: s.tx_hash,
     xcUrl:  `https://xchain.io/tx/${s.tx_hash}`,
   }));
@@ -88,10 +82,9 @@ async function getAssetData(asset) {
     id:     o.tx_hash,
     asset:  asset,
     type:   o.give_asset === asset ? 'offer' : 'bid',
-    value:  o.give_asset === 'BTC' ? o.give_quantity / 1e8 : null,
     from:   shortAddr(o.source),
     to:     null,
-    time:   timeAgo(o.block_time),
+    blockIndex: o.block_index ?? null,
     txHash: o.tx_hash,
     xcUrl:  `https://xchain.io/order/${o.tx_hash}`,
   }));
@@ -108,24 +101,15 @@ async function getAssetData(asset) {
     floor:        floor ? parseFloat(floor.btcPrice.toFixed(6)) : null,
     floorXcp:     floor?.xcpPrice ?? null,
     dispenserAddr:floor?.dispenser ?? null,
+    dispensers,
     transactions,
-    priceHistory,
     fetchedAt:    new Date().toISOString(),
   };
 }
 
-// Helpers
 function shortAddr(addr) {
   if (!addr) return '—';
   return `${addr.slice(0,6)}…${addr.slice(-4)}`;
-}
-function timeAgo(blockTime) {
-  if (!blockTime) return '—';
-  const secs = Math.floor(Date.now() / 1000) - blockTime;
-  if (secs < 60)   return `${secs}s ago`;
-  if (secs < 3600) return `${Math.floor(secs/60)}m ago`;
-  if (secs < 86400)return `${Math.floor(secs/3600)}hr ago`;
-  return `${Math.floor(secs/86400)}d ago`;
 }
 
 export default async function handler(req, res) {

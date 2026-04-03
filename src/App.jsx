@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './styles.css';
 import Header  from './components/Header.jsx';
 import Sidebar from './components/Sidebar.jsx';
@@ -9,8 +9,30 @@ import Market  from './pages/Market.jsx';
 import { GridIcon, FrogIcon, ChartIcon } from './components/Icons.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
+const PAGES = ['gallery', 'djpepe', 'market'];
+const PAGE_PATHS = { '/': 'gallery', '/gallery': 'gallery', '/djpepe': 'djpepe', '/market': 'market' };
+
+function getPageFromUrl() {
+  const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+  return PAGE_PATHS[path] || 'gallery';
+}
+
 export default function App() {
-  const [page, setPage] = useState('gallery');
+  const [page, setPageState] = useState(getPageFromUrl);
+
+  const setPage = useCallback((id) => {
+    if (!PAGES.includes(id)) return;
+    setPageState(id);
+    const path = id === 'gallery' ? '/' : `/${id}`;
+    window.history.pushState(null, '', path);
+  }, []);
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const onPop = () => setPageState(getPageFromUrl());
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Lifted state so Header and Ticker can show real data
   const [fileCount, setFileCount]         = useState(null);
