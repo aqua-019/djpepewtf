@@ -10,13 +10,10 @@ export const MARKET_ASSETS = [
     image:     '/DJPEPE.jpg',
     bg:        'g1',
     floor:     null,
-    change:    null,
     supply:    169,
     holders:   null,
-    volume:    null,
-    lastSale:  null,
-    bestOffer: null,
     series:    'Hip-Hop Elements 1/4',
+    seriesGroup: 'hiphop',
     buyUrl:    'https://pepe.wtf/asset/DJPEPE',
     xcUrl:     'https://xchain.io/asset/DJPEPE',
   },
@@ -28,13 +25,10 @@ export const MARKET_ASSETS = [
     icon:      '🎤',
     bg:        'g2',
     floor:     null,
-    change:    null,
     supply:    200,
     holders:   null,
-    volume:    null,
-    lastSale:  null,
-    bestOffer: null,
     series:    'Hip-Hop Elements 2/4',
+    seriesGroup: 'hiphop',
     buyUrl:    'https://pepe.wtf/asset/MCPEPE',
     xcUrl:     'https://xchain.io/asset/MCPEPE',
   },
@@ -46,13 +40,10 @@ export const MARKET_ASSETS = [
     icon:      '🕺',
     bg:        'g3',
     floor:     null,
-    change:    null,
     supply:    200,
     holders:   null,
-    volume:    null,
-    lastSale:  null,
-    bestOffer: null,
     series:    'Hip-Hop Elements 3/4',
+    seriesGroup: 'hiphop',
     buyUrl:    'https://pepe.wtf/asset/BBOYPEPE',
     xcUrl:     'https://xchain.io/asset/BBOYPEPE',
   },
@@ -64,13 +55,10 @@ export const MARKET_ASSETS = [
     icon:      '🎨',
     bg:        'g4',
     floor:     null,
-    change:    null,
     supply:    200,
     holders:   null,
-    volume:    null,
-    lastSale:  null,
-    bestOffer: null,
     series:    'Hip-Hop Elements 4/4',
+    seriesGroup: 'hiphop',
     buyUrl:    'https://pepe.wtf/asset/PEPEONE',
     xcUrl:     'https://xchain.io/asset/PEPEONE',
   },
@@ -82,13 +70,10 @@ export const MARKET_ASSETS = [
     icon:      '🐸',
     bg:        'g5',
     floor:     null,
-    change:    null,
     supply:    null,
     holders:   null,
-    volume:    null,
-    lastSale:  null,
-    bestOffer: null,
     subasset:  'FAKEDJPEPE.ENTER_THE_PEPE',
+    seriesGroup: 'homage',
     buyUrl:    'https://pepe.wtf/asset/FAKEDJPEPE',
     xcUrl:     'https://xchain.io/asset/FAKEDJPEPE',
   },
@@ -103,8 +88,8 @@ export const TIMELINE = [
   },
   {
     year: '2016',
-    heading: 'DJPEPE Minted — First Audio NFT',
-    body: 'On October 13th, DJPEPE is created by RareScrilla on Counterparty. 169 cards issued. The first audio NFT in history — holders got access to exclusive music. Part of the Hip-Hop Elements series alongside MCPEPE, BBOYPEPE, and PEPEONE.',
+    heading: 'DJPEPE Minted \u2014 First Audio NFT',
+    body: 'On October 13th, DJPEPE is created by RareScrilla on Counterparty. 169 cards issued. The first audio NFT in history \u2014 holders got access to exclusive music. Part of the Hip-Hop Elements series alongside MCPEPE, BBOYPEPE, and PEPEONE.',
   },
   {
     year: '2016',
@@ -128,7 +113,7 @@ export const TIMELINE = [
   },
   {
     year: '2021',
-    heading: 'NFT Boom — Rare Pepes Rediscovered',
+    heading: 'NFT Boom \u2014 Rare Pepes Rediscovered',
     body: 'The mainstream NFT explosion brings renewed attention to Rare Pepes as the original crypto art. Collectors recognize their historical significance.',
   },
   {
@@ -139,11 +124,11 @@ export const TIMELINE = [
   {
     year: '2023',
     heading: 'Fake Rares Emerge',
-    body: 'Fake Rare Pepes begin appearing on XCP, including FAKEDJPEPE — homage tokens that reference the originals while creating their own collector communities.',
+    body: 'Fake Rare Pepes begin appearing on XCP, including FAKEDJPEPE \u2014 homage tokens that reference the originals while creating their own collector communities.',
   },
   {
     year: 'NOW',
-    heading: 'DJPEPE.WTF — The Official Archive',
+    heading: 'DJPEPE.WTF \u2014 The Official Archive',
     body: 'The canonical digital home for DJ PEPE culture, memes, and asset history. Strong hands only.',
   },
 ];
@@ -171,7 +156,7 @@ export const DJPEPE_STATS = [
 
 // ── FORMAT HELPERS ────────────────────────────────────
 export function fmtNum(n) {
-  if (n === null || n === undefined) return '—';
+  if (n === null || n === undefined) return '\u2014';
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
   return String(n);
 }
