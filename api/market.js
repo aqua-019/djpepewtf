@@ -46,7 +46,7 @@ async function getBtcUsd() {
 let ethUsdCache = { price: null, ts: 0 };
 async function getEthUsd() {
   const now = Date.now();
-  if (ethUsdCache.price && now - ethUsdCache.ts < 120_000) return ethUsdCache.price;
+  if (ethUsdCache.price && now - ethUsdCache.ts < 300_000) return ethUsdCache.price;
   try {
     const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd', {
       signal: AbortSignal.timeout(5000),
@@ -137,10 +137,15 @@ async function getOpenSeaSales(assetName, ethUsd) {
     if (!res.ok) return [];
     const data = await res.json();
     return (data.asset_events || [])
-      .filter(e => (e.nft?.name || '').toUpperCase().includes(assetName))
+      .filter(e => {
+        const name = (e.nft?.name || '').toUpperCase();
+        const desc = (e.nft?.description || '').toUpperCase();
+        return name.includes(assetName) || name.includes(`[${assetName}]`) || desc.includes(assetName);
+      })
       .slice(0, 10)
       .map(e => {
-        const ethPrice = e.payment?.quantity ? parseFloat(e.payment.quantity) / 1e18 : null;
+        const ethPrice = e.payment?.quantity ? parseFloat(e.payment.quantity) / 1e18
+          : e.total_price ? parseFloat(e.total_price) / 1e18 : null;
         const usdPrice = (ethPrice != null && ethUsd != null) ? Math.round(ethPrice * ethUsd * 100) / 100 : null;
         return {
           id: e.order_hash || e.transaction?.hash || `os-${Date.now()}`,
@@ -306,6 +311,7 @@ async function getAssetData(asset, btcUsd) {
     lastSale,
     transactions,
     openseaSales,
+    openseaEnabled: !!process.env.OPENSEA_API_KEY,
     btcUsd:        btcUsd,
     fetchedAt:     new Date().toISOString(),
   };

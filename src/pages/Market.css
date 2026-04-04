@@ -185,6 +185,15 @@
 .ad-tx-links a { font-size: 8px; color: var(--accent); text-decoration: none; opacity: 0.6; transition: opacity 0.15s; }
 .ad-tx-links a:hover { opacity: 1; text-decoration: underline; }
 
+.ad-tx-empty {
+  text-align: center; color: var(--txt3); padding: 20px 16px;
+  font-size: 10px; line-height: 1.6;
+  background: rgba(255,255,255,0.02); border-radius: var(--r12);
+  border: 1px dashed rgba(255,255,255,0.08);
+}
+.ad-tx-empty a { color: var(--accent); text-decoration: none; }
+.ad-tx-empty a:hover { text-decoration: underline; }
+
 .tx-show-more {
   display: block; margin: 10px auto 0;
   padding: 6px 20px; font-size: 10px; font-weight: 600;
