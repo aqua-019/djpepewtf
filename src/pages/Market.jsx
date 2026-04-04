@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { MARKET_ASSETS } from '../data/index.js';
 import { CACHE_TTL } from '../lib/constants.js';
+import PriceChart from '../components/PriceChart.jsx';
 import './Market.css';
 
 // Image component with proper error cascade -> placeholder on all failures
@@ -197,6 +198,19 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
       {[{ label: 'Floor (BTC)', value: fmtBtc(a.floor) }, { label: 'Floor (USD)', value: a.floorUsd != null ? fmtUsd(a.floorUsd) : '\u2014', accent: true }, { label: 'Floor (sats)', value: fmtSats(a.floor) }, { label: 'Supply', value: displayVal(a.supply) }, { label: 'Holders', value: displayVal(a.holders) }, { label: 'Locked', value: a.locked ? 'Yes' : 'No' }, { label: 'Divisible', value: a.divisible ? 'Yes' : 'No' }, { label: 'Chain', value: a.chain }, { label: 'Series', value: a.series || '\u2014' }, { label: 'Dispensers', value: String(a.dispenserCount) }, { label: 'Total Sales', value: String(a.totalSales) }, { label: 'Last Sale (BTC)', value: a.lastSale ? fmtBtc(a.lastSale.price) : '\u2014' }, { label: 'Last Sale (USD)', value: a.lastSale?.usdPrice ? fmtUsd(a.lastSale.usdPrice) : '\u2014', accent: true }, { label: 'Last Sale Date', value: a.lastSale ? fmtDate(a.lastSale.timestamp) : '\u2014' }, { label: 'OpenSea Sales', value: String(a.openseaSales.length) }, { label: 'Updated', value: a.fetchedAt ? fmtDate(a.fetchedAt) : '\u2014' }].map(s => (
         <div key={s.label} className={`ad-stat-box ${s.accent ? 'stat-usd' : ''}`}><div className="ad-stat-label">{s.label}</div><div className="ad-stat-val">{s.value}</div></div>))}
     </div>
+
+    {(() => {
+      const chartData = (a.dispenses || [])
+        .filter(d => d.btcPrice && d.timestamp)
+        .map(d => ({ time: Math.floor(new Date(d.timestamp).getTime() / 1000), price: parseFloat(d.btcPrice) }))
+        .sort((x, y) => x.time - y.time);
+      return chartData.length >= 2 ? (
+        <div className="ad-chart-wrap">
+          <div className="ad-section-label">Price History ({chartData.length} sales)</div>
+          <PriceChart data={chartData} width={600} height={180} />
+        </div>
+      ) : null;
+    })()}
 
     {a.dispensers.length > 0 && (<div className="ad-dispensers"><div className="ad-section-label">Open Dispensers ({a.dispensers.length})</div>
       <div className="dispenser-list">{a.dispensers.map((d, i) => (<div key={i} className="dispenser-item"><div className="disp-price">{d.btcPrice} BTC</div>{d.usdPrice != null && <div className="disp-usd">{fmtUsd(d.usdPrice)}</div>}<div className="disp-addr">{d.address}</div>{d.giveRemaining != null && <div className="disp-remaining">{d.giveRemaining} remaining</div>}</div>))}</div>

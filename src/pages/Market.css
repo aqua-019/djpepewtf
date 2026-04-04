@@ -133,6 +133,13 @@
 .stat-usd .ad-stat-val { color: oklch(0.80 0.14 85); }
 .stat-usd { border-color: oklch(0.80 0.14 85 / 0.12); }
 
+.ad-chart-wrap {
+  margin-bottom: 18px; padding: 12px;
+  background: var(--glass); border: 1px solid var(--border); border-radius: var(--r12);
+  overflow: hidden;
+}
+.ad-chart-wrap svg { width: 100%; height: auto; }
+
 .ad-dispensers { margin-bottom: 18px; }
 .ad-section-label { font-size: 10px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
 .dispenser-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; }
