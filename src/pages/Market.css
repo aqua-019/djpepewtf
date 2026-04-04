@@ -109,10 +109,10 @@
 .ad-card-placeholder {
   width: 320px; height: 320px; border-radius: var(--r12);
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.05));
-  border: 2px solid var(--border);
+  background: oklch(0.15 0.008 260);
+  border: 2px dashed oklch(0.30 0.008 260);
   font-family: var(--font-display); font-size: 32px; font-weight: 800;
-  color: var(--txt3); letter-spacing: 2px;
+  color: oklch(0.35 0.005 260); letter-spacing: 2px;
 }
 .ad-top-right { flex: 1; min-width: 0; padding-top: 4px; }
 

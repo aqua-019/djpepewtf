@@ -4,22 +4,18 @@ import { CACHE_TTL } from '../lib/constants.js';
 import PriceChart from '../components/PriceChart.jsx';
 import './Market.css';
 
-// Image component with proper error cascade -> placeholder on all failures
+// Image component with reliable index-based fallback cascade
 function AssetImg({ src, fallbacks = [], alt, className, placeholderClass, placeholderText }) {
-  const [curSrc, setCurSrc] = useState(src);
-  const tried = useRef(new Set());
-
-  useEffect(() => { tried.current = new Set(); setCurSrc(src); }, [src]);
-
-  const handleError = () => {
-    tried.current.add(curSrc);
-    const next = [src, ...fallbacks].find(u => u && !tried.current.has(u));
-    if (next) setCurSrc(next);
-    else setCurSrc(null);
-  };
-
-  if (!curSrc) return <div className={placeholderClass}>{placeholderText}</div>;
-  return <img src={curSrc} alt={alt} className={className} onError={handleError} />;
+  const allSources = [src, ...fallbacks].filter(Boolean);
+  const [idx, setIdx] = useState(0);
+  useEffect(() => { setIdx(0); }, [src]);
+  if (allSources.length === 0 || idx >= allSources.length) {
+    return <div className={placeholderClass}>{placeholderText}</div>;
+  }
+  return (
+    <img src={allSources[idx]} alt={alt} className={className}
+         onError={() => setIdx(i => i + 1)} />
+  );
 }
 
 function ExternalLinkIcon({ size = 12 }) {
