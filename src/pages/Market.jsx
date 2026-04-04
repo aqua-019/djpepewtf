@@ -21,6 +21,15 @@ function AssetImg({ src, fallbacks = [], alt, className, placeholderClass, place
   return <img src={curSrc} alt={alt} className={className} onError={handleError} />;
 }
 
+function ExternalLinkIcon({ size = 12 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 12 12" fill="none"
+         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+      <path d="M4 1h7v7M11 1L4.5 7.5"/>
+    </svg>
+  );
+}
+
 const TYPE_TAG   = { sale:'tag-green', transfer:'tag-grey', offer:'tag-red', bid:'tag-green', 'opensea-sale':'tag-blue' };
 const TYPE_LABEL = { sale:'Sale', transfer:'Transfer', offer:'Offer', bid:'Bid', 'opensea-sale':'OpenSea' };
 
@@ -222,8 +231,8 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
     )}
 
     <div className="ad-actions">
-      <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn btn-green">Buy on Pepe.WTF \u2197</a>
-      <a href={a.xcUrl} target="_blank" rel="noreferrer" className="btn btn-outline">XChain Explorer \u2197</a>
+      <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn btn-green">Buy on Pepe.WTF <ExternalLinkIcon /></a>
+      <a href={a.xcUrl} target="_blank" rel="noreferrer" className="btn btn-outline">XChain Explorer <ExternalLinkIcon /></a>
       <button className="btn btn-outline" onClick={onRefresh}>Refresh</button>
     </div>
   </>);

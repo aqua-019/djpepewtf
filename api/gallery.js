@@ -30,9 +30,6 @@ export default async function handler(req, res) {
         uploadedAt: b.uploadedAt,
         bg:         `g${(i % 6) + 1}`,
         icon:       iconForType(ext),
-        upvotes:    0,
-        comments:   0,
-        views:      0,
         isNew:      false,
       };
     });

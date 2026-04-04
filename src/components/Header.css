@@ -7,10 +7,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  background: oklch(0.12 0.015 150 / 0.75);
+  background: oklch(0.11 0.005 260 / 0.75);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid oklch(0.35 0.06 150 / 0.10);
+  border-bottom: 1px solid oklch(0.30 0.008 260 / 0.10);
 }
 
 /* LOGO */
@@ -30,7 +30,7 @@
   gap: 2px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--r50);
+  border-radius: var(--r6);
   padding: 4px;
 }
 
@@ -42,7 +42,7 @@
   color: var(--txt2);
   background: none;
   border: none;
-  border-radius: var(--r50);
+  border-radius: var(--r6);
   cursor: pointer;
   transition: all 0.22s ease;
   white-space: nowrap;
@@ -51,7 +51,7 @@
 .header-tab.active {
   background: var(--accent-dim);
   color: var(--accent);
-  border: 1px solid oklch(0.62 0.12 152 / 0.20);
+  border: 1px solid oklch(0.68 0.16 145 / 0.20);
 }
 
 /* RIGHT */

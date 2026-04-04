@@ -2,6 +2,15 @@ import { useState, useEffect } from 'react';
 import { TIMELINE, TRAITS, DJPEPE_STATS } from '../data/index.js';
 import './DJPepe.css';
 
+function ExternalLinkIcon({ size = 12 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 12 12" fill="none"
+         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+      <path d="M4 1h7v7M11 1L4.5 7.5"/>
+    </svg>
+  );
+}
+
 const LINKS = [
   { label: 'Pepe.WTF Asset Page', url: 'https://pepe.wtf/asset/DJPEPE'      },
   { label: 'XChain Explorer',     url: 'https://xchain.io/asset/DJPEPE'      },
@@ -73,10 +82,10 @@ export default function DJPepe() {
 
         <div className="btn-row">
           <a href="https://pepe.wtf/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-green">
-            Buy on Pepe.WTF ↗
+            Buy on Pepe.WTF <ExternalLinkIcon />
           </a>
           <a href="https://xchain.io/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-outline">
-            View on Chain ↗
+            View on Chain <ExternalLinkIcon />
           </a>
         </div>
       </div>
@@ -115,7 +124,7 @@ export default function DJPepe() {
           <div className="sec-label" style={{ marginTop: 16 }}>Links</div>
           {LINKS.map(l => (
             <a key={l.label} href={l.url} target="_blank" rel="noreferrer" className="ext-link">
-              <span>↗</span> {l.label}
+              <ExternalLinkIcon /> {l.label}
             </a>
           ))}
         </div>
