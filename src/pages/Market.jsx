@@ -9,6 +9,7 @@ const TYPE_LABEL = { sale:'Sale', transfer:'Transfer', offer:'Offer', bid:'Bid',
 const displayVal = v => (v !== null && v !== undefined) ? String(v) : '—';
 const fmtBtc = v => v != null ? `${v} BTC` : '—';
 const fmtSats = v => v != null ? `${Math.round(v * 1e8).toLocaleString()} sats` : '—';
+const fmtUsd = v => v != null ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
 const fmtDate = v => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
 const ASSET_TICKERS = MARKET_ASSETS.map(a => a.ticker).join(',');
@@ -21,6 +22,7 @@ let cacheTime = 0;
 export default function Market({ onMarketUpdate }) {
   const [expandedId, setExpandedId] = useState(null);
   const [liveData,   setLiveData]   = useState(null);
+  const [btcUsd,     setBtcUsd]     = useState(null);
   const [txFilter,   setTxFilter]   = useState('all');
   const [txExpanded, setTxExpanded] = useState(false);
   const [status,     setStatus]     = useState('loading');
@@ -30,6 +32,7 @@ export default function Market({ onMarketUpdate }) {
     return {
       ...staticAsset,
       floor:          live?.floor          ?? staticAsset.floor,
+      floorUsd:       live?.floorUsd       ?? null,
       floorSats:      live?.floorSats      ?? null,
       supply:         live?.supply         ?? staticAsset.supply,
       holders:        live?.holders        ?? staticAsset.holders,
@@ -68,7 +71,9 @@ export default function Market({ onMarketUpdate }) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       cache = json.assets; cacheTime = now;
-      setLiveData(json.assets); setStatus('live');
+      setLiveData(json.assets);
+      setBtcUsd(json.btcUsd ?? null);
+      setStatus('live');
     } catch (err) {
       console.warn('[market fetch]', err);
       setStatus(cache ? 'stale' : 'error');
@@ -84,11 +89,11 @@ export default function Market({ onMarketUpdate }) {
 
   useEffect(() => {
     const djpepe = liveData?.DJPEPE;
-    onMarketUpdate?.({ floor: djpepe?.floor ?? null, supply: djpepe?.supply ?? 169, status });
+    onMarketUpdate?.({ floor: djpepe?.floor ?? null, floorUsd: djpepe?.floorUsd ?? null, supply: djpepe?.supply ?? 169, status });
   }, [liveData, status, onMarketUpdate]);
 
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
-  const getImgSrc = (a) => a.imageUrl || a.imageFallback || null;
+  const getImgSrc = (a) => a.imageUrl || a.imageFallback || a.imageLocal || null;
 
   return (
     <div className="market-page">
@@ -97,7 +102,7 @@ export default function Market({ onMarketUpdate }) {
       <div className={`market-status ${status}`}>
         <span className="ms-dot"/>
         {status === 'loading' && 'Fetching live data from Counterparty…'}
-        {status === 'live'    && 'Live · Counterparty API · refreshes every 60s'}
+        {status === 'live'    && <>Live · Counterparty API · BTC {btcUsd ? `$${btcUsd.toLocaleString()}` : '…'} · refreshes every 60s</>}
         {status === 'stale'   && 'Using cached data · API unreachable'}
         {status === 'error'   && <>API unreachable · <button className="ms-retry" onClick={() => fetchMarket(true)}>retry</button></>}
       </div>
@@ -112,6 +117,7 @@ export default function Market({ onMarketUpdate }) {
           toggleExpand={toggleExpand}
           getImgSrc={getImgSrc}
           fetchMarket={fetchMarket}
+          btcUsd={btcUsd}
         />
         <AssetSection
           label="Homage Collection"
@@ -122,6 +128,7 @@ export default function Market({ onMarketUpdate }) {
           toggleExpand={toggleExpand}
           getImgSrc={getImgSrc}
           fetchMarket={fetchMarket}
+          btcUsd={btcUsd}
         />
       </div>
 
@@ -151,7 +158,7 @@ export default function Market({ onMarketUpdate }) {
               <>
                 <table className="tx-table">
                   <thead>
-                    <tr><th>Asset</th><th>Type</th><th>Price</th><th>From</th><th>To</th><th>TX</th><th></th></tr>
+                    <tr><th>Asset</th><th>Type</th><th>BTC</th><th>USD</th><th>From</th><th>To</th><th>TX</th><th></th></tr>
                   </thead>
                   <tbody>
                     {txShown.slice(0, txLimit).map((tx, i) => (
@@ -159,6 +166,7 @@ export default function Market({ onMarketUpdate }) {
                         <td className="tx-asset">{tx.asset}</td>
                         <td><span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span></td>
                         <td className="tx-price">{tx.btcPrice ? `${tx.btcPrice} BTC` : tx.ethPrice ? `${tx.ethPrice.toFixed(4)} ETH` : '—'}</td>
+                        <td className="tx-usd">{tx.usdPrice ? fmtUsd(tx.usdPrice) : '—'}</td>
                         <td className="tx-addr">{tx.from}</td>
                         <td className="tx-addr">{tx.to || '—'}</td>
                         <td className="tx-hash">{tx.txHash?.slice(0,8)}…</td>
@@ -186,7 +194,7 @@ export default function Market({ onMarketUpdate }) {
 }
 
 // ── ASSET SECTION ─────────────────────────────────────────
-function AssetSection({ label, className, assets, buildAsset, expandedId, toggleExpand, getImgSrc, fetchMarket }) {
+function AssetSection({ label, className, assets, buildAsset, expandedId, toggleExpand, getImgSrc, fetchMarket, btcUsd }) {
   return (
     <div className={`series-section ${className || ''}`}>
       <div className="series-header">{label}</div>
@@ -201,7 +209,7 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
           <div key={a.id}>
             <div className={`asset-grid-row ${isOpen ? 'expanded' : ''}`} onClick={() => toggleExpand(a.id)}>
               <div className="ag-icon">
-                {imgSrc ? <img src={imgSrc} alt={a.name} className="ag-icon-img"/>
+                {imgSrc ? <img src={imgSrc} alt={a.name} className="ag-icon-img" onError={e => { if (a.imageLocal && e.target.src !== a.imageLocal) e.target.src = a.imageLocal; }}/>
                         : <div className="ag-icon-placeholder">{a.ticker.slice(0,2)}</div>}
               </div>
               <div className="ag-name">
@@ -210,7 +218,13 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
               </div>
               <div className="ag-floor">
                 {a.floor != null
-                  ? <><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span></>
+                  ? <>
+                      <div className="ag-floor-col">
+                        <span className="ag-floor-val">{a.floor}</span>
+                        <span className="ag-floor-unit">BTC</span>
+                      </div>
+                      {a.floorUsd != null && <span className="ag-floor-usd">{fmtUsd(a.floorUsd)}</span>}
+                    </>
                   : <span className="ag-null">—</span>}
               </div>
               <div className="ag-stat">{displayVal(a.supply)}</div>
@@ -221,7 +235,7 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
               </div>
             </div>
             <div className={`asset-detail ${isOpen ? 'open' : ''}`}>
-              {isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} />}
+              {isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} btcUsd={btcUsd} />}
             </div>
           </div>
         );
@@ -231,11 +245,12 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
 }
 
 // ── DETAIL PANEL ──────────────────────────────────────────
-function DetailPanel({ asset, imgSrc, onRefresh }) {
+function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
   const a = asset;
   const [showAllTx, setShowAllTx] = useState(false);
   const txList = [...(a.dispenses || []), ...(a.openseaSales || [])];
-  const txVisible = showAllTx ? txList.slice(0, 50) : txList.slice(0, 15);
+  const TX_PREVIEW = 8;
+  const txVisible = showAllTx ? txList.slice(0, 50) : txList.slice(0, TX_PREVIEW);
 
   return (
     <>
@@ -243,7 +258,7 @@ function DetailPanel({ asset, imgSrc, onRefresh }) {
       <div className="ad-header">
         <div className="ad-visual">
           {imgSrc
-            ? <img src={imgSrc} alt={a.name} className="ad-img"/>
+            ? <img src={imgSrc} alt={a.name} className="ad-img" onError={e => { if (a.imageLocal && e.target.src !== a.imageLocal) e.target.src = a.imageLocal; }}/>
             : <div className="ad-img-placeholder">{a.ticker}</div>}
         </div>
         <div className="ad-info">
@@ -252,13 +267,15 @@ function DetailPanel({ asset, imgSrc, onRefresh }) {
           {a.issuer && <div className="ad-meta">Issuer: <span className="ad-mono">{a.issuer.slice(0,12)}…{a.issuer.slice(-6)}</span></div>}
           {a.owner && a.owner !== a.issuer && <div className="ad-meta">Owner: <span className="ad-mono">{a.owner.slice(0,12)}…{a.owner.slice(-6)}</span></div>}
           <div className="ad-meta">{a.chain} · {a.locked ? 'Locked' : 'Unlocked'} · {a.divisible ? 'Divisible' : 'Indivisible'} · {a.series || 'Homage'}</div>
+          {btcUsd && <div className="ad-meta ad-btc-rate">BTC/USD: ${btcUsd.toLocaleString()}</div>}
         </div>
       </div>
 
       {/* 4x4 Stats Grid */}
       <div className="ad-stats">
         {[
-          { label: 'Floor',          value: fmtBtc(a.floor) },
+          { label: 'Floor (BTC)',    value: fmtBtc(a.floor) },
+          { label: 'Floor (USD)',    value: a.floorUsd != null ? fmtUsd(a.floorUsd) : '—', accent: true },
           { label: 'Floor (sats)',   value: fmtSats(a.floor) },
           { label: 'Supply',         value: displayVal(a.supply) },
           { label: 'Holders',        value: displayVal(a.holders) },
@@ -268,14 +285,13 @@ function DetailPanel({ asset, imgSrc, onRefresh }) {
           { label: 'Series',         value: a.series || '—' },
           { label: 'Dispensers',     value: String(a.dispenserCount) },
           { label: 'Total Sales',    value: String(a.totalSales) },
-          { label: 'Last Sale',      value: a.lastSale ? fmtBtc(a.lastSale.price) : '—' },
+          { label: 'Last Sale (BTC)',value: a.lastSale ? fmtBtc(a.lastSale.price) : '—' },
+          { label: 'Last Sale (USD)',value: a.lastSale?.usdPrice ? fmtUsd(a.lastSale.usdPrice) : '—', accent: true },
           { label: 'Last Sale Date', value: a.lastSale ? fmtDate(a.lastSale.timestamp) : '—' },
           { label: 'OpenSea Sales',  value: String(a.openseaSales.length) },
-          { label: 'Issuer',         value: a.issuer ? `${a.issuer.slice(0,8)}…` : '—' },
-          { label: 'Asset Type',     value: a.subasset ? 'Subasset' : 'Named' },
           { label: 'Updated',        value: a.fetchedAt ? fmtDate(a.fetchedAt) : '—' },
         ].map(s => (
-          <div key={s.label} className="ad-stat-box">
+          <div key={s.label} className={`ad-stat-box ${s.accent ? 'stat-usd' : ''}`}>
             <div className="ad-stat-label">{s.label}</div>
             <div className="ad-stat-val">{s.value}</div>
           </div>
@@ -290,6 +306,7 @@ function DetailPanel({ asset, imgSrc, onRefresh }) {
             {a.dispensers.map((d, i) => (
               <div key={i} className="dispenser-item">
                 <div className="disp-price">{d.btcPrice} BTC</div>
+                {d.usdPrice != null && <div className="disp-usd">{fmtUsd(d.usdPrice)}</div>}
                 <div className="disp-addr">{d.address}</div>
                 {d.giveRemaining != null && <div className="disp-remaining">{d.giveRemaining} remaining</div>}
               </div>
@@ -301,12 +318,18 @@ function DetailPanel({ asset, imgSrc, onRefresh }) {
       {/* Per-asset sales/tx history */}
       {txList.length > 0 && (
         <div className="ad-tx-section">
-          <div className="ad-section-label">Sales & Activity ({txList.length})</div>
+          <div className="ad-section-head">
+            <div className="ad-section-label">Sales & Activity ({txList.length})</div>
+            {showAllTx && txList.length > TX_PREVIEW && (
+              <button className="tx-show-less" onClick={() => setShowAllTx(false)}>Show Less</button>
+            )}
+          </div>
           <div className="ad-tx-list">
             {txVisible.map((tx, i) => (
               <div key={tx.id ?? i} className="tx-item">
                 <span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span>
                 <span className="tx-price-inline">{tx.btcPrice ? `${tx.btcPrice} BTC` : tx.ethPrice ? `${tx.ethPrice.toFixed(4)} ETH` : '—'}</span>
+                {tx.usdPrice != null && <span className="tx-usd-inline">{fmtUsd(tx.usdPrice)}</span>}
                 <span className="tx-qty">×{tx.quantity}</span>
                 <span className="tx-addr-short">{tx.from} → {tx.to || '—'}</span>
                 {tx.timestamp && <span className="tx-time">{fmtDate(tx.timestamp)}</span>}
@@ -318,7 +341,7 @@ function DetailPanel({ asset, imgSrc, onRefresh }) {
               </div>
             ))}
           </div>
-          {txList.length > 15 && !showAllTx && (
+          {txList.length > TX_PREVIEW && !showAllTx && (
             <button className="tx-show-more" onClick={() => setShowAllTx(true)}>
               Show all {txList.length} transactions
             </button>

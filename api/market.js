@@ -2,11 +2,14 @@
  * /api/market.js
  * Server-side proxy for Counterparty API v2.
  * Fetches asset info, holders, dispensers, dispenses (actual sales),
- * and recent sends for one or more XCP assets.
+ * recent sends, BTC-USD price, and TokenScan images.
  * Optionally fetches OpenSea Emblem Vault sales if OPENSEA_API_KEY is set.
  */
 
 const BASE = 'https://api.counterparty.io:4000/v2';
+
+// TokenScan image URLs (known pattern for Counterparty assets)
+const TOKENSCAN_IMG = (asset) => `https://tokenscan.io/img/assets/${asset}.png`;
 
 async function xcp(path) {
   try {
@@ -21,14 +24,38 @@ async function xcp(path) {
   }
 }
 
-// Resolve asset image from Counterparty description metadata URL
-async function resolveImageUrl(description) {
+// Fetch current BTC-USD price from mempool.space (free, no key needed)
+let btcUsdCache = { price: null, ts: 0 };
+async function getBtcUsd() {
+  const now = Date.now();
+  if (btcUsdCache.price && now - btcUsdCache.ts < 120_000) return btcUsdCache.price;
+  try {
+    const res = await fetch('https://mempool.space/api/v1/prices', {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return btcUsdCache.price;
+    const data = await res.json();
+    btcUsdCache = { price: data.USD ?? null, ts: now };
+    return btcUsdCache.price;
+  } catch {
+    return btcUsdCache.price;
+  }
+}
+
+// Resolve asset image: try TokenScan first, then Counterparty description metadata
+async function resolveImageUrl(asset, description) {
+  // TokenScan is the primary source
+  const tsUrl = TOKENSCAN_IMG(asset);
+  try {
+    const res = await fetch(tsUrl, { method: 'HEAD', signal: AbortSignal.timeout(4000) });
+    if (res.ok) return tsUrl;
+  } catch {}
+
+  // Fallback: parse description for metadata JSON URL
   if (!description) return null;
-  // Check if description looks like a URL or contains one
   const urlMatch = description.match(/https?:\/\/[^\s"']+\.json/i)
     || description.match(/^(https?:\/\/[^\s]+|[a-z0-9.-]+\/[^\s]+\.json)$/i);
   if (!urlMatch) {
-    // Some descriptions are bare domain paths like "res.indiesquare.me/json/BBOYPEPE.json"
     const bareUrl = description.match(/^([a-z0-9.-]+\.[a-z]+\/[^\s]+)$/i);
     if (bareUrl) {
       try {
@@ -91,12 +118,8 @@ async function getOpenSeaSales(assetName) {
     });
     if (!res.ok) return [];
     const data = await res.json();
-    // Filter for sales that mention this asset in the NFT name
     return (data.asset_events || [])
-      .filter(e => {
-        const name = (e.nft?.name || '').toUpperCase();
-        return name.includes(assetName);
-      })
+      .filter(e => (e.nft?.name || '').toUpperCase().includes(assetName))
       .slice(0, 10)
       .map(e => ({
         id: e.order_hash || e.transaction?.hash || `os-${Date.now()}`,
@@ -113,7 +136,7 @@ async function getOpenSeaSales(assetName) {
   }
 }
 
-async function getAssetData(asset) {
+async function getAssetData(asset, btcUsd) {
   // Run all requests in parallel
   const [info, holdersRes, sendsRes, ordersRes, dispensesRes] = await Promise.all([
     xcp(`/assets/${asset}`),
@@ -135,24 +158,31 @@ async function getAssetData(asset) {
   const holders = holdersRes?.result?.length ?? null;
   const totalSupplyUnits = divisible && supply ? supply / 1e8 : supply;
 
-  // Resolve image from metadata
-  const imageUrl = await resolveImageUrl(desc);
+  // Resolve image (TokenScan first, then metadata)
+  const imageUrl = await resolveImageUrl(asset, desc);
+
+  // Helper: attach USD value to a BTC price
+  const withUsd = (btc) => (btc != null && btcUsd != null) ? Math.round(btc * btcUsd * 100) / 100 : null;
 
   // Completed dispenses (actual sales with BTC amounts)
-  const dispenses = (dispensesRes?.result || []).map(d => ({
-    id:        d.tx_hash,
-    asset:     asset,
-    type:      'sale',
-    btcPrice:  d.satoshirate ? d.satoshirate / 1e8 : null,
-    quantity:  d.dispense_quantity ?? 1,
-    from:      shortAddr(d.source),
-    to:        shortAddr(d.destination),
-    blockIndex: d.block_index ?? null,
-    timestamp: d.block_time ? new Date(d.block_time * 1000).toISOString() : null,
-    txHash:    d.tx_hash,
-    xcUrl:     `https://xchain.io/tx/${d.tx_hash}`,
-    tsUrl:     `https://tokenscan.io/tx/${d.tx_hash}`,
-  }));
+  const dispenses = (dispensesRes?.result || []).map(d => {
+    const btcPrice = d.satoshirate ? d.satoshirate / 1e8 : null;
+    return {
+      id:        d.tx_hash,
+      asset:     asset,
+      type:      'sale',
+      btcPrice,
+      usdPrice:  withUsd(btcPrice),
+      quantity:  d.dispense_quantity ?? 1,
+      from:      shortAddr(d.source),
+      to:        shortAddr(d.destination),
+      blockIndex: d.block_index ?? null,
+      timestamp: d.block_time ? new Date(d.block_time * 1000).toISOString() : null,
+      txHash:    d.tx_hash,
+      xcUrl:     `https://xchain.io/tx/${d.tx_hash}`,
+      tsUrl:     `https://tokenscan.io/tx/${d.tx_hash}`,
+    };
+  });
 
   // Recent sends (transfers)
   const sends = (sendsRes?.result || []).map(s => ({
@@ -160,6 +190,7 @@ async function getAssetData(asset) {
     asset:     asset,
     type:      'transfer',
     btcPrice:  null,
+    usdPrice:  null,
     quantity:  s.quantity ?? 1,
     from:      shortAddr(s.source),
     to:        shortAddr(s.destination),
@@ -171,20 +202,24 @@ async function getAssetData(asset) {
   }));
 
   // Open orders (DEX)
-  const orders = (ordersRes?.result || []).map(o => ({
-    id:        o.tx_hash,
-    asset:     asset,
-    type:      o.give_asset === asset ? 'offer' : 'bid',
-    btcPrice:  o.give_asset === 'BTC' ? o.give_quantity / 1e8 : null,
-    quantity:  1,
-    from:      shortAddr(o.source),
-    to:        null,
-    blockIndex: o.block_index ?? null,
-    timestamp: o.block_time ? new Date(o.block_time * 1000).toISOString() : null,
-    txHash:    o.tx_hash,
-    xcUrl:     `https://xchain.io/order/${o.tx_hash}`,
-    tsUrl:     `https://tokenscan.io/tx/${o.tx_hash}`,
-  }));
+  const orders = (ordersRes?.result || []).map(o => {
+    const btcPrice = o.give_asset === 'BTC' ? o.give_quantity / 1e8 : null;
+    return {
+      id:        o.tx_hash,
+      asset:     asset,
+      type:      o.give_asset === asset ? 'offer' : 'bid',
+      btcPrice,
+      usdPrice:  withUsd(btcPrice),
+      quantity:  1,
+      from:      shortAddr(o.source),
+      to:        null,
+      blockIndex: o.block_index ?? null,
+      timestamp: o.block_time ? new Date(o.block_time * 1000).toISOString() : null,
+      txHash:    o.tx_hash,
+      xcUrl:     `https://xchain.io/order/${o.tx_hash}`,
+      tsUrl:     `https://tokenscan.io/tx/${o.tx_hash}`,
+    };
+  });
 
   // OpenSea sales (if API key available)
   const openseaSales = await getOpenSeaSales(asset);
@@ -195,8 +230,19 @@ async function getAssetData(asset) {
   // Last sale info
   const lastSale = dispenses.length > 0 ? {
     price: dispenses[0].btcPrice,
+    usdPrice: dispenses[0].usdPrice,
     timestamp: dispenses[0].timestamp,
   } : null;
+
+  // Floor USD
+  const floorBtc = floor ? parseFloat(floor.btcPrice.toFixed(8)) : null;
+  const floorUsd = withUsd(floorBtc);
+
+  // Dispenser USD values
+  const dispensersWithUsd = dispensers.map(d => ({
+    ...d,
+    usdPrice: withUsd(d.btcPrice),
+  }));
 
   return {
     ticker:        asset,
@@ -208,17 +254,19 @@ async function getAssetData(asset) {
     owner,
     description:   desc,
     imageUrl,
-    floor:         floor ? parseFloat(floor.btcPrice.toFixed(6)) : null,
-    floorSats:     floor ? Math.round(floor.btcPrice * 1e8) : null,
+    floor:         floorBtc,
+    floorUsd,
+    floorSats:     floorBtc ? Math.round(floorBtc * 1e8) : null,
     floorXcp:      floor?.xcpPrice ?? null,
     dispenserAddr: floor?.dispenser ?? null,
-    dispenserCount: dispensers.length,
-    dispensers,
+    dispenserCount: dispensersWithUsd.length,
+    dispensers:    dispensersWithUsd,
     dispenses,
     totalSales:    dispenses.length,
     lastSale,
     transactions,
     openseaSales,
+    btcUsd:        btcUsd,
     fetchedAt:     new Date().toISOString(),
   };
 }
@@ -238,9 +286,11 @@ export default async function handler(req, res) {
   const assets = raw.split(',').map(a => a.trim().toUpperCase()).filter(Boolean).slice(0, 10);
 
   try {
-    const results = await Promise.all(assets.map(getAssetData));
+    // Fetch BTC-USD price once for all assets
+    const btcUsd = await getBtcUsd();
+    const results = await Promise.all(assets.map(a => getAssetData(a, btcUsd)));
     const byTicker = Object.fromEntries(results.map(r => [r.ticker, r]));
-    return res.status(200).json({ assets: byTicker, fetchedAt: new Date().toISOString() });
+    return res.status(200).json({ assets: byTicker, btcUsd, fetchedAt: new Date().toISOString() });
   } catch (err) {
     console.error('[market]', err);
     return res.status(500).json({ error: 'Could not fetch market data.', assets: {} });
