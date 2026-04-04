@@ -358,5 +358,7 @@
   .asset-grid-row { grid-template-columns: 52px 1fr auto; padding: 10px 12px; }
   .ad-card-img, .ad-card-placeholder { width: 160px; height: 160px; }
   .ad-stats { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .ad-hero-stats { gap: 8px; }
+  .ad-hero-val { font-size: 20px; }
   .ad-title { font-size: 22px; }
 }

@@ -224,6 +224,16 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
         <div className="ad-hero-val">{displayVal(a.holders)}</div>
         <div className="ad-hero-sub">wallets</div>
       </div>
+      {a.openseaSales.length > 0 && (() => {
+        const ethPrices = a.openseaSales.map(s => s.ethPrice).filter(Boolean);
+        return ethPrices.length > 0 ? (
+          <div className="ad-hero-stat">
+            <div className="ad-hero-label">ETH Floor (OpenSea)</div>
+            <div className="ad-hero-val">{Math.min(...ethPrices).toFixed(4)} ETH</div>
+            <div className="ad-hero-sub">via Emblem Vault</div>
+          </div>
+        ) : null;
+      })()}
     </div>
 
     <div className="ad-detail-grid">
