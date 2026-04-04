@@ -1,25 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { fmtNum } from '../data/index.js';
 import { useUploadQueue } from '../components/useUploadQueue.js';
 import UploadQueuePanel  from '../components/UploadQueuePanel.jsx';
 import './Gallery.css';
-
-// ── LOCAL STORAGE HELPERS ─────────────────────────────────
-const LS_KEY = 'djpepe_gallery_stats';
-function loadStats() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
-}
-function saveStats(stats) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(stats)); } catch { /* localStorage unavailable */ }
-}
-function mergeStats(files, stats) {
-  return files.map(f => ({
-    ...f,
-    upvotes:  stats[f.id]?.upvotes  ?? f.upvotes,
-    views:    stats[f.id]?.views    ?? f.views,
-    comments: stats[f.id]?.comments ?? f.comments,
-  }));
-}
 
 // ── HELPERS ───────────────────────────────────────────────
 const BG_CLASSES = ['g1','g2','g3','g4','g5','g6'];
@@ -53,17 +35,8 @@ export default function Gallery({ onFileCount }) {
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [adminToken] = useState(() => {
-    try { return localStorage.getItem('djpepe_admin_token') || ''; } catch { return ''; }
-  });
-  const [upvoted, setUpvoted]   = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('djpepe_upvoted') || '[]')); }
-    catch { return new Set(); }
-  });
   const [copied, setCopied]     = useState(false);
   const fileInput               = useRef();
-  const stats                   = useRef(loadStats());
 
   // ── UPLOAD QUEUE ──────────────────────────────────────────
   const onFileUploaded = useCallback((data) => {
@@ -76,7 +49,6 @@ export default function Gallery({ onFileCount }) {
       uploadedAt: data.uploadedAt,
       bg:         BG_CLASSES[Math.floor(Math.random() * BG_CLASSES.length)],
       icon:       '📁',
-      upvotes: 0, comments: 0, views: 0,
       isNew: true,
     };
     setFiles(prev => {
@@ -151,7 +123,7 @@ export default function Gallery({ onFileCount }) {
     const res  = await fetch(url);
     const data = await res.json();
     const remote = (data.files || []).map((f, i) => ({ ...f, bg: BG_CLASSES[i % 6] }));
-    return { items: mergeStats(remote, stats.current), hasMore: data.hasMore || false, cursor: data.cursor || null };
+    return { items: remote, hasMore: data.hasMore || false, cursor: data.cursor || null };
   }, []);
 
   useEffect(() => {
@@ -208,62 +180,15 @@ export default function Gallery({ onFileCount }) {
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    if (sort === 'hot') return (b.upvotes * 3 + b.views) - (a.upvotes * 3 + a.views);
     if (sort === 'new') return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
-    if (sort === 'top') return b.views - a.views;
+    if (sort === 'old') return new Date(a.uploadedAt || 0) - new Date(b.uploadedAt || 0);
+    if (sort === 'az')  return (a.name || '').localeCompare(b.name || '');
     return 0;
   });
 
-  // ── UPVOTE ────────────────────────────────────────────────
-  const toggleUpvote = (id) => {
-    setUpvoted(prev => {
-      const next  = new Set(prev);
-      const delta = next.has(id) ? -1 : 1;
-      next.has(id) ? next.delete(id) : next.add(id);
-      try { localStorage.setItem('djpepe_upvoted', JSON.stringify([...next])); } catch { /* localStorage unavailable */ }
-      stats.current[id] = { ...stats.current[id], upvotes: (stats.current[id]?.upvotes ?? 0) + delta };
-      saveStats(stats.current);
-      setFiles(prev => prev.map(f => f.id === id ? { ...f, upvotes: f.upvotes + delta } : f));
-      return next;
-    });
-  };
-
-  // ── OPEN FILE (increment view) ────────────────────────────
+  // ── OPEN FILE ──────────────────────────────────────────────
   const openFile = (file) => {
-    stats.current[file.id] = { ...stats.current[file.id], views: (stats.current[file.id]?.views ?? file.views) + 1 };
-    saveStats(stats.current);
-    setFiles(prev => prev.map(f => f.id === file.id ? { ...f, views: f.views + 1 } : f));
-    setSelected({ ...file, views: file.views + 1 });
-  };
-
-  // ── DELETE FILE ────────────────────────────────────────────
-  const deleteFile = async (file) => {
-    const token = adminToken || prompt('Enter admin token:');
-    if (!token) return;
-    try { localStorage.setItem('djpepe_admin_token', token); } catch {}
-    setDeleting(true);
-    try {
-      const res = await fetch('/api/gallery-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
-        body: JSON.stringify({ url: file.url }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        alert(err.error || 'Delete failed');
-        return;
-      }
-      setFiles(prev => {
-        const next = prev.filter(f => f.id !== file.id);
-        onFileCount?.(next.length);
-        return next;
-      });
-      setSelected(null);
-    } catch {
-      alert('Delete failed — network error');
-    } finally {
-      setDeleting(false);
-    }
+    setSelected(file);
   };
 
   // ── COPY LINK ─────────────────────────────────────────────
@@ -320,9 +245,9 @@ export default function Gallery({ onFileCount }) {
           </span>
         </div>
         <div className="sort-tabs">
-          {['hot','new','top'].map(s => (
-            <button key={s} className={`sort-tab ${sort===s?'active':''}`} onClick={() => setSort(s)}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
+          {[['new','Newest'],['old','Oldest'],['az','A\u2013Z']].map(([key, label]) => (
+            <button key={key} className={`sort-tab ${sort===key?'active':''}`} onClick={() => setSort(key)}>
+              {label}
             </button>
           ))}
         </div>
@@ -405,11 +330,7 @@ export default function Gallery({ onFileCount }) {
                 </div>
                 <div className="cell-meta">
                   <div className="cell-name">{file.name}</div>
-                  <div className="cell-stats">
-                    <span className="stat-up">▲ {fmtNum(file.upvotes + (upvoted.has(file.id) ? 1 : 0))}</span>
-                    <span>💬 {fmtNum(file.comments)}</span>
-                    <span>👁 {fmtNum(file.views)}</span>
-                  </div>
+                  <div className="cell-sub">{file.type?.toUpperCase()}</div>
                 </div>
               </div>
             ))}
@@ -447,43 +368,15 @@ export default function Gallery({ onFileCount }) {
               )}
             </div>
             <div className="modal-body">
-              <div className="modal-stats">
-                {[
-                  { label:'Upvotes',  val: fmtNum(selected.upvotes + (upvoted.has(selected.id)?1:0)), cls:'green' },
-                  { label:'Views',    val: fmtNum(selected.views),    cls:'' },
-                  { label:'Comments', val: fmtNum(selected.comments), cls:'' },
-                ].map(s => (
-                  <div key={s.label} className="modal-stat">
-                    <span className="ms-label">{s.label}</span>
-                    <span className={`ms-val ${s.cls}`}>{s.val}</span>
-                  </div>
-                ))}
-              </div>
               <div className="modal-details">
                 <div className="detail-row"><span>Format</span><span>{selected.type?.toUpperCase()}</span></div>
                 {selected.size && <div className="detail-row"><span>Size</span><span>{(selected.size/1024).toFixed(1)} KB</span></div>}
                 {selected.uploadedAt && <div className="detail-row"><span>Added</span><span>{new Date(selected.uploadedAt).toLocaleDateString()}</span></div>}
-                {selected.url && <div className="detail-row"><span>CDN URL</span><a href={selected.url} target="_blank" rel="noreferrer" className="detail-link">Open ↗</a></div>}
+                {selected.url && <div className="detail-row"><span>CDN URL</span><a href={selected.url} target="_blank" rel="noreferrer" className="detail-link">Open</a></div>}
               </div>
               <div className="modal-actions">
-                <button
-                  className={`btn ${upvoted.has(selected.id) ? 'btn-green' : 'btn-outline'}`}
-                  onClick={() => {
-                    toggleUpvote(selected.id);
-                    setSelected(prev => ({ ...prev, upvotes: prev.upvotes + (upvoted.has(prev.id)?-1:1) }));
-                  }}
-                >
-                  {upvoted.has(selected.id) ? '▲ Upvoted' : '▲ Upvote'}
-                </button>
                 {selected.url && <a href={selected.url} download={selected.name} className="btn btn-outline">Download</a>}
                 <button className="btn btn-outline" onClick={copyLink}>{copied ? 'Link copied.' : 'Copy link'}</button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => deleteFile(selected)}
-                  disabled={deleting}
-                >
-                  {deleting ? 'Deleting…' : 'Delete'}
-                </button>
               </div>
             </div>
           </div>
