@@ -54,6 +54,8 @@ export default function Market({ onMarketUpdate }) {
   const [txFilter,   setTxFilter]   = useState('all');
   const [txExpanded, setTxExpanded] = useState(false);
   const [status,     setStatus]     = useState('loading');
+  const prevFloors = useRef({});
+  const [floorDeltas, setFloorDeltas] = useState({});
 
   const buildAsset = useCallback((staticAsset) => {
     const live = liveData?.[staticAsset.ticker];
@@ -99,6 +101,21 @@ export default function Market({ onMarketUpdate }) {
     onMarketUpdate?.({ floor: djpepe?.floor ?? null, floorUsd: djpepe?.floorUsd ?? null, supply: djpepe?.supply ?? 169, status });
   }, [liveData, status, onMarketUpdate]);
 
+  useEffect(() => {
+    if (!liveData) return;
+    const deltas = {};
+    for (const ticker of Object.keys(liveData)) {
+      const newFloor = liveData[ticker]?.floor;
+      const oldFloor = prevFloors.current[ticker];
+      if (newFloor != null && oldFloor != null && oldFloor !== newFloor) {
+        const pct = ((newFloor - oldFloor) / oldFloor * 100).toFixed(1);
+        deltas[ticker] = { direction: newFloor > oldFloor ? 'up' : 'down', pct };
+      }
+      if (newFloor != null) prevFloors.current[ticker] = newFloor;
+    }
+    if (Object.keys(deltas).length > 0) setFloorDeltas(prev => ({ ...prev, ...deltas }));
+  }, [liveData]);
+
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
   const getImgSrc = (a) => a.imageUrl || a.imageFallback || null;
 
@@ -112,8 +129,8 @@ export default function Market({ onMarketUpdate }) {
         {status === 'error' && <>API unreachable \u00b7 <button className="ms-retry" onClick={() => fetchMarket(true)}>retry</button></>}
       </div>
       <div className="asset-table">
-        <AssetSection label="Hip-Hop Elements Series" assets={hiphopAssets} buildAsset={buildAsset} expandedId={expandedId} toggleExpand={toggleExpand} getImgSrc={getImgSrc} fetchMarket={fetchMarket} btcUsd={btcUsd} />
-        <AssetSection label="Homage Collection" className="series-homage" assets={homageAssets} buildAsset={buildAsset} expandedId={expandedId} toggleExpand={toggleExpand} getImgSrc={getImgSrc} fetchMarket={fetchMarket} btcUsd={btcUsd} />
+        <AssetSection label="Hip-Hop Elements Series" assets={hiphopAssets} buildAsset={buildAsset} expandedId={expandedId} toggleExpand={toggleExpand} getImgSrc={getImgSrc} fetchMarket={fetchMarket} btcUsd={btcUsd} floorDeltas={floorDeltas} />
+        <AssetSection label="Homage Collection" className="series-homage" assets={homageAssets} buildAsset={buildAsset} expandedId={expandedId} toggleExpand={toggleExpand} getImgSrc={getImgSrc} fetchMarket={fetchMarket} btcUsd={btcUsd} floorDeltas={floorDeltas} />
       </div>
       <div className={`panel tx-bottom-panel ${txExpanded ? '' : 'collapsed'}`}>
         <div className="panel-head panel-toggle" onClick={() => setTxExpanded(!txExpanded)}>
@@ -145,7 +162,7 @@ export default function Market({ onMarketUpdate }) {
   );
 }
 
-function AssetSection({ label, className, assets, buildAsset, expandedId, toggleExpand, getImgSrc, fetchMarket, btcUsd }) {
+function AssetSection({ label, className, assets, buildAsset, expandedId, toggleExpand, getImgSrc, fetchMarket, btcUsd, floorDeltas }) {
   return (
     <div className={`series-section ${className || ''}`}>
       <div className="series-header">{label}</div>
@@ -158,7 +175,7 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
               <AssetImg src={imgSrc} fallbacks={[a.imageFallback].filter(Boolean)} alt={a.name} className="ag-icon-img" placeholderClass="ag-icon-placeholder" placeholderText={a.ticker.slice(0,2)} />
             </div>
             <div className="ag-name"><span className="ag-name-main">{a.name}</span><span className="ag-name-sub">{a.ticker} \u00b7 {a.series || a.chain}</span></div>
-            <div className="ag-floor">{a.floor != null ? <><div className="ag-floor-col"><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span></div>{a.floorUsd != null && <span className="ag-floor-usd">{fmtUsd(a.floorUsd)}</span>}</> : <span className="ag-null">\u2014</span>}</div>
+            <div className="ag-floor">{a.floor != null ? <><div className="ag-floor-col"><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span>{floorDeltas[a.ticker] && <span className={`ag-floor-delta ${floorDeltas[a.ticker].direction}`}>{floorDeltas[a.ticker].direction === 'up' ? '\u25b2' : '\u25bc'}{floorDeltas[a.ticker].pct}%</span>}</div>{a.floorUsd != null && <span className="ag-floor-usd">{fmtUsd(a.floorUsd)}</span>}</> : <span className="ag-null">\u2014</span>}</div>
             <div className="ag-stat">{displayVal(a.supply)}</div><div className="ag-stat">{displayVal(a.holders)}</div>
             <div className="ag-actions"><a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-accent" onClick={e => e.stopPropagation()}>Buy</a><span className="ag-expand-arrow">{isOpen ? '\u25be' : '\u25b8'}</span></div>
           </div>
