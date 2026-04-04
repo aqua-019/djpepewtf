@@ -2,7 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUploadQueue } from '../components/useUploadQueue.js';
 import UploadQueuePanel  from '../components/UploadQueuePanel.jsx';
 import SubmitModal        from '../components/SubmitModal.jsx';
+import { ImageIcon, VideoIcon, AudioIcon, GifIcon, VectorIcon, FileIcon } from '../components/Icons.jsx';
 import './Gallery.css';
+
+const ICON_MAP = { image: ImageIcon, video: VideoIcon, audio: AudioIcon, gif: GifIcon, vector: VectorIcon, file: FileIcon };
 
 // ── HELPERS ───────────────────────────────────────────────
 const BG_CLASSES = ['g1','g2','g3','g4','g5','g6'];
@@ -32,6 +35,7 @@ export default function Gallery({ onFileCount }) {
     try { return parseInt(localStorage.getItem('gallery-cell-size')) || 180; } catch { return 180; }
   });
   const [filterType, setFilterType] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
   const [search, setSearch] = useState('');
   const [cursor, setCursor] = useState(null);
@@ -51,7 +55,7 @@ export default function Gallery({ onFileCount }) {
       size:       data.size,
       uploadedAt: data.uploadedAt,
       bg:         BG_CLASSES[Math.floor(Math.random() * BG_CLASSES.length)],
-      icon:       '📁',
+      icon:       'file',
       isNew: true,
     };
     setFiles(prev => {
@@ -180,6 +184,7 @@ export default function Gallery({ onFileCount }) {
     if (filterYear !== 'all' && f.uploadedAt) {
       if (new Date(f.uploadedAt).getFullYear() !== Number(filterYear)) return false;
     }
+    if (filterCategory !== 'all' && f.category !== filterCategory) return false;
     if (searchLower && !(f.name || '').toLowerCase().includes(searchLower)) return false;
     return true;
   });
@@ -274,9 +279,9 @@ export default function Gallery({ onFileCount }) {
       {/* ── FILTER BAR ───────────────────────────────────── */}
       <div className="filter-bar">
         <div className="filter-group">
-          {['all','image','video','audio'].map(t => (
-            <button key={t} className={`filter-pill ${filterType===t?'active':''}`} onClick={() => setFilterType(t)}>
-              {t === 'all' ? 'All' : t.charAt(0).toUpperCase() + t.slice(1) + 's'}
+          {[['all','All'],['image','Images'],['gif','GIFs'],['video','Video'],['audio','Audio']].map(([key, label]) => (
+            <button key={key} className={`filter-pill ${filterCategory===key?'active':''}`} onClick={() => { setFilterCategory(key); setFilterType(key === 'all' ? 'all' : key); }}>
+              {label}
             </button>
           ))}
           {years.length > 0 && (
@@ -339,7 +344,7 @@ export default function Gallery({ onFileCount }) {
                 <div className={`cell-thumb ${file.bg}`}>
                   {file.url && IMAGE_EXTS.has(file.type)
                     ? <img src={file.url} alt={file.name} loading="lazy"/>
-                    : <span className="cell-icon">{file.icon}</span>
+                    : <span className="cell-icon">{(() => { const Icon = ICON_MAP[file.icon] || FileIcon; return <Icon />; })()}</span>
                   }
                   {file.isNew                        && <span className="tag tag-new cell-badge">New</span>}
                   {!file.isNew && file.type==='gif'  && <span className="tag tag-red  cell-badge">GIF</span>}
@@ -348,7 +353,7 @@ export default function Gallery({ onFileCount }) {
                 </div>
                 <div className="cell-meta">
                   <div className="cell-name">{file.name}</div>
-                  <div className="cell-sub">{file.type?.toUpperCase()}</div>
+                  <div className="cell-sub">{file.category || file.type?.toUpperCase()} \u00b7 {file.type?.toUpperCase()}</div>
                 </div>
               </div>
             ))}

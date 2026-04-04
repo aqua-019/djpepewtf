@@ -30,6 +30,7 @@ export default async function handler(req, res) {
         uploadedAt: b.uploadedAt,
         bg:         `g${(i % 6) + 1}`,
         icon:       iconForType(ext),
+        category:   categoryForType(ext),
         isNew:      false,
       };
     });
@@ -48,12 +49,24 @@ export default async function handler(req, res) {
   }
 }
 
+function categoryForType(ext) {
+  const IMAGE_EXTS = new Set(['jpg','jpeg','png','tiff','bmp','webp','avif','heic','heif']);
+  const VIDEO_EXTS = new Set(['mp4','webm','mov','avi','ogv']);
+  const AUDIO_EXTS = new Set(['mp3','wav','ogg','flac','aac','m4a']);
+  if (ext === 'gif') return 'gif';
+  if (ext === 'svg') return 'image';
+  if (IMAGE_EXTS.has(ext)) return 'image';
+  if (VIDEO_EXTS.has(ext)) return 'video';
+  if (AUDIO_EXTS.has(ext)) return 'audio';
+  return 'other';
+}
+
 function iconForType(ext) {
   const map = {
-    gif: '🎞', mp4: '📼', webm: '📼', mov: '📼', avi: '📼', ogv: '📼',
-    mp3: '🎵', wav: '🎵', ogg: '🎵', flac: '🎵', aac: '🎵', m4a: '🎵',
-    jpg: '🐸', jpeg: '🐸', png: '🎴', tiff: '🖼', bmp: '🖼',
-    svg: '✏️', webp: '🖼', avif: '🖼', heic: '🖼', heif: '🖼',
+    gif: 'gif', mp4: 'video', webm: 'video', mov: 'video', avi: 'video', ogv: 'video',
+    mp3: 'audio', wav: 'audio', ogg: 'audio', flac: 'audio', aac: 'audio', m4a: 'audio',
+    jpg: 'image', jpeg: 'image', png: 'image', tiff: 'image', bmp: 'image',
+    svg: 'vector', webp: 'image', avif: 'image', heic: 'image', heif: 'image',
   };
-  return map[ext] || '📁';
+  return map[ext] || 'file';
 }

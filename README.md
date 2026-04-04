@@ -1,16 +1,57 @@
-# React + Vite
+# DJPEPE.WTF
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The canonical archive, meme gallery, and asset market for DJ PEPE -- the first audio NFT in history, minted on Bitcoin via Counterparty (XCP), October 13, 2016.
 
-Currently, two official plugins are available:
+**Live:** https://djpepe.wtf
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
 
-## React Compiler
+- **Frontend:** React 19 + Vite 8 (vanilla CSS with custom properties)
+- **Backend:** Vercel Serverless Functions
+- **Storage:** Vercel Blob (gallery files + submissions)
+- **Data:** Counterparty API v2 (live asset data), mempool.space (BTC/USD), CoinGecko (ETH/USD)
+- **Notifications:** Telegram Bot API + Resend (email)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Setup
 
-## Expanding the ESLint configuration
+```bash
+git clone https://github.com/aqua-019/djpepewtf.git
+cd djpepewtf
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Copy `.env.example` and set the required environment variables. See `.env.example` for the full list.
+
+## API Endpoints
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/gallery` | GET | Public | List gallery files (paginated) |
+| `/api/upload` | POST | Public (rate-limited) | Upload file to gallery |
+| `/api/market` | GET | Public | Live asset data from Counterparty |
+| `/api/submit` | POST | Public | Community meme submission |
+| `/api/submissions` | GET | Admin | List pending submissions |
+| `/api/approve` | POST | Admin | Move submission to gallery |
+| `/api/reject` | POST | Admin | Delete submission |
+| `/api/gallery-delete` | POST | Admin | Delete a gallery file |
+
+Admin endpoints require `x-admin-token` header matching the `ADMIN_TOKEN` environment variable.
+
+## Pages
+
+- **Gallery** -- Meme archive with search, category filters, size slider
+- **DJPEPE** -- Asset info page with live stats, timeline, traits
+- **Market** -- Multi-asset dashboard with price charts, dispensers, sales history
+
+## Deployment
+
+Deployed on Vercel. Push to `main` triggers auto-deploy.
+
+```bash
+git push origin main
+```
+
+## Architecture
+
+See the full architecture document for detailed design decisions, data models, and implementation notes.

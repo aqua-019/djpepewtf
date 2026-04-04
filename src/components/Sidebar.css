@@ -15,7 +15,7 @@
 .sidebar-inner {
   width: var(--sidebar-w-open);
   height: 100%;
-  background: oklch(0.12 0.015 150 / 0.55);
+  background: oklch(0.11 0.005 260 / 0.55);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
   border-right: 1px solid rgba(255, 255, 255, 0.05);
@@ -53,7 +53,7 @@
 .si-item.active {
   background: var(--accent-dim);
   color: var(--accent);
-  border: 1px solid oklch(0.62 0.12 152 / 0.14);
+  border: 1px solid oklch(0.68 0.16 145 / 0.14);
 }
 
 .si-item svg {

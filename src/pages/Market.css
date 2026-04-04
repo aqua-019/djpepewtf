@@ -75,6 +75,9 @@
 .ag-floor-val { font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--accent); }
 .ag-floor-unit { font-size: 10px; color: var(--txt3); font-weight: 500; }
 .ag-floor-usd { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: oklch(0.80 0.14 85); }
+.ag-floor-delta { font-size: 10px; font-weight: 600; margin-left: 4px; }
+.ag-floor-delta.up { color: var(--accent); }
+.ag-floor-delta.down { color: var(--red); }
 .ag-null { font-size: 18px; color: var(--txt3); }
 .ag-stat { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--txt); }
 .ag-actions { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
@@ -132,6 +135,13 @@
 .ad-stat-val { font-family: var(--font-display); font-size: 15px; font-weight: 800; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stat-usd .ad-stat-val { color: oklch(0.80 0.14 85); }
 .stat-usd { border-color: oklch(0.80 0.14 85 / 0.12); }
+
+.ad-chart-wrap {
+  margin-bottom: 18px; padding: 12px;
+  background: var(--glass); border: 1px solid var(--border); border-radius: var(--r12);
+  overflow: hidden;
+}
+.ad-chart-wrap svg { width: 100%; height: auto; }
 
 .ad-dispensers { margin-bottom: 18px; }
 .ad-section-label { font-size: 10px; font-weight: 700; color: var(--txt3); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }

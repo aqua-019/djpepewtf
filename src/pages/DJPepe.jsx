@@ -17,6 +17,8 @@ const LINKS = [
   { label: 'Rare Pepe Directory', url: 'https://rarepepedirectory.com'       },
   { label: 'Counterparty.io',     url: 'https://counterparty.io'             },
   { label: 'FAKEDJPEPE on XChain',url: 'https://xchain.io/asset/FAKEDJPEPE'  },
+  { label: 'Telegram',            url: 'https://t.me/djpepewtf'              },
+  { label: 'Twitter / X',         url: 'https://x.com/djpepewtf'             },
 ];
 
 export default function DJPepe() {
@@ -88,6 +90,20 @@ export default function DJPepe() {
             View on Chain <ExternalLinkIcon />
           </a>
         </div>
+      </div>
+
+      {/* ── AUDIO SECTION ────────────────────────────────── */}
+      <div className="audio-section">
+        <div className="audio-label">First Audio NFT</div>
+        <div className="audio-bars">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span key={i} className="audio-bar" style={{ animationDelay: `${i * 0.12}s` }} />
+          ))}
+        </div>
+        <p className="audio-desc">
+          DJPEPE is the first audio NFT ever minted on any blockchain.
+          Holders got access to exclusive music by RareScrilla.
+        </p>
       </div>
 
       {/* ── HISTORY + TRAITS ─────────────────────────────── */}

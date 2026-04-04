@@ -199,7 +199,7 @@
   overflow: hidden;
 }
 .cell-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.cell-icon { font-size: 32px; }
+.cell-icon { width: 32px; height: 32px; color: var(--txt3); }
 
 /* thumb bg gradients */
 .g1 { background: linear-gradient(135deg,#061408,#0d2410); }
