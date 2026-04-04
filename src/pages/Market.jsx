@@ -315,7 +315,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
         </div>
       )}
 
-      {/* Per-asset sales/tx history */}
+      {/* Per-asset sales/tx history — proper table */}
       {txList.length > 0 && (
         <div className="ad-tx-section">
           <div className="ad-section-head">
@@ -324,22 +324,39 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
               <button className="tx-show-less" onClick={() => setShowAllTx(false)}>Show Less</button>
             )}
           </div>
-          <div className="ad-tx-list">
-            {txVisible.map((tx, i) => (
-              <div key={tx.id ?? i} className="tx-item">
-                <span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span>
-                <span className="tx-price-inline">{tx.btcPrice ? `${tx.btcPrice} BTC` : tx.ethPrice ? `${tx.ethPrice.toFixed(4)} ETH` : '—'}</span>
-                {tx.usdPrice != null && <span className="tx-usd-inline">{fmtUsd(tx.usdPrice)}</span>}
-                <span className="tx-qty">×{tx.quantity}</span>
-                <span className="tx-addr-short">{tx.from} → {tx.to || '—'}</span>
-                {tx.timestamp && <span className="tx-time">{fmtDate(tx.timestamp)}</span>}
-                <span className="tx-item-links">
-                  {tx.xcUrl && <a href={tx.xcUrl} target="_blank" rel="noreferrer">XChain</a>}
-                  {tx.tsUrl && <a href={tx.tsUrl} target="_blank" rel="noreferrer">TokenScan</a>}
-                  {tx.openseaUrl && <a href={tx.openseaUrl} target="_blank" rel="noreferrer">OpenSea</a>}
-                </span>
-              </div>
-            ))}
+          <div className="ad-tx-table-wrap">
+            <table className="ad-tx-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Date</th>
+                  <th>BTC Price</th>
+                  <th>USD Price</th>
+                  <th>Qty</th>
+                  <th>Seller</th>
+                  <th>Buyer</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {txVisible.map((tx, i) => (
+                  <tr key={tx.id ?? i} className="ad-tx-row">
+                    <td><span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span></td>
+                    <td className="ad-tx-date">{tx.timestamp ? fmtDate(tx.timestamp) : '—'}</td>
+                    <td className="ad-tx-btc">{tx.btcPrice ? `${tx.btcPrice} BTC` : tx.ethPrice ? `${tx.ethPrice.toFixed(4)} ETH` : '—'}</td>
+                    <td className="ad-tx-usd">{tx.usdPrice != null ? fmtUsd(tx.usdPrice) : '—'}</td>
+                    <td className="ad-tx-qty">{tx.quantity}</td>
+                    <td className="ad-tx-addr" title={tx.from || ''}>{tx.fromShort || tx.from || '—'}</td>
+                    <td className="ad-tx-addr" title={tx.to || ''}>{tx.toShort || tx.to || '—'}</td>
+                    <td className="ad-tx-links">
+                      {tx.xcUrl && <a href={tx.xcUrl} target="_blank" rel="noreferrer">XChain</a>}
+                      {tx.tsUrl && <a href={tx.tsUrl} target="_blank" rel="noreferrer">TS</a>}
+                      {tx.openseaUrl && <a href={tx.openseaUrl} target="_blank" rel="noreferrer">OS</a>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           {txList.length > TX_PREVIEW && !showAllTx && (
             <button className="tx-show-more" onClick={() => setShowAllTx(true)}>

@@ -166,7 +166,9 @@ async function getAssetData(asset, btcUsd) {
 
   // Completed dispenses (actual sales with BTC amounts)
   const dispenses = (dispensesRes?.result || []).map(d => {
-    const btcPrice = d.satoshirate ? d.satoshirate / 1e8 : null;
+    // Counterparty v2 dispenses: btc_amount is in satoshis, or use satoshirate from parent dispenser
+    const btcSats = d.btc_amount ?? d.satoshirate ?? d.satoshi_price ?? null;
+    const btcPrice = btcSats ? btcSats / 1e8 : null;
     return {
       id:        d.tx_hash,
       asset:     asset,
@@ -174,8 +176,10 @@ async function getAssetData(asset, btcUsd) {
       btcPrice,
       usdPrice:  withUsd(btcPrice),
       quantity:  d.dispense_quantity ?? 1,
-      from:      shortAddr(d.source),
-      to:        shortAddr(d.destination),
+      from:      d.source ?? null,
+      fromShort: shortAddr(d.source),
+      to:        d.destination ?? null,
+      toShort:   shortAddr(d.destination),
       blockIndex: d.block_index ?? null,
       timestamp: d.block_time ? new Date(d.block_time * 1000).toISOString() : null,
       txHash:    d.tx_hash,
@@ -192,8 +196,10 @@ async function getAssetData(asset, btcUsd) {
     btcPrice:  null,
     usdPrice:  null,
     quantity:  s.quantity ?? 1,
-    from:      shortAddr(s.source),
-    to:        shortAddr(s.destination),
+    from:      s.source ?? null,
+    fromShort: shortAddr(s.source),
+    to:        s.destination ?? null,
+    toShort:   shortAddr(s.destination),
     blockIndex: s.block_index ?? null,
     timestamp: s.block_time ? new Date(s.block_time * 1000).toISOString() : null,
     txHash:    s.tx_hash,
@@ -211,8 +217,10 @@ async function getAssetData(asset, btcUsd) {
       btcPrice,
       usdPrice:  withUsd(btcPrice),
       quantity:  1,
-      from:      shortAddr(o.source),
+      from:      o.source ?? null,
+      fromShort: shortAddr(o.source),
       to:        null,
+      toShort:   null,
       blockIndex: o.block_index ?? null,
       timestamp: o.block_time ? new Date(o.block_time * 1000).toISOString() : null,
       txHash:    o.tx_hash,
