@@ -5,10 +5,10 @@
   width: 100%;
   max-width: 600px;
   margin: 24px auto 0;
-  border-radius: var(--r24);
+  border-radius: var(--r12);
   overflow: hidden;
-  border: 1px solid oklch(0.62 0.12 152 / 0.20);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px oklch(0.62 0.12 152 / 0.08);
+  border: 1px solid oklch(0.68 0.16 145 / 0.20);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px oklch(0.68 0.16 145 / 0.08);
   position: relative;
 }
 .hero-art-img {
@@ -22,13 +22,13 @@
 /* PILLS */
 .pill {
   padding: 3px 10px; font-size: 10px; font-weight: 500;
-  border-radius: var(--r50);
+  border-radius: var(--r6);
   background: rgba(0,0,0,0.55);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.09);
   color: var(--txt2);
 }
-.pill-green { background: oklch(0.62 0.12 152 / 0.15); border-color: oklch(0.62 0.12 152 / 0.25); color: var(--accent); }
+.pill-green { background: oklch(0.68 0.16 145 / 0.15); border-color: oklch(0.68 0.16 145 / 0.25); color: var(--accent); }
 .pill-red   { background: var(--red-dim);   border-color: var(--border-r); color: #ff7777; }
 
 /* ── HERO INFO ──────────────────────────────────────────── */
@@ -86,14 +86,14 @@
 .timeline::before {
   content: ''; position: absolute;
   left: 20px; top: 0; bottom: 0; width: 1px;
-  background: oklch(0.62 0.12 152 / 0.06);
+  background: oklch(0.68 0.16 145 / 0.06);
 }
 .timeline-entry { display: flex; gap: 14px; margin-bottom: 16px; position: relative; }
 .tl-year {
   flex-shrink: 0; width: 40px; height: 40px;
   border-radius: 10px; z-index: 1;
   background: rgba(255,255,255,0.04);
-  border: 1px solid oklch(0.62 0.12 152 / 0.16);
+  border: 1px solid oklch(0.68 0.16 145 / 0.16);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-size: 11px; font-weight: 800;
   color: var(--accent);
@@ -111,7 +111,7 @@
   border-radius: 10px; margin-bottom: 4px;
   transition: all 0.2s;
 }
-.trait-row:hover { border-color: oklch(0.62 0.12 152 / 0.18); background: var(--accent-dim); }
+.trait-row:hover { border-color: oklch(0.68 0.16 145 / 0.18); background: var(--accent-dim); }
 .trait-name { font-size: 10px; color: var(--txt2); }
 .trait-val  { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--accent); }
 .trait-val.red   { color: var(--red); }

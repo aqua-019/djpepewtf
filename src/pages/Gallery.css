@@ -10,8 +10,8 @@
   gap: 6px;
   padding: 24px 20px;
   margin-bottom: 16px;
-  border: 1.5px dashed oklch(0.62 0.12 152 / 0.20);
-  border-radius: var(--r24);
+  border: 1.5px dashed oklch(0.68 0.16 145 / 0.20);
+  border-radius: var(--r8);
   background: var(--glass);
   backdrop-filter: blur(16px);
   cursor: pointer;
@@ -22,25 +22,25 @@
 .upload-zone::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse 60% 80% at 50% 0%, oklch(0.62 0.12 152 / 0.05), transparent);
+  background: radial-gradient(ellipse 60% 80% at 50% 0%, oklch(0.68 0.16 145 / 0.05), transparent);
   pointer-events: none;
 }
 .upload-zone:hover,
 .upload-zone.drag-over {
   border-color: var(--accent-str);
-  background: oklch(0.62 0.12 152 / 0.05);
+  background: oklch(0.68 0.16 145 / 0.05);
 }
 .upload-zone.success {
   border-color: var(--accent);
   border-style: solid;
-  background: oklch(0.62 0.12 152 / 0.05);
+  background: oklch(0.68 0.16 145 / 0.05);
 }
 
 .upload-icon-wrap {
   width: 42px; height: 42px;
   border-radius: 12px;
   background: var(--accent-dim);
-  border: 1px solid oklch(0.62 0.12 152 / 0.20);
+  border: 1px solid oklch(0.68 0.16 145 / 0.20);
   display: flex; align-items: center; justify-content: center;
   color: var(--accent);
   margin-bottom: 2px;
@@ -48,7 +48,7 @@
 
 .upload-spinner {
   width: 18px; height: 18px;
-  border: 2px solid oklch(0.62 0.12 152 / 0.25);
+  border: 2px solid oklch(0.68 0.16 145 / 0.25);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -70,7 +70,7 @@
   letter-spacing: 0.5px; text-transform: uppercase;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.09);
-  border-radius: var(--r50);
+  border-radius: var(--r6);
   color: var(--txt2);
 }
 
@@ -92,16 +92,16 @@
   display: flex; gap: 3px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
-  border-radius: var(--r50); padding: 3px;
+  border-radius: var(--r6); padding: 3px;
 }
 .sort-tab {
   padding: 4px 12px; font-size: 10px; font-weight: 600;
   color: var(--txt2); background: none; border: none;
-  border-radius: var(--r50); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--r6); cursor: pointer; transition: all 0.2s;
 }
 .sort-tab.active {
   background: var(--accent-dim); color: var(--accent);
-  border: 1px solid oklch(0.62 0.12 152 / 0.20);
+  border: 1px solid oklch(0.68 0.16 145 / 0.20);
 }
 .sort-tab:hover:not(.active) { color: var(--txt); }
 
@@ -116,18 +116,18 @@
 .filter-pill {
   padding: 4px 12px; font-size: 10px; font-weight: 600;
   color: var(--txt2); background: none; border: 1px solid transparent;
-  border-radius: var(--r50); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--r6); cursor: pointer; transition: all 0.2s;
 }
 .filter-pill.active {
   background: var(--accent-dim); color: var(--accent);
-  border-color: oklch(0.62 0.12 152 / 0.20);
+  border-color: oklch(0.68 0.16 145 / 0.20);
 }
 .filter-pill:hover:not(.active) { color: var(--txt); }
 
 .filter-year-select {
   padding: 4px 10px; font-size: 10px; font-weight: 500;
   background: var(--glass); border: 1px solid var(--border);
-  border-radius: var(--r50); color: var(--txt2); cursor: pointer;
+  border-radius: var(--r6); color: var(--txt2); cursor: pointer;
   font-family: var(--font-body);
 }
 .filter-year-select:focus { outline: 1px solid var(--accent); }
@@ -151,7 +151,7 @@
   cursor: pointer; transition: box-shadow 0.2s;
 }
 .size-slider::-webkit-slider-thumb:hover {
-  box-shadow: 0 0 8px oklch(0.62 0.12 152 / 0.3);
+  box-shadow: 0 0 8px oklch(0.68 0.16 145 / 0.3);
 }
 
 /* ── GRID ────────────────────────────────────────────────── */
@@ -172,9 +172,9 @@
   display: flex; flex-direction: column;
 }
 .cell:hover {
-  border-color: oklch(0.62 0.12 152 / 0.28);
+  border-color: oklch(0.68 0.16 145 / 0.28);
   transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 0 1px oklch(0.62 0.12 152 / 0.10);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 0 1px oklch(0.68 0.16 145 / 0.10);
 }
 
 .cell-thumb {
@@ -248,7 +248,7 @@
 .modal-close:hover { color: var(--txt); background: var(--glass-hi); }
 
 .modal-preview {
-  background: #040a05;
+  background: #04050a;
   display: flex; align-items: center; justify-content: center;
   min-height: 240px; max-height: 360px; overflow: hidden;
 }
@@ -343,7 +343,7 @@
   align-items:     center;
   gap:             16px;
   padding:         32px 20px;
-  background:      #040a05;
+  background:      #04050a;
   width:           100%;
 }
 .modal-audio-icon { font-size: 52px; }

@@ -2,9 +2,9 @@
   position: fixed;
   bottom: 40px; right: 16px;
   width: 340px;
-  background: oklch(0.14 0.02 150 / 0.96);
+  background: oklch(0.14 0.006 260 / 0.96);
   backdrop-filter: blur(20px);
-  border: 1px solid oklch(0.62 0.12 152 / 0.18);
+  border: 1px solid oklch(0.68 0.16 145 / 0.18);
   border-radius: var(--r16);
   z-index: 300;
   box-shadow: 0 16px 48px rgba(0,0,0,0.6);
@@ -32,7 +32,7 @@
 .uqp-actions { display: flex; gap: 5px; }
 .uqp-btn {
   padding: 3px 9px; font-size: 9px; font-weight: 600;
-  border-radius: var(--r50); cursor: pointer; transition: all 0.2s;
+  border-radius: var(--r6); cursor: pointer; transition: all 0.2s;
   border: 1px solid;
 }
 .uqp-btn.retry { background: rgba(255,68,68,0.1);  border-color: rgba(255,68,68,0.3);  color: #ff7777; }
@@ -106,7 +106,7 @@
 
 .uqp-spinner {
   width: 10px; height: 10px; flex-shrink: 0;
-  border: 1.5px solid oklch(0.62 0.12 152 / 0.20);
+  border: 1.5px solid oklch(0.68 0.16 145 / 0.20);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
