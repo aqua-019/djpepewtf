@@ -252,16 +252,18 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
   const TX_PREVIEW = 8;
   const txVisible = showAllTx ? txList.slice(0, 50) : txList.slice(0, TX_PREVIEW);
 
+  const cardImg = imgSrc || a.imageFallback || null;
+
   return (
     <>
-      {/* Header: large image + info */}
-      <div className="ad-header">
-        <div className="ad-visual">
-          {imgSrc
-            ? <img src={imgSrc} alt={a.name} className="ad-img" onError={e => { if (a.imageFallback && !e.target.src.endsWith(a.imageFallback)) e.target.src = a.imageFallback; }}/>
-            : <div className="ad-img-placeholder">{a.ticker}</div>}
+      {/* Large card image floated left, stats wrap around it */}
+      <div className="ad-top">
+        <div className="ad-card-img-wrap">
+          {cardImg
+            ? <img src={cardImg} alt={a.name} className="ad-card-img" onError={e => { if (a.imageFallback && !e.target.src.endsWith(a.imageFallback)) e.target.src = a.imageFallback; }}/>
+            : <div className="ad-card-placeholder">{a.ticker}</div>}
         </div>
-        <div className="ad-info">
+        <div className="ad-top-right">
           <h3 className="ad-title">{a.name} <span className="ad-ticker">/ {a.ticker}</span></h3>
           {a.description && <p className="ad-desc">{a.description}</p>}
           {a.issuer && <div className="ad-meta">Issuer: <span className="ad-mono">{a.issuer.slice(0,12)}…{a.issuer.slice(-6)}</span></div>}
@@ -271,7 +273,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
         </div>
       </div>
 
-      {/* 4x4 Stats Grid */}
+      {/* Stats Grid wraps around the image */}
       <div className="ad-stats">
         {[
           { label: 'Floor (BTC)',    value: fmtBtc(a.floor) },
