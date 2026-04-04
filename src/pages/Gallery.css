@@ -74,6 +74,11 @@
   color: var(--txt2);
 }
 
+.submit-cta-row {
+  display: flex; justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
 /* ── GALLERY BAR ─────────────────────────────────────────── */
 .gallery-bar {
   display: flex; align-items: center; justify-content: space-between;

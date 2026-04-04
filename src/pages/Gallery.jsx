@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUploadQueue } from '../components/useUploadQueue.js';
 import UploadQueuePanel  from '../components/UploadQueuePanel.jsx';
+import SubmitModal        from '../components/SubmitModal.jsx';
 import './Gallery.css';
 
 // ── HELPERS ───────────────────────────────────────────────
@@ -37,6 +38,7 @@ export default function Gallery({ onFileCount }) {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [copied, setCopied]     = useState(false);
+  const [showSubmit, setShowSubmit] = useState(false);
   const fileInput               = useRef();
 
   // ── UPLOAD QUEUE ──────────────────────────────────────────
@@ -239,6 +241,10 @@ export default function Gallery({ onFileCount }) {
         />
       </div>
 
+      <div className="submit-cta-row">
+        <button className="btn btn-green" onClick={() => setShowSubmit(true)}>Submit a Meme</button>
+      </div>
+
       {/* ── GALLERY BAR ──────────────────────────────────── */}
       <div className="gallery-bar">
         <div className="gallery-title">
@@ -394,6 +400,9 @@ export default function Gallery({ onFileCount }) {
           </div>
         </div>
       )}
+
+      {/* ── SUBMIT MODAL ────────────────────────────────── */}
+      {showSubmit && <SubmitModal onClose={() => setShowSubmit(false)} />}
 
       {/* ── UPLOAD QUEUE PANEL ───────────────────────────── */}
       {showQueue && queue.length > 0 && (
