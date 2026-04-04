@@ -86,19 +86,19 @@
 .ag-actions { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
 .ag-expand-arrow { font-size: 14px; color: var(--txt3); transition: transform 0.2s; }
 
-/* ── FLUID DETAIL PANEL ──────────────────────────────────── */
 .asset-detail {
   max-height: 0; opacity: 0; overflow: hidden;
-  transition: max-height 0.35s ease-out, opacity 0.25s ease-out, padding 0.3s ease-out;
+  transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
   padding: 0 20px;
   background: oklch(0.62 0.12 152 / 0.03);
   border-bottom: 1px solid transparent;
 }
 .asset-detail.open {
-  max-height: 2000px; opacity: 1;
+  max-height: 6000px; opacity: 1;
   padding: 24px 20px;
   border-bottom: 1px solid oklch(0.62 0.12 152 / 0.10);
 }
+.asset-detail-inner { min-height: 0; }
 
 /* Detail header: large image + info */
 /* Large card image floated left with text + stats wrapping */

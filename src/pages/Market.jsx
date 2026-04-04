@@ -235,7 +235,9 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
               </div>
             </div>
             <div className={`asset-detail ${isOpen ? 'open' : ''}`}>
-              {isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} btcUsd={btcUsd} />}
+              <div className="asset-detail-inner">
+                {isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} btcUsd={btcUsd} />}
+              </div>
             </div>
           </div>
         );
@@ -332,8 +334,8 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
                 <tr>
                   <th>Type</th>
                   <th>Date</th>
-                  <th>BTC Price</th>
-                  <th>USD Price</th>
+                  <th>Price</th>
+                  <th>USD</th>
                   <th>Qty</th>
                   <th>Seller</th>
                   <th>Buyer</th>

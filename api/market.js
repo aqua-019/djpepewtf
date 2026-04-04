@@ -42,6 +42,24 @@ async function getBtcUsd() {
   }
 }
 
+// Fetch current ETH-USD price from CoinGecko (free, no key needed)
+let ethUsdCache = { price: null, ts: 0 };
+async function getEthUsd() {
+  const now = Date.now();
+  if (ethUsdCache.price && now - ethUsdCache.ts < 120_000) return ethUsdCache.price;
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd', {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return ethUsdCache.price;
+    const data = await res.json();
+    ethUsdCache = { price: data?.ethereum?.usd ?? null, ts: now };
+    return ethUsdCache.price;
+  } catch {
+    return ethUsdCache.price;
+  }
+}
+
 // Resolve asset image: try TokenScan first, then Counterparty description metadata
 async function resolveImageUrl(asset, description) {
   // TokenScan is the primary source
@@ -107,7 +125,7 @@ async function getFloor(asset) {
 }
 
 // Fetch OpenSea Emblem Vault sales for a specific asset name
-async function getOpenSeaSales(assetName) {
+async function getOpenSeaSales(assetName, ethUsd) {
   const apiKey = process.env.OPENSEA_API_KEY;
   if (!apiKey) return [];
   try {
@@ -121,16 +139,29 @@ async function getOpenSeaSales(assetName) {
     return (data.asset_events || [])
       .filter(e => (e.nft?.name || '').toUpperCase().includes(assetName))
       .slice(0, 10)
-      .map(e => ({
-        id: e.order_hash || e.transaction?.hash || `os-${Date.now()}`,
-        asset: assetName,
-        type: 'opensea-sale',
-        ethPrice: e.payment?.quantity ? parseFloat(e.payment.quantity) / 1e18 : null,
-        from: shortAddr(e.seller),
-        to: shortAddr(e.buyer),
-        timestamp: e.event_timestamp ? new Date(e.event_timestamp).toISOString() : null,
-        openseaUrl: e.nft?.opensea_url || `https://opensea.io/collection/emblem-vault`,
-      }));
+      .map(e => {
+        const ethPrice = e.payment?.quantity ? parseFloat(e.payment.quantity) / 1e18 : null;
+        const usdPrice = (ethPrice != null && ethUsd != null) ? Math.round(ethPrice * ethUsd * 100) / 100 : null;
+        return {
+          id: e.order_hash || e.transaction?.hash || `os-${Date.now()}`,
+          asset: assetName,
+          type: 'opensea-sale',
+          btcPrice: null,
+          ethPrice,
+          usdPrice,
+          quantity: 1,
+          from: e.seller ?? null,
+          fromShort: shortAddr(e.seller),
+          to: e.buyer ?? null,
+          toShort: shortAddr(e.buyer),
+          blockIndex: null,
+          timestamp: e.event_timestamp ? new Date(e.event_timestamp).toISOString() : null,
+          txHash: e.transaction?.hash ?? null,
+          xcUrl: null,
+          tsUrl: null,
+          openseaUrl: e.nft?.opensea_url || `https://opensea.io/collection/emblem-vault`,
+        };
+      });
   } catch {
     return [];
   }
@@ -229,8 +260,9 @@ async function getAssetData(asset, btcUsd) {
     };
   });
 
-  // OpenSea sales (if API key available)
-  const openseaSales = await getOpenSeaSales(asset);
+  // OpenSea sales (if API key available) — needs ethUsd for pricing
+  const ethUsd = await getEthUsd();
+  const openseaSales = await getOpenSeaSales(asset, ethUsd);
 
   // Combined transactions: dispenses first (most valuable), then orders, then sends
   const transactions = [...dispenses, ...orders, ...sends].slice(0, 50);
@@ -298,7 +330,8 @@ export default async function handler(req, res) {
     const btcUsd = await getBtcUsd();
     const results = await Promise.all(assets.map(a => getAssetData(a, btcUsd)));
     const byTicker = Object.fromEntries(results.map(r => [r.ticker, r]));
-    return res.status(200).json({ assets: byTicker, btcUsd, fetchedAt: new Date().toISOString() });
+    const ethUsd = await getEthUsd();
+    return res.status(200).json({ assets: byTicker, btcUsd, ethUsd, fetchedAt: new Date().toISOString() });
   } catch (err) {
     console.error('[market]', err);
     return res.status(500).json({ error: 'Could not fetch market data.', assets: {} });
