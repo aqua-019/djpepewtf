@@ -83,7 +83,7 @@ export default function Market({ onMarketUpdate }) {
   }, [liveData, status, onMarketUpdate]);
 
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
-  const getImgSrc = (a) => a.imageUrl || a.imageFallback || a.imageLocal || null;
+  const getImgSrc = (a) => a.imageUrl || a.imageFallback || null;
 
   return (
     <div className="market-page">
@@ -165,7 +165,7 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
           <div key={a.id}>
             <div className={`asset-grid-row ${isOpen ? 'expanded' : ''}`} onClick={() => toggleExpand(a.id)}>
               <div className="ag-icon">
-                {imgSrc ? <img src={imgSrc} alt={a.name} className="ag-icon-img" onError={e => { if (a.imageLocal && e.target.src !== a.imageLocal) e.target.src = a.imageLocal; }}/> : <div className="ag-icon-placeholder">{a.ticker.slice(0,2)}</div>}
+                {imgSrc ? <img src={imgSrc} alt={a.name} className="ag-icon-img" onError={e => { if (a.imageFallback && !e.target.src.endsWith(a.imageFallback)) e.target.src = a.imageFallback; }}/> : <div className="ag-icon-placeholder">{a.ticker.slice(0,2)}</div>}
               </div>
               <div className="ag-name">
                 <span className="ag-name-main">{a.name}</span>
@@ -202,7 +202,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
     <>
       <div className="ad-header">
         <div className="ad-visual">
-          {imgSrc ? <img src={imgSrc} alt={a.name} className="ad-img" onError={e => { if (a.imageLocal && e.target.src !== a.imageLocal) e.target.src = a.imageLocal; }}/> : <div className="ad-img-placeholder">{a.ticker}</div>}
+          {imgSrc ? <img src={imgSrc} alt={a.name} className="ad-img" onError={e => { if (a.imageFallback && !e.target.src.endsWith(a.imageFallback)) e.target.src = a.imageFallback; }}/> : <div className="ad-img-placeholder">{a.ticker}</div>}
         </div>
         <div className="ad-info">
           <h3 className="ad-title">{a.name} <span className="ad-ticker">/ {a.ticker}</span></h3>
