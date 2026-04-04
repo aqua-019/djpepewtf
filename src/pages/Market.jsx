@@ -1,7 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { MARKET_ASSETS } from '../data/index.js';
 import { CACHE_TTL } from '../lib/constants.js';
 import './Market.css';
+
+// Image component with proper error cascade -> placeholder on all failures
+function AssetImg({ src, fallbacks = [], alt, className, placeholderClass, placeholderText }) {
+  const [curSrc, setCurSrc] = useState(src);
+  const tried = useRef(new Set());
+
+  useEffect(() => { tried.current = new Set(); setCurSrc(src); }, [src]);
+
+  const handleError = () => {
+    tried.current.add(curSrc);
+    const next = [src, ...fallbacks].find(u => u && !tried.current.has(u));
+    if (next) setCurSrc(next);
+    else setCurSrc(null);
+  };
+
+  if (!curSrc) return <div className={placeholderClass}>{placeholderText}</div>;
+  return <img src={curSrc} alt={alt} className={className} onError={handleError} />;
+}
 
 const TYPE_TAG   = { sale:'tag-green', transfer:'tag-grey', offer:'tag-red', bid:'tag-green', 'opensea-sale':'tag-blue' };
 const TYPE_LABEL = { sale:'Sale', transfer:'Transfer', offer:'Offer', bid:'Bid', 'opensea-sale':'OpenSea' };
@@ -126,7 +144,9 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
         const a = buildAsset(sa); const isOpen = expandedId === a.id; const imgSrc = getImgSrc(a);
         return (<div key={a.id}>
           <div className={`asset-grid-row ${isOpen ? 'expanded' : ''}`} onClick={() => toggleExpand(a.id)}>
-            <div className="ag-icon">{imgSrc ? <img src={imgSrc} alt={a.name} className="ag-icon-img" onError={e => { if (a.imageFallback && !e.target.src.endsWith(a.imageFallback)) e.target.src = a.imageFallback; }}/> : <div className="ag-icon-placeholder">{a.ticker.slice(0,2)}</div>}</div>
+            <div className="ag-icon">
+              <AssetImg src={imgSrc} fallbacks={[a.imageFallback].filter(Boolean)} alt={a.name} className="ag-icon-img" placeholderClass="ag-icon-placeholder" placeholderText={a.ticker.slice(0,2)} />
+            </div>
             <div className="ag-name"><span className="ag-name-main">{a.name}</span><span className="ag-name-sub">{a.ticker} \u00b7 {a.series || a.chain}</span></div>
             <div className="ag-floor">{a.floor != null ? <><div className="ag-floor-col"><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span></div>{a.floorUsd != null && <span className="ag-floor-usd">{fmtUsd(a.floorUsd)}</span>}</> : <span className="ag-null">\u2014</span>}</div>
             <div className="ag-stat">{displayVal(a.supply)}</div><div className="ag-stat">{displayVal(a.holders)}</div>
@@ -152,9 +172,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
   return (<>
     <div className="ad-top">
       <div className="ad-card-img-wrap">
-        {cardImg
-          ? <img src={cardImg} alt={a.name} className="ad-card-img" onError={e => { if (a.imageFallback && !e.target.src.endsWith(a.imageFallback)) e.target.src = a.imageFallback; }}/>
-          : <div className="ad-card-placeholder">{a.ticker}</div>}
+        <AssetImg src={cardImg} fallbacks={[a.imageFallback].filter(Boolean)} alt={a.name} className="ad-card-img" placeholderClass="ad-card-placeholder" placeholderText={a.ticker} />
       </div>
       <div className="ad-top-right">
         <h3 className="ad-title">{a.name} <span className="ad-ticker">/ {a.ticker}</span></h3>
@@ -195,6 +213,13 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
       </table></div>
       {txList.length > TX_PREVIEW && !showAllTx && <button className="tx-show-more" onClick={() => setShowAllTx(true)}>Show all {txList.length}</button>}
     </div>)}
+
+    {txList.length === 0 && (
+      <div className="ad-tx-section">
+        <div className="ad-section-label">Sales & Activity</div>
+        <div className="ad-tx-empty">No sales recorded yet. Check <a href={a.buyUrl} target="_blank" rel="noreferrer">Pepe.WTF</a> or <a href={a.xcUrl} target="_blank" rel="noreferrer">XChain</a> for the latest.</div>
+      </div>
+    )}
 
     <div className="ad-actions">
       <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn btn-green">Buy on Pepe.WTF \u2197</a>
