@@ -35,6 +35,7 @@ export default function Gallery({ onFileCount }) {
     try { return parseInt(localStorage.getItem('gallery-cell-size')) || 180; } catch { return 180; }
   });
   const [filterType, setFilterType] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
   const [search, setSearch] = useState('');
   const [cursor, setCursor] = useState(null);
@@ -183,6 +184,7 @@ export default function Gallery({ onFileCount }) {
     if (filterYear !== 'all' && f.uploadedAt) {
       if (new Date(f.uploadedAt).getFullYear() !== Number(filterYear)) return false;
     }
+    if (filterCategory !== 'all' && f.category !== filterCategory) return false;
     if (searchLower && !(f.name || '').toLowerCase().includes(searchLower)) return false;
     return true;
   });
@@ -277,9 +279,9 @@ export default function Gallery({ onFileCount }) {
       {/* ── FILTER BAR ───────────────────────────────────── */}
       <div className="filter-bar">
         <div className="filter-group">
-          {['all','image','video','audio'].map(t => (
-            <button key={t} className={`filter-pill ${filterType===t?'active':''}`} onClick={() => setFilterType(t)}>
-              {t === 'all' ? 'All' : t.charAt(0).toUpperCase() + t.slice(1) + 's'}
+          {[['all','All'],['image','Images'],['gif','GIFs'],['video','Video'],['audio','Audio']].map(([key, label]) => (
+            <button key={key} className={`filter-pill ${filterCategory===key?'active':''}`} onClick={() => { setFilterCategory(key); setFilterType(key === 'all' ? 'all' : key); }}>
+              {label}
             </button>
           ))}
           {years.length > 0 && (
@@ -351,7 +353,7 @@ export default function Gallery({ onFileCount }) {
                 </div>
                 <div className="cell-meta">
                   <div className="cell-name">{file.name}</div>
-                  <div className="cell-sub">{file.type?.toUpperCase()}</div>
+                  <div className="cell-sub">{file.category || file.type?.toUpperCase()} \u00b7 {file.type?.toUpperCase()}</div>
                 </div>
               </div>
             ))}

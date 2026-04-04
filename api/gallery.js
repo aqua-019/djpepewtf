@@ -30,6 +30,7 @@ export default async function handler(req, res) {
         uploadedAt: b.uploadedAt,
         bg:         `g${(i % 6) + 1}`,
         icon:       iconForType(ext),
+        category:   categoryForType(ext),
         isNew:      false,
       };
     });
@@ -46,6 +47,18 @@ export default async function handler(req, res) {
     console.error('[gallery]', err);
     return res.status(500).json({ error: 'Could not load gallery.', files: [] });
   }
+}
+
+function categoryForType(ext) {
+  const IMAGE_EXTS = new Set(['jpg','jpeg','png','tiff','bmp','webp','avif','heic','heif']);
+  const VIDEO_EXTS = new Set(['mp4','webm','mov','avi','ogv']);
+  const AUDIO_EXTS = new Set(['mp3','wav','ogg','flac','aac','m4a']);
+  if (ext === 'gif') return 'gif';
+  if (ext === 'svg') return 'image';
+  if (IMAGE_EXTS.has(ext)) return 'image';
+  if (VIDEO_EXTS.has(ext)) return 'video';
+  if (AUDIO_EXTS.has(ext)) return 'audio';
+  return 'other';
 }
 
 function iconForType(ext) {
