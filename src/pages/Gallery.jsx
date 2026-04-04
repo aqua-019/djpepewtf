@@ -2,7 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUploadQueue } from '../components/useUploadQueue.js';
 import UploadQueuePanel  from '../components/UploadQueuePanel.jsx';
 import SubmitModal        from '../components/SubmitModal.jsx';
+import { ImageIcon, VideoIcon, AudioIcon, GifIcon, VectorIcon, FileIcon } from '../components/Icons.jsx';
 import './Gallery.css';
+
+const ICON_MAP = { image: ImageIcon, video: VideoIcon, audio: AudioIcon, gif: GifIcon, vector: VectorIcon, file: FileIcon };
 
 // ── HELPERS ───────────────────────────────────────────────
 const BG_CLASSES = ['g1','g2','g3','g4','g5','g6'];
@@ -51,7 +54,7 @@ export default function Gallery({ onFileCount }) {
       size:       data.size,
       uploadedAt: data.uploadedAt,
       bg:         BG_CLASSES[Math.floor(Math.random() * BG_CLASSES.length)],
-      icon:       '📁',
+      icon:       'file',
       isNew: true,
     };
     setFiles(prev => {
@@ -339,7 +342,7 @@ export default function Gallery({ onFileCount }) {
                 <div className={`cell-thumb ${file.bg}`}>
                   {file.url && IMAGE_EXTS.has(file.type)
                     ? <img src={file.url} alt={file.name} loading="lazy"/>
-                    : <span className="cell-icon">{file.icon}</span>
+                    : <span className="cell-icon">{(() => { const Icon = ICON_MAP[file.icon] || FileIcon; return <Icon />; })()}</span>
                   }
                   {file.isNew                        && <span className="tag tag-new cell-badge">New</span>}
                   {!file.isNew && file.type==='gif'  && <span className="tag tag-red  cell-badge">GIF</span>}

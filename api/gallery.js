@@ -50,10 +50,10 @@ export default async function handler(req, res) {
 
 function iconForType(ext) {
   const map = {
-    gif: '🎞', mp4: '📼', webm: '📼', mov: '📼', avi: '📼', ogv: '📼',
-    mp3: '🎵', wav: '🎵', ogg: '🎵', flac: '🎵', aac: '🎵', m4a: '🎵',
-    jpg: '🐸', jpeg: '🐸', png: '🎴', tiff: '🖼', bmp: '🖼',
-    svg: '✏️', webp: '🖼', avif: '🖼', heic: '🖼', heif: '🖼',
+    gif: 'gif', mp4: 'video', webm: 'video', mov: 'video', avi: 'video', ogv: 'video',
+    mp3: 'audio', wav: 'audio', ogg: 'audio', flac: 'audio', aac: 'audio', m4a: 'audio',
+    jpg: 'image', jpeg: 'image', png: 'image', tiff: 'image', bmp: 'image',
+    svg: 'vector', webp: 'image', avif: 'image', heic: 'image', heif: 'image',
   };
-  return map[ext] || '📁';
+  return map[ext] || 'file';
 }
