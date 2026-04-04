@@ -1,4 +1,4 @@
-// ── MARKET ASSETS ─────────────────────────────────────────
+// ── MARKET ASSETS ─────────────────────────────────────
 // Hip-Hop Elements series (4 cards) + FAKEDJPEPE
 export const MARKET_ASSETS = [
   {
@@ -73,61 +73,19 @@ export const MARKET_ASSETS = [
   },
 ];
 
-// ── DJPEPE TIMELINE ───────────────────────────────────────
 export const TIMELINE = [
-  {
-    year: '2016',
-    heading: 'Rare Pepe Project Launches',
-    body: 'The Rare Pepe project launches on the Counterparty (XCP) protocol, built on Bitcoin. A new era of blockchain art begins.',
-  },
-  {
-    year: '2016',
-    heading: 'DJPEPE Minted — First Audio NFT',
-    body: 'On October 13th, DJPEPE is created by RareScrilla on Counterparty. 169 cards issued. The first audio NFT in history — holders got access to exclusive music. Part of the Hip-Hop Elements series alongside MCPEPE, BBOYPEPE, and PEPEONE.',
-  },
-  {
-    year: '2016',
-    heading: 'Rare Pepe Wallet Launches',
-    body: 'Joe Looney creates Rare Pepe Wallet, enabling users to trade and collect Rare Pepe cards on the Counterparty protocol.',
-  },
-  {
-    year: '2017',
-    heading: 'Given Away at Blockchain Conferences',
-    body: 'DJPEPE cards are distributed at blockchain conferences and events from 2017 through 2019, making them highly sought-after originals with unlockable bonus content.',
-  },
-  {
-    year: '2018',
-    heading: 'First Rare Pepe Auction',
-    body: 'January 2018: Homer Pepe sells for $39,000 at the first live Rare Pepe auction in New York, establishing Rare Pepes as valuable digital art.',
-  },
-  {
-    year: '2018',
-    heading: 'Rare Pepe Foundation Established',
-    body: 'The Rare Pepe Foundation is established to curate and preserve the Rare Pepe collection, ensuring the historical integrity of the project.',
-  },
-  {
-    year: '2021',
-    heading: 'NFT Boom — Rare Pepes Rediscovered',
-    body: 'The mainstream NFT explosion brings renewed attention to Rare Pepes as the original crypto art. Collectors recognize their historical significance.',
-  },
-  {
-    year: '2021',
-    heading: 'Homer Pepe Resells for $312K',
-    body: 'October 2021: Homer Pepe resells for $312,000 at a Sotheby\'s-adjacent event, cementing Rare Pepes as blue-chip digital collectibles.',
-  },
-  {
-    year: '2023',
-    heading: 'Fake Rares Emerge',
-    body: 'Fake Rare Pepes begin appearing on XCP, including FAKEDJPEPE — homage tokens that reference the originals while creating their own collector communities.',
-  },
-  {
-    year: 'NOW',
-    heading: 'DJPEPE.WTF — The Official Archive',
-    body: 'The canonical digital home for DJ PEPE culture, memes, and asset history. Strong hands only.',
-  },
+  { year: '2016', heading: 'Rare Pepe Project Launches', body: 'The Rare Pepe project launches on the Counterparty (XCP) protocol, built on Bitcoin. A new era of blockchain art begins.' },
+  { year: '2016', heading: 'DJPEPE Minted \u2014 First Audio NFT', body: 'On October 13th, DJPEPE is created by RareScrilla on Counterparty. 169 cards issued. The first audio NFT in history \u2014 holders got access to exclusive music. Part of the Hip-Hop Elements series alongside MCPEPE, BBOYPEPE, and PEPEONE.' },
+  { year: '2016', heading: 'Rare Pepe Wallet Launches', body: 'Joe Looney creates Rare Pepe Wallet, enabling users to trade and collect Rare Pepe cards on the Counterparty protocol.' },
+  { year: '2017', heading: 'Given Away at Blockchain Conferences', body: 'DJPEPE cards are distributed at blockchain conferences and events from 2017 through 2019, making them highly sought-after originals with unlockable bonus content.' },
+  { year: '2018', heading: 'First Rare Pepe Auction', body: 'January 2018: Homer Pepe sells for $39,000 at the first live Rare Pepe auction in New York, establishing Rare Pepes as valuable digital art.' },
+  { year: '2018', heading: 'Rare Pepe Foundation Established', body: 'The Rare Pepe Foundation is established to curate and preserve the Rare Pepe collection, ensuring the historical integrity of the project.' },
+  { year: '2021', heading: 'NFT Boom \u2014 Rare Pepes Rediscovered', body: 'The mainstream NFT explosion brings renewed attention to Rare Pepes as the original crypto art. Collectors recognize their historical significance.' },
+  { year: '2021', heading: 'Homer Pepe Resells for $312K', body: 'October 2021: Homer Pepe resells for $312,000 at a Sotheby\'s-adjacent event, cementing Rare Pepes as blue-chip digital collectibles.' },
+  { year: '2023', heading: 'Fake Rares Emerge', body: 'Fake Rare Pepes begin appearing on XCP, including FAKEDJPEPE \u2014 homage tokens that reference the originals while creating their own collector communities.' },
+  { year: 'NOW', heading: 'DJPEPE.WTF \u2014 The Official Archive', body: 'The canonical digital home for DJ PEPE culture, memes, and asset history. Strong hands only.' },
 ];
 
-// ── DJPEPE TRAITS ─────────────────────────────────────────
 export const TRAITS = [
   { name: 'Creator',   value: 'RareScrilla'  },
   { name: 'Minted',    value: 'Oct 13, 2016' },
@@ -138,7 +96,6 @@ export const TRAITS = [
   { name: 'Requests',  value: 'NO', red: true },
 ];
 
-// ── DJPEPE HERO STATS ─────────────────────────────────────
 export const DJPEPE_STATS = [
   { label: 'Floor',   value: null,   sub: 'See pepe.wtf'       },
   { label: 'Supply',  value: '169',  sub: 'Total minted'       },
@@ -148,9 +105,8 @@ export const DJPEPE_STATS = [
   { label: 'Series',  value: 'HH',   sub: 'Hip-Hop, card 1/4'  },
 ];
 
-// ── FORMAT HELPERS ────────────────────────────────────────
 export function fmtNum(n) {
-  if (n === null || n === undefined) return '—';
+  if (n === null || n === undefined) return '\u2014';
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
   return String(n);
 }
