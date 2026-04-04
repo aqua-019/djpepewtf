@@ -97,7 +97,7 @@ export default function Market({ onMarketUpdate }) {
         </div>
         {txExpanded && (<div className="tx-table-wrap">
           {txShown.length === 0 ? <div className="tx-empty">No transactions found.</div> : (<>
-            <table className="tx-table"><thead><tr><th>Asset</th><th>Type</th><th>BTC</th><th>USD</th><th>From</th><th>To</th><th>TX</th><th></th></tr></thead>
+            <table className="tx-table"><thead><tr><th>Asset</th><th>Type</th><th>Price</th><th>USD</th><th>From</th><th>To</th><th>TX</th><th></th></tr></thead>
               <tbody>{txShown.slice(0, txLimit).map((tx, i) => (
                 <tr key={tx.id ?? i} className="tx-row">
                   <td className="tx-asset">{tx.asset}</td>
@@ -132,7 +132,9 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
             <div className="ag-stat">{displayVal(a.supply)}</div><div className="ag-stat">{displayVal(a.holders)}</div>
             <div className="ag-actions"><a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-accent" onClick={e => e.stopPropagation()}>Buy</a><span className="ag-expand-arrow">{isOpen ? '\u25be' : '\u25b8'}</span></div>
           </div>
-          <div className={`asset-detail ${isOpen ? 'open' : ''}`}>{isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} btcUsd={btcUsd} />}</div>
+          <div className={`asset-detail ${isOpen ? 'open' : ''}`}>
+            <div className="asset-detail-inner">{isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} btcUsd={btcUsd} />}</div>
+          </div>
         </div>);
       })}
     </div>
@@ -148,7 +150,6 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
   const cardImg = imgSrc || a.imageFallback || null;
 
   return (<>
-    {/* Large card image + info side by side */}
     <div className="ad-top">
       <div className="ad-card-img-wrap">
         {cardImg
@@ -165,7 +166,6 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
       </div>
     </div>
 
-    {/* 4x4 Stats Grid */}
     <div className="ad-stats">
       {[{ label: 'Floor (BTC)', value: fmtBtc(a.floor) }, { label: 'Floor (USD)', value: a.floorUsd != null ? fmtUsd(a.floorUsd) : '\u2014', accent: true }, { label: 'Floor (sats)', value: fmtSats(a.floor) }, { label: 'Supply', value: displayVal(a.supply) }, { label: 'Holders', value: displayVal(a.holders) }, { label: 'Locked', value: a.locked ? 'Yes' : 'No' }, { label: 'Divisible', value: a.divisible ? 'Yes' : 'No' }, { label: 'Chain', value: a.chain }, { label: 'Series', value: a.series || '\u2014' }, { label: 'Dispensers', value: String(a.dispenserCount) }, { label: 'Total Sales', value: String(a.totalSales) }, { label: 'Last Sale (BTC)', value: a.lastSale ? fmtBtc(a.lastSale.price) : '\u2014' }, { label: 'Last Sale (USD)', value: a.lastSale?.usdPrice ? fmtUsd(a.lastSale.usdPrice) : '\u2014', accent: true }, { label: 'Last Sale Date', value: a.lastSale ? fmtDate(a.lastSale.timestamp) : '\u2014' }, { label: 'OpenSea Sales', value: String(a.openseaSales.length) }, { label: 'Updated', value: a.fetchedAt ? fmtDate(a.fetchedAt) : '\u2014' }].map(s => (
         <div key={s.label} className={`ad-stat-box ${s.accent ? 'stat-usd' : ''}`}><div className="ad-stat-label">{s.label}</div><div className="ad-stat-val">{s.value}</div></div>))}
@@ -180,7 +180,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
         {showAllTx && txList.length > TX_PREVIEW && <button className="tx-show-less" onClick={() => setShowAllTx(false)}>Show Less</button>}
       </div>
       <div className="ad-tx-table-wrap"><table className="ad-tx-table">
-        <thead><tr><th>Type</th><th>Date</th><th>BTC Price</th><th>USD Price</th><th>Qty</th><th>Seller</th><th>Buyer</th><th></th></tr></thead>
+        <thead><tr><th>Type</th><th>Date</th><th>Price</th><th>USD</th><th>Qty</th><th>Seller</th><th>Buyer</th><th></th></tr></thead>
         <tbody>{txVisible.map((tx, i) => (
           <tr key={tx.id ?? i} className="ad-tx-row">
             <td><span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span></td>
