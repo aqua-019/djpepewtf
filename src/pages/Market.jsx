@@ -4,22 +4,18 @@ import { CACHE_TTL } from '../lib/constants.js';
 import PriceChart from '../components/PriceChart.jsx';
 import './Market.css';
 
-// Image component with proper error cascade -> placeholder on all failures
+// Image component with reliable index-based fallback cascade
 function AssetImg({ src, fallbacks = [], alt, className, placeholderClass, placeholderText }) {
-  const [curSrc, setCurSrc] = useState(src);
-  const tried = useRef(new Set());
-
-  useEffect(() => { tried.current = new Set(); setCurSrc(src); }, [src]);
-
-  const handleError = () => {
-    tried.current.add(curSrc);
-    const next = [src, ...fallbacks].find(u => u && !tried.current.has(u));
-    if (next) setCurSrc(next);
-    else setCurSrc(null);
-  };
-
-  if (!curSrc) return <div className={placeholderClass}>{placeholderText}</div>;
-  return <img src={curSrc} alt={alt} className={className} onError={handleError} />;
+  const allSources = [src, ...fallbacks].filter(Boolean);
+  const [idx, setIdx] = useState(0);
+  useEffect(() => { setIdx(0); }, [src]);
+  if (allSources.length === 0 || idx >= allSources.length) {
+    return <div className={placeholderClass}>{placeholderText}</div>;
+  }
+  return (
+    <img src={allSources[idx]} alt={alt} className={className}
+         onError={() => setIdx(i => i + 1)} />
+  );
 }
 
 function ExternalLinkIcon({ size = 12 }) {
@@ -211,9 +207,37 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
       </div>
     </div>
 
-    <div className="ad-stats">
-      {[{ label: 'Floor (BTC)', value: fmtBtc(a.floor) }, { label: 'Floor (USD)', value: a.floorUsd != null ? fmtUsd(a.floorUsd) : '\u2014', accent: true }, { label: 'Floor (sats)', value: fmtSats(a.floor) }, { label: 'Supply', value: displayVal(a.supply) }, { label: 'Holders', value: displayVal(a.holders) }, { label: 'Locked', value: a.locked ? 'Yes' : 'No' }, { label: 'Divisible', value: a.divisible ? 'Yes' : 'No' }, { label: 'Chain', value: a.chain }, { label: 'Series', value: a.series || '\u2014' }, { label: 'Dispensers', value: String(a.dispenserCount) }, { label: 'Total Sales', value: String(a.totalSales) }, { label: 'Last Sale (BTC)', value: a.lastSale ? fmtBtc(a.lastSale.price) : '\u2014' }, { label: 'Last Sale (USD)', value: a.lastSale?.usdPrice ? fmtUsd(a.lastSale.usdPrice) : '\u2014', accent: true }, { label: 'Last Sale Date', value: a.lastSale ? fmtDate(a.lastSale.timestamp) : '\u2014' }, { label: 'OpenSea Sales', value: String(a.openseaSales.length) }, { label: 'Updated', value: a.fetchedAt ? fmtDate(a.fetchedAt) : '\u2014' }].map(s => (
-        <div key={s.label} className={`ad-stat-box ${s.accent ? 'stat-usd' : ''}`}><div className="ad-stat-label">{s.label}</div><div className="ad-stat-val">{s.value}</div></div>))}
+    <div className="ad-hero-stats">
+      <div className="ad-hero-stat">
+        <div className="ad-hero-label">Floor Price</div>
+        <div className="ad-hero-val green">{a.floor != null ? `${a.floor} BTC` : '\u2014'}</div>
+        {a.floorUsd != null && <div className="ad-hero-sub gold">{fmtUsd(a.floorUsd)}</div>}
+        {a.floor != null && <div className="ad-hero-sub dim">{fmtSats(a.floor)}</div>}
+      </div>
+      <div className="ad-hero-stat">
+        <div className="ad-hero-label">Supply</div>
+        <div className="ad-hero-val">{displayVal(a.supply)}</div>
+        <div className="ad-hero-sub">total minted</div>
+      </div>
+      <div className="ad-hero-stat">
+        <div className="ad-hero-label">Holders</div>
+        <div className="ad-hero-val">{displayVal(a.holders)}</div>
+        <div className="ad-hero-sub">wallets</div>
+      </div>
+    </div>
+
+    <div className="ad-detail-grid">
+      <div className="ad-kv"><span className="ad-kv-k">Last Sale</span><span className="ad-kv-v">{a.lastSale?.price ? fmtBtc(a.lastSale.price) : '\u2014'}</span></div>
+      <div className="ad-kv"><span className="ad-kv-k">Last Sale Date</span><span className="ad-kv-v">{a.lastSale?.timestamp ? fmtDate(a.lastSale.timestamp) : '\u2014'}</span></div>
+      <div className="ad-kv"><span className="ad-kv-k">Last Sale USD</span><span className="ad-kv-v gold">{a.lastSale?.usdPrice ? fmtUsd(a.lastSale.usdPrice) : '\u2014'}</span></div>
+      <div className="ad-kv"><span className="ad-kv-k">Total Sales</span><span className="ad-kv-v">{String(a.totalSales)}</span></div>
+      <div className="ad-kv"><span className="ad-kv-k">Open Dispensers</span><span className="ad-kv-v">{String(a.dispenserCount)}</span></div>
+      <div className="ad-kv"><span className="ad-kv-k">Chain</span><span className="ad-kv-v">{a.chain}</span></div>
+      <div className="ad-kv"><span className="ad-kv-k">Locked</span><span className="ad-kv-v">{a.locked ? 'Yes' : 'No'}</span></div>
+      <div className="ad-kv"><span className="ad-kv-k">Divisible</span><span className="ad-kv-v">{a.divisible ? 'Yes' : 'No'}</span></div>
+      <div className="ad-kv"><span className="ad-kv-k">Series</span><span className="ad-kv-v">{a.series || '\u2014'}</span></div>
+      {a.openseaSales.length > 0 && <div className="ad-kv"><span className="ad-kv-k">OpenSea Sales</span><span className="ad-kv-v">{a.openseaSales.length}</span></div>}
+      <div className="ad-kv"><span className="ad-kv-k">Updated</span><span className="ad-kv-v">{a.fetchedAt ? fmtDate(a.fetchedAt) : '\u2014'}</span></div>
     </div>
 
     {(() => {
@@ -264,6 +288,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
     <div className="ad-actions">
       <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn btn-green">Buy on Pepe.WTF <ExternalLinkIcon /></a>
       <a href={a.xcUrl} target="_blank" rel="noreferrer" className="btn btn-outline">XChain Explorer <ExternalLinkIcon /></a>
+      <a href={`https://opensea.io/collection/emblem-vault?search[query]=${a.ticker}`} target="_blank" rel="noreferrer" className="btn btn-outline">Emblem Vault <ExternalLinkIcon /></a>
       <button className="btn btn-outline" onClick={onRefresh}>Refresh</button>
     </div>
   </>);

@@ -116,14 +116,17 @@ async function getAssetData(asset, btcUsd) {
   const dispenses = (dispensesRes?.result || []).map(d => {
     const btcSats = d.btc_amount ?? d.satoshirate ?? d.satoshi_price ?? null;
     const btcPrice = btcSats ? btcSats / 1e8 : null;
+    const rawTime = d.block_time || d.confirmed_at || null;
+    const timestamp = rawTime
+      ? new Date(typeof rawTime === 'number' ? rawTime * 1000 : rawTime).toISOString()
+      : null;
     return { id: d.tx_hash, asset, type: 'sale', btcPrice, usdPrice: withUsd(btcPrice),
       quantity: d.dispense_quantity ?? 1,
       from: d.source ?? null, fromShort: shortAddr(d.source),
       to: d.destination ?? null, toShort: shortAddr(d.destination),
-      blockIndex: d.block_index ?? null,
-      timestamp: d.block_time ? new Date(d.block_time * 1000).toISOString() : null,
+      blockIndex: d.block_index ?? null, timestamp,
       txHash: d.tx_hash, xcUrl: `https://xchain.io/tx/${d.tx_hash}`, tsUrl: `https://tokenscan.io/tx/${d.tx_hash}` };
-  });
+  }).sort((a, b) => (b.blockIndex || 0) - (a.blockIndex || 0));
   const sends = (sendsRes?.result || []).map(s => ({
     id: s.tx_hash, asset, type: 'transfer', btcPrice: null, usdPrice: null,
     quantity: s.quantity ?? 1, from: s.source ?? null, fromShort: shortAddr(s.source),
@@ -141,7 +144,10 @@ async function getAssetData(asset, btcUsd) {
   const ethUsd = await getEthUsd();
   const openseaSales = await getOpenSeaSales(asset, ethUsd);
   const transactions = [...dispenses, ...orders, ...sends].slice(0, 50);
-  const lastSale = dispenses.length > 0 ? { price: dispenses[0].btcPrice, usdPrice: dispenses[0].usdPrice, timestamp: dispenses[0].timestamp } : null;
+  const lastSale = dispenses.length > 0
+    ? { price: dispenses[0].btcPrice, usdPrice: dispenses[0].usdPrice,
+        timestamp: dispenses[0].timestamp || dispenses.find(d => d.timestamp)?.timestamp || null }
+    : null;
   const floorBtc = floor ? parseFloat(floor.btcPrice.toFixed(8)) : null;
   const dispensersWithUsd = dispensers.map(d => ({ ...d, usdPrice: withUsd(d.btcPrice) }));
   return {
