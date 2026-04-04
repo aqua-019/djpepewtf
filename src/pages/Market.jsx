@@ -288,6 +288,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
     <div className="ad-actions">
       <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn btn-green">Buy on Pepe.WTF <ExternalLinkIcon /></a>
       <a href={a.xcUrl} target="_blank" rel="noreferrer" className="btn btn-outline">XChain Explorer <ExternalLinkIcon /></a>
+      <a href={`https://opensea.io/collection/emblem-vault?search[query]=${a.ticker}`} target="_blank" rel="noreferrer" className="btn btn-outline">Emblem Vault <ExternalLinkIcon /></a>
       <button className="btn btn-outline" onClick={onRefresh}>Refresh</button>
     </div>
   </>);
