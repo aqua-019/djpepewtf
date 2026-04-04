@@ -32,6 +32,7 @@ export default function Gallery({ onFileCount }) {
   });
   const [filterType, setFilterType] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [search, setSearch] = useState('');
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -169,6 +170,7 @@ export default function Gallery({ onFileCount }) {
 
   const years = [...new Set(files.map(f => f.uploadedAt ? new Date(f.uploadedAt).getFullYear() : null).filter(Boolean))].sort((a,b) => b - a);
 
+  const searchLower = search.toLowerCase().trim();
   const filtered = files.filter(f => {
     if (filterType === 'image' && !IMAGE_EXTS.has(f.type)) return false;
     if (filterType === 'video' && !VIDEO_EXTS.has(f.type)) return false;
@@ -176,6 +178,7 @@ export default function Gallery({ onFileCount }) {
     if (filterYear !== 'all' && f.uploadedAt) {
       if (new Date(f.uploadedAt).getFullYear() !== Number(filterYear)) return false;
     }
+    if (searchLower && !(f.name || '').toLowerCase().includes(searchLower)) return false;
     return true;
   });
 
@@ -205,7 +208,7 @@ export default function Gallery({ onFileCount }) {
     ? { h: 'Drop it.', s: 'Release to add to the gallery' }
     : isUploading
     ? { h: `Uploading ${counts.done || 0} / ${queue.length} files…`, s: 'Queue panel bottom-right' }
-    : { h: 'Drop files or folders to upload', s: 'or click to browse — supports entire folders' };
+    : { h: 'Upload to the archive', s: 'Drop files or click to browse' };
 
   return (
     <div className="gallery-page">
@@ -244,12 +247,21 @@ export default function Gallery({ onFileCount }) {
             {loading ? 'loading…' : `${filtered.length} items`}
           </span>
         </div>
-        <div className="sort-tabs">
-          {[['new','Newest'],['old','Oldest'],['az','A\u2013Z']].map(([key, label]) => (
-            <button key={key} className={`sort-tab ${sort===key?'active':''}`} onClick={() => setSort(key)}>
-              {label}
-            </button>
-          ))}
+        <div className="gallery-bar-right">
+          <input
+            type="text"
+            className="gallery-search"
+            placeholder="Search…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <div className="sort-tabs">
+            {[['new','Newest'],['old','Oldest'],['az','A\u2013Z']].map(([key, label]) => (
+              <button key={key} className={`sort-tab ${sort===key?'active':''}`} onClick={() => setSort(key)}>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
