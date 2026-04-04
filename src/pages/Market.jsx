@@ -145,11 +145,17 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
   const txList = [...(a.dispenses || []), ...(a.openseaSales || [])];
   const TX_PREVIEW = 8;
   const txVisible = showAllTx ? txList.slice(0, 50) : txList.slice(0, TX_PREVIEW);
+  const cardImg = imgSrc || a.imageFallback || null;
 
   return (<>
-    <div className="ad-header">
-      <div className="ad-visual">{imgSrc ? <img src={imgSrc} alt={a.name} className="ad-img" onError={e => { if (a.imageFallback && !e.target.src.endsWith(a.imageFallback)) e.target.src = a.imageFallback; }}/> : <div className="ad-img-placeholder">{a.ticker}</div>}</div>
-      <div className="ad-info">
+    {/* Large card image + info side by side */}
+    <div className="ad-top">
+      <div className="ad-card-img-wrap">
+        {cardImg
+          ? <img src={cardImg} alt={a.name} className="ad-card-img" onError={e => { if (a.imageFallback && !e.target.src.endsWith(a.imageFallback)) e.target.src = a.imageFallback; }}/>
+          : <div className="ad-card-placeholder">{a.ticker}</div>}
+      </div>
+      <div className="ad-top-right">
         <h3 className="ad-title">{a.name} <span className="ad-ticker">/ {a.ticker}</span></h3>
         {a.description && <p className="ad-desc">{a.description}</p>}
         {a.issuer && <div className="ad-meta">Issuer: <span className="ad-mono">{a.issuer.slice(0,12)}\u2026{a.issuer.slice(-6)}</span></div>}
@@ -158,13 +164,17 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
         {btcUsd && <div className="ad-meta ad-btc-rate">BTC/USD: ${btcUsd.toLocaleString()}</div>}
       </div>
     </div>
+
+    {/* 4x4 Stats Grid */}
     <div className="ad-stats">
       {[{ label: 'Floor (BTC)', value: fmtBtc(a.floor) }, { label: 'Floor (USD)', value: a.floorUsd != null ? fmtUsd(a.floorUsd) : '\u2014', accent: true }, { label: 'Floor (sats)', value: fmtSats(a.floor) }, { label: 'Supply', value: displayVal(a.supply) }, { label: 'Holders', value: displayVal(a.holders) }, { label: 'Locked', value: a.locked ? 'Yes' : 'No' }, { label: 'Divisible', value: a.divisible ? 'Yes' : 'No' }, { label: 'Chain', value: a.chain }, { label: 'Series', value: a.series || '\u2014' }, { label: 'Dispensers', value: String(a.dispenserCount) }, { label: 'Total Sales', value: String(a.totalSales) }, { label: 'Last Sale (BTC)', value: a.lastSale ? fmtBtc(a.lastSale.price) : '\u2014' }, { label: 'Last Sale (USD)', value: a.lastSale?.usdPrice ? fmtUsd(a.lastSale.usdPrice) : '\u2014', accent: true }, { label: 'Last Sale Date', value: a.lastSale ? fmtDate(a.lastSale.timestamp) : '\u2014' }, { label: 'OpenSea Sales', value: String(a.openseaSales.length) }, { label: 'Updated', value: a.fetchedAt ? fmtDate(a.fetchedAt) : '\u2014' }].map(s => (
         <div key={s.label} className={`ad-stat-box ${s.accent ? 'stat-usd' : ''}`}><div className="ad-stat-label">{s.label}</div><div className="ad-stat-val">{s.value}</div></div>))}
     </div>
+
     {a.dispensers.length > 0 && (<div className="ad-dispensers"><div className="ad-section-label">Open Dispensers ({a.dispensers.length})</div>
       <div className="dispenser-list">{a.dispensers.map((d, i) => (<div key={i} className="dispenser-item"><div className="disp-price">{d.btcPrice} BTC</div>{d.usdPrice != null && <div className="disp-usd">{fmtUsd(d.usdPrice)}</div>}<div className="disp-addr">{d.address}</div>{d.giveRemaining != null && <div className="disp-remaining">{d.giveRemaining} remaining</div>}</div>))}</div>
     </div>)}
+
     {txList.length > 0 && (<div className="ad-tx-section">
       <div className="ad-section-head"><div className="ad-section-label">Sales & Activity ({txList.length})</div>
         {showAllTx && txList.length > TX_PREVIEW && <button className="tx-show-less" onClick={() => setShowAllTx(false)}>Show Less</button>}
@@ -185,6 +195,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
       </table></div>
       {txList.length > TX_PREVIEW && !showAllTx && <button className="tx-show-more" onClick={() => setShowAllTx(true)}>Show all {txList.length}</button>}
     </div>)}
+
     <div className="ad-actions">
       <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn btn-green">Buy on Pepe.WTF \u2197</a>
       <a href={a.xcUrl} target="_blank" rel="noreferrer" className="btn btn-outline">XChain Explorer \u2197</a>
