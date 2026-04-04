@@ -1,77 +1,77 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 /* ── RESET ───────────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #root { height: 100%; }
 
-/* ── TOKENS — MUTED GREEN ────────────────────────────────── */
+/* ── TOKENS — NEUTRAL DARK ───────────────────────────────── */
 :root {
-  /* Backgrounds */
-  --bg:          oklch(0.12 0.015 150);
-  --bg2:         oklch(0.16 0.02 150);
-  --bg-elevated: oklch(0.20 0.025 148);
+  /* Backgrounds: neutral dark, not green-tinted */
+  --bg:          oklch(0.11 0.005 260);
+  --bg2:         oklch(0.14 0.006 260);
+  --bg-elevated: oklch(0.17 0.008 260);
+  --bg-hover:    oklch(0.19 0.010 260);
 
-  /* Muted green spectrum */
-  --accent:      oklch(0.62 0.12 152);
-  --accent-dim:  oklch(0.40 0.08 150 / 0.12);
-  --accent-mid:  oklch(0.50 0.10 150 / 0.20);
-  --accent-str:  oklch(0.62 0.12 152 / 0.30);
+  /* Primary accent: Pepe green, used sparingly */
+  --accent:      oklch(0.68 0.16 145);
+  --accent-dim:  oklch(0.68 0.16 145 / 0.08);
+  --accent-mid:  oklch(0.68 0.16 145 / 0.16);
+  --accent-str:  oklch(0.68 0.16 145 / 0.30);
 
-  /* Warm accents */
-  --gold:        oklch(0.75 0.14 85);
-  --ember:       oklch(0.55 0.18 25);
+  /* Secondary: warm gold for USD / value emphasis */
+  --gold:        oklch(0.80 0.14 85);
+  --gold-dim:    oklch(0.80 0.14 85 / 0.10);
+
+  /* Tertiary: Bitcoin orange */
+  --btc:         oklch(0.72 0.18 55);
+  --btc-dim:     oklch(0.72 0.18 55 / 0.10);
 
   /* Functional */
-  --buy:         oklch(0.55 0.10 152);
-  --sell:        oklch(0.55 0.14 25);
-  --red:         #e05555;
-  --red-dim:     rgba(224, 85, 85, 0.10);
+  --buy:         oklch(0.60 0.14 145);
+  --sell:        oklch(0.60 0.16 25);
+  --red:         oklch(0.62 0.22 25);
+  --red-dim:     oklch(0.62 0.22 25 / 0.10);
+  --blue:        oklch(0.65 0.15 255);
+  --blue-dim:    oklch(0.65 0.15 255 / 0.10);
+  --ember:       oklch(0.55 0.18 25);
 
-  /* Glassmorphism */
-  --glass:       oklch(0.16 0.02 150 / 0.55);
-  --glass-hi:    oklch(0.20 0.03 150 / 0.60);
-  --border:      oklch(0.25 0.02 150 / 0.35);
-  --border-hi:   oklch(0.35 0.04 150 / 0.30);
-  --border-a:    oklch(0.62 0.12 152 / 0.22);
-  --border-r:    rgba(224, 85, 85, 0.22);
+  /* Glassmorphism: neutral base */
+  --glass:       oklch(0.14 0.005 260 / 0.55);
+  --glass-hi:    oklch(0.18 0.008 260 / 0.60);
+  --border:      oklch(0.22 0.005 260 / 0.60);
+  --border-hi:   oklch(0.30 0.008 260 / 0.50);
+  --border-a:    oklch(0.68 0.16 145 / 0.18);
+  --border-r:    oklch(0.62 0.22 25 / 0.22);
 
-  /* Text */
-  --txt:         oklch(0.90 0.01 150);
-  --txt2:        oklch(0.60 0.015 150);
-  --txt3:        oklch(0.40 0.01 150);
+  /* Text: cool white hierarchy, not green */
+  --txt:         oklch(0.92 0.005 260);
+  --txt2:        oklch(0.60 0.008 260);
+  --txt3:        oklch(0.40 0.005 260);
 
-  /* Radius */
+  /* Radius: industrial, not bubbly */
+  --r4:  4px;
+  --r6:  6px;
   --r8:  8px;
   --r12: 12px;
   --r16: 16px;
-  --r20: 20px;
-  --r24: 24px;
-  --r50: 50px;
 
   /* Typography */
-  --font-display: 'Oswald', sans-serif;
-  --font-body:    'DM Sans', system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', monospace;
+  --font-display: 'Space Grotesk', 'Inter Tight', system-ui, sans-serif;
+  --font-body:    'Inter', 'Inter Tight', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'JetBrains Mono', monospace;
 
   /* Layout */
   --sidebar-w:       52px;
   --sidebar-w-open:  186px;
   --header-h:        53px;
-
-  /* Legacy aliases — keep components working during migration */
-  --green:     var(--accent);
-  --green-dim: var(--accent-dim);
-  --green-mid: var(--accent-mid);
-  --green-str: var(--accent-str);
-  --border-g:  var(--border-a);
 }
 
 /* ── BASE ────────────────────────────────────────────────── */
 body {
   background: var(--bg);
   background-image:
-    radial-gradient(ellipse 60% 50% at 20% 20%, oklch(0.18 0.04 150 / 0.40) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 80% 75%, oklch(0.15 0.03 150 / 0.25) 0%, transparent 60%);
+    radial-gradient(ellipse 60% 50% at 20% 20%, oklch(0.16 0.015 260 / 0.40) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 75%, oklch(0.14 0.010 260 / 0.25) 0%, transparent 60%);
   background-attachment: fixed;
   color: var(--txt);
   font-family: var(--font-body);
@@ -106,22 +106,25 @@ body {
 /* ── BUTTONS ─────────────────────────────────────────────── */
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 9px 20px;
+  padding: 10px 20px;
   font-family: var(--font-body);
   font-size: 12px; font-weight: 600;
-  border-radius: var(--r50);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: var(--r6);
   cursor: pointer;
-  transition: all 0.22s ease;
+  transition: all 0.18s ease;
   white-space: nowrap;
-  border: none;
+  border: 1.5px solid var(--border);
 }
 .btn-green {
   background: var(--accent);
-  color: oklch(0.10 0.015 150);
-  box-shadow: 0 0 14px oklch(0.62 0.12 152 / 0.18);
+  color: oklch(0.10 0.005 260);
+  border-color: var(--accent);
+  box-shadow: 0 0 14px oklch(0.68 0.16 145 / 0.18);
 }
 .btn-green:hover {
-  box-shadow: 0 0 20px oklch(0.62 0.12 152 / 0.25);
+  box-shadow: 0 0 20px oklch(0.68 0.16 145 / 0.25);
   transform: translateY(-1px);
 }
 .btn-outline {
@@ -135,13 +138,6 @@ body {
   border: 1.5px solid var(--border-r);
   color: var(--red);
 }
-.btn-danger {
-  background: var(--red-dim);
-  border: 1.5px solid var(--border-r);
-  color: var(--red);
-}
-.btn-danger:hover { background: rgba(224, 85, 85, 0.18); }
-.btn-danger:disabled { opacity: 0.5; cursor: wait; }
 .btn-red:hover { background: var(--red-dim); }
 
 /* ── TAGS ────────────────────────────────────────────────── */
@@ -149,7 +145,7 @@ body {
   display: inline-block;
   padding: 2px 9px;
   font-size: 9px; font-weight: 700;
-  border-radius: var(--r50);
+  border-radius: var(--r4);
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -177,9 +173,9 @@ body {
 /* ── TICKER ──────────────────────────────────────────────── */
 .ticker-bar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
-  background: oklch(0.12 0.015 150 / 0.88);
+  background: oklch(0.11 0.005 260 / 0.88);
   backdrop-filter: blur(12px);
-  border-top: 1px solid oklch(0.35 0.06 150 / 0.12);
+  border-top: 1px solid oklch(0.30 0.008 260 / 0.12);
   padding: 5px 0;
   overflow: hidden; white-space: nowrap;
   font-size: 10px; color: var(--txt2);
@@ -200,14 +196,14 @@ body {
 .live-dot {
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 6px oklch(0.62 0.12 152 / 0.35);
+  box-shadow: 0 0 6px oklch(0.68 0.16 145 / 0.35);
   flex-shrink: 0;
 }
 /* pulse removed — subtle static dot preferred */
 
 /* ── CELL ENTER ANIMATION ────────────────────────────────── */
 @keyframes cell-in {
-  from { opacity: 0; transform: scale(0.88) translateY(14px); border-color: oklch(0.62 0.12 152 / 0.4); }
+  from { opacity: 0; transform: scale(0.88) translateY(14px); border-color: oklch(0.68 0.16 145 / 0.4); }
   to   { opacity: 1; transform: none; }
 }
 .cell-new { animation: cell-in 0.45s cubic-bezier(0.2, 0.8, 0.4, 1) forwards; }
@@ -215,7 +211,7 @@ body {
 /* ── MODAL OVERLAY ───────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 200;
-  background: oklch(0.10 0.015 150 / 0.82);
+  background: oklch(0.10 0.005 260 / 0.82);
   backdrop-filter: blur(10px);
   display: flex; align-items: center; justify-content: center;
   padding: 24px;
@@ -223,9 +219,9 @@ body {
 }
 @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
 .modal-box {
-  background: oklch(0.14 0.02 150 / 0.95);
+  background: oklch(0.14 0.006 260 / 0.95);
   border: 1px solid var(--border-a);
-  border-radius: var(--r24);
+  border-radius: var(--r12);
   max-width: 640px; width: 100%;
   max-height: 88vh;
   overflow-y: auto;
@@ -339,7 +335,7 @@ body {
     max-width: 100%;
     width: 100%;
     max-height: 92vh;
-    border-radius: var(--r24) var(--r24) 0 0;
+    border-radius: var(--r12) var(--r12) 0 0;
   }
 
   /* Upload queue panel */
@@ -370,9 +366,9 @@ body {
   bottom: 0; left: 0; right: 0;
   height: 48px;
   z-index: 150;
-  background: oklch(0.12 0.015 150 / 0.92);
+  background: oklch(0.11 0.005 260 / 0.92);
   backdrop-filter: blur(16px);
-  border-top: 1px solid oklch(0.35 0.06 150 / 0.12);
+  border-top: 1px solid oklch(0.30 0.008 260 / 0.12);
   padding: 0 8px;
   align-items: center;
   justify-content: space-around;
