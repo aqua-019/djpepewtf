@@ -47,6 +47,7 @@ export default async function handler(req, res) {
     // Send notifications (best-effort, don't block response)
     const meta = { title, context, submitter, dateCreated, filename, url: blob.url };
     sendTelegramNotification(meta).catch(() => {});
+    sendEmailNotification(meta).catch(() => {});
 
     return res.status(200).json({
       ok: true,
@@ -77,5 +78,36 @@ async function sendTelegramNotification({ title, context, submitter, dateCreated
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+  });
+}
+
+async function sendEmailNotification({ title, context, submitter, dateCreated, filename, url }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const toEmail = process.env.NOTIFICATION_EMAIL;
+  if (!apiKey || !toEmail) return;
+
+  const subject = `New DJPEPE.WTF Submission: ${title || filename}`;
+  const html = [
+    '<h2>New Meme Submission</h2>',
+    `<p><strong>Title:</strong> ${title || filename}</p>`,
+    `<p><strong>Submitted by:</strong> ${submitter}</p>`,
+    dateCreated ? `<p><strong>Date created:</strong> ${dateCreated}</p>` : '',
+    context ? `<p><strong>Context:</strong> ${context}</p>` : '',
+    `<p><strong>File:</strong> <a href="${url}">${filename}</a></p>`,
+    `<br><p style="color:#888;font-size:12px">Sent from DJPEPE.WTF submission system</p>`,
+  ].filter(Boolean).join('\n');
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      from: 'DJPEPE.WTF <onboarding@resend.dev>',
+      to: [toEmail],
+      subject,
+      html,
+    }),
   });
 }
