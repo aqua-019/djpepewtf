@@ -20,7 +20,7 @@ export const MARKET_ASSETS = [
     name:         'MC PEPE',
     ticker:       'MCPEPE',
     chain:        'XCP',
-    imageFallback: '/MCPEPE.jpg',
+    imageFallback: null,
     supply:       200,
     holders:      null,
     floor:        null,
@@ -34,7 +34,7 @@ export const MARKET_ASSETS = [
     name:         'BBOY PEPE',
     ticker:       'BBOYPEPE',
     chain:        'XCP',
-    imageFallback: '/BBOYPEPE.jpg',
+    imageFallback: null,
     supply:       200,
     holders:      null,
     floor:        null,
@@ -48,7 +48,7 @@ export const MARKET_ASSETS = [
     name:         'PEPE ONE',
     ticker:       'PEPEONE',
     chain:        'XCP',
-    imageFallback: '/PEPEONE.jpg',
+    imageFallback: null,
     supply:       200,
     holders:      null,
     floor:        null,
@@ -62,7 +62,7 @@ export const MARKET_ASSETS = [
     name:         'FAKE DJ PEPE',
     ticker:       'FAKEDJPEPE',
     chain:        'XCP',
-    imageFallback: '/FAKEDJPEPE.jpg',
+    imageFallback: null,
     supply:       null,
     holders:      null,
     floor:        null,
@@ -73,7 +73,6 @@ export const MARKET_ASSETS = [
   },
 ];
 
-// ── DJPEPE TIMELINE ───────────────────────────────────
 export const TIMELINE = [
   { year: '2016', heading: 'Rare Pepe Project Launches', body: 'The Rare Pepe project launches on the Counterparty (XCP) protocol, built on Bitcoin. A new era of blockchain art begins.' },
   { year: '2016', heading: 'DJPEPE Minted \u2014 First Audio NFT', body: 'On October 13th, DJPEPE is created by RareScrilla on Counterparty. 169 cards issued. The first audio NFT in history \u2014 holders got access to exclusive music. Part of the Hip-Hop Elements series alongside MCPEPE, BBOYPEPE, and PEPEONE.' },
@@ -87,7 +86,6 @@ export const TIMELINE = [
   { year: 'NOW', heading: 'DJPEPE.WTF \u2014 The Official Archive', body: 'The canonical digital home for DJ PEPE culture, memes, and asset history. Strong hands only.' },
 ];
 
-// ── DJPEPE TRAITS ─────────────────────────────────────
 export const TRAITS = [
   { name: 'Creator',   value: 'RareScrilla'  },
   { name: 'Minted',    value: 'Oct 13, 2016' },
@@ -98,7 +96,6 @@ export const TRAITS = [
   { name: 'Requests',  value: 'NO', red: true },
 ];
 
-// ── DJPEPE HERO STATS ─────────────────────────────────
 export const DJPEPE_STATS = [
   { label: 'Floor',   value: null,   sub: 'See pepe.wtf'       },
   { label: 'Supply',  value: '169',  sub: 'Total minted'       },
@@ -108,7 +105,6 @@ export const DJPEPE_STATS = [
   { label: 'Series',  value: 'HH',   sub: 'Hip-Hop, card 1/4'  },
 ];
 
-// ── FORMAT HELPERS ────────────────────────────────────
 export function fmtNum(n) {
   if (n === null || n === undefined) return '\u2014';
   if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
