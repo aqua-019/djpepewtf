@@ -46,8 +46,8 @@ export default async function handler(req, res) {
 
     // Send notifications (best-effort, don't block response)
     const meta = { title, context, submitter, dateCreated, filename, url: blob.url };
-    sendTelegramNotification(meta).catch(() => {});
-    sendEmailNotification(meta).catch(() => {});
+    sendTelegramNotification(meta).catch(err => console.error('[telegram] failed:', err.message));
+    sendEmailNotification(meta).catch(err => console.error('[email] failed:', err.message));
 
     return res.status(200).json({
       ok: true,
@@ -97,7 +97,7 @@ async function sendEmailNotification({ title, context, submitter, dateCreated, f
     `<br><p style="color:#888;font-size:12px">Sent from DJPEPE.WTF submission system</p>`,
   ].filter(Boolean).join('\n');
 
-  await fetch('https://api.resend.com/emails', {
+  const resp = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -110,4 +110,10 @@ async function sendEmailNotification({ title, context, submitter, dateCreated, f
       html,
     }),
   });
+  if (!resp.ok) {
+    const errBody = await resp.text().catch(() => '');
+    console.error('[email] Resend error:', resp.status, errBody);
+  } else {
+    console.log('[email] sent to', toEmail);
+  }
 }
