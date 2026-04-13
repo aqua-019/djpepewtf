@@ -80,12 +80,10 @@
 .btn-row { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; }
 .btn-row a { text-decoration: none; }
 
-/* ── INFO LAYOUT (Audio + Traits side-by-side) ──────────── */
+/* ── INFO LAYOUT (Traits + Links centered) ──────────────── */
 .info-layout {
-  display: grid; grid-template-columns: 1fr 240px;
-  gap: 24px; padding: 20px 22px;
-  max-width: 820px; margin: 0 auto;
-  align-items: start;
+  padding: 20px 22px;
+  max-width: 480px; margin: 0 auto;
 }
 
 .timeline { display: flex; flex-direction: column; gap: 0; position: relative; }
@@ -178,6 +176,5 @@
   .asset-title { font-size: 28px; }
   .stats-row { justify-content: flex-start; }
   .btn-row { justify-content: flex-start; }
-  .info-layout { grid-template-columns: 1fr; gap: 20px; }
   .traits-col { padding-left: 0; border-left: none; }
 }

@@ -7,41 +7,56 @@
 }
 
 /* ── SPINE ──────────────────────────────────────── */
+/* Two lines running down the sides of event cards with pulsing dot */
 .djpepe-timeline .isolated-spine {
+  display: none; /* replaced by per-card side lines */
+}
+
+.djpepe-timeline .timeline-grid::before,
+.djpepe-timeline .timeline-grid::after {
+  content: '';
   position: absolute;
-  left: 24px;
   top: 0;
   bottom: 0;
   width: 2px;
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    var(--accent) 10%,
-    var(--accent) 90%,
+    var(--accent) 8%,
+    var(--accent) 92%,
     transparent 100%
   );
-  opacity: 0.18;
+  opacity: 0.15;
   z-index: 0;
   pointer-events: none;
 }
+.djpepe-timeline .timeline-grid::before { left: 0; }
+.djpepe-timeline .timeline-grid::after { right: 0; }
 
 .djpepe-timeline .pulsing-dot {
-  position: absolute;
-  top: 0;
-  left: -3px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 12px var(--accent);
-  animation: pulseDotDown 12s linear infinite;
+  display: none; /* replaced by dual dots */
 }
 
+.djpepe-timeline .spine-dot-left,
+.djpepe-timeline .spine-dot-right {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent), 0 0 20px rgba(82, 181, 99, 0.3);
+  z-index: 2;
+  pointer-events: none;
+  animation: pulseDotDown 16s linear infinite;
+}
+.djpepe-timeline .spine-dot-left { left: -2px; }
+.djpepe-timeline .spine-dot-right { right: -2px; animation-delay: -8s; }
+
 @keyframes pulseDotDown {
-  0% { top: 5%; opacity: 0; }
-  5% { opacity: 1; }
-  95% { opacity: 1; }
-  100% { top: 95%; opacity: 0; }
+  0% { top: 2%; opacity: 0; }
+  4% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { top: 98%; opacity: 0; }
 }
 
 /* ── FILTER DOCK ────────────────────────────────── */
@@ -250,20 +265,26 @@
 
 /* ── SOURCE LINK ────────────────────────────────── */
 .djpepe-timeline .card-source-link {
-  font-size: 10px;
-  color: var(--txt3);
+  display: inline-block;
+  padding: 5px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid oklch(0.68 0.16 145 / 0.20);
+  border-radius: var(--r4);
   text-decoration: none;
-  transition: color 0.15s;
+  transition: all 0.2s ease;
 }
 .djpepe-timeline .card-source-link:hover {
-  color: var(--accent);
+  background: var(--accent-mid);
+  border-color: oklch(0.68 0.16 145 / 0.35);
+  color: var(--txt);
 }
 
 /* ── MOBILE ─────────────────────────────────────── */
 @media (max-width: 768px) {
-  .djpepe-timeline .isolated-spine {
-    left: 16px;
-  }
 
   .djpepe-timeline .filter-dock {
     gap: 6px;
