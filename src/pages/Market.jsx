@@ -47,8 +47,6 @@ export default function Market({ onMarketUpdate }) {
   const [expandedId, setExpandedId] = useState(null);
   const [liveData,   setLiveData]   = useState(null);
   const [btcUsd,     setBtcUsd]     = useState(null);
-  const [txFilter,   setTxFilter]   = useState('all');
-  const [txExpanded, setTxExpanded] = useState(false);
   const [status,     setStatus]     = useState('loading');
   const prevFloors = useRef({});
   const [floorDeltas, setFloorDeltas] = useState({});
@@ -69,9 +67,6 @@ export default function Market({ onMarketUpdate }) {
   }, [liveData]);
 
   const assets = MARKET_ASSETS.map(buildAsset);
-  const allTxs = assets.flatMap(a => a.transactions);
-  const txShown = txFilter === 'all' ? allTxs : allTxs.filter(t => t.asset === txFilter);
-  const txLimit = txExpanded ? 50 : 20;
 
   const fetchMarket = useCallback(async (force = false) => {
     const now = Date.now();
@@ -127,32 +122,6 @@ export default function Market({ onMarketUpdate }) {
       <div className="asset-table">
         <AssetSection label="Hip-Hop Elements Series" assets={hiphopAssets} buildAsset={buildAsset} expandedId={expandedId} toggleExpand={toggleExpand} getImgSrc={getImgSrc} fetchMarket={fetchMarket} btcUsd={btcUsd} floorDeltas={floorDeltas} />
         <AssetSection label="Homage Collection" className="series-homage" assets={homageAssets} buildAsset={buildAsset} expandedId={expandedId} toggleExpand={toggleExpand} getImgSrc={getImgSrc} fetchMarket={fetchMarket} btcUsd={btcUsd} floorDeltas={floorDeltas} />
-      </div>
-      <div className={`panel tx-bottom-panel ${txExpanded ? '' : 'collapsed'}`}>
-        <div className="panel-head panel-toggle" onClick={() => setTxExpanded(!txExpanded)}>
-          <div className="panel-title">All Recent Activity<span className="tx-count-badge">{allTxs.length}</span>{status === 'live' && <span className="live-badge">LIVE</span>}<span className="toggle-arrow">{txExpanded ? '\u25be' : '\u25b8'}</span></div>
-          {txExpanded && (<div className="filter-tabs" onClick={e => e.stopPropagation()}>
-            <button className={`filter-tab ${txFilter==='all'?'active':''}`} onClick={() => setTxFilter('all')}>All</button>
-            {MARKET_ASSETS.map(a => (<button key={a.ticker} className={`filter-tab ${txFilter===a.ticker?'active':''}`} onClick={() => setTxFilter(a.ticker)}>{a.ticker}</button>))}
-          </div>)}
-        </div>
-        {txExpanded && (<div className="tx-table-wrap">
-          {txShown.length === 0 ? <div className="tx-empty">No transactions found.</div> : (<>
-            <table className="tx-table"><thead><tr><th>Asset</th><th>Type</th><th>Price</th><th>USD</th><th>From</th><th>To</th><th>TX</th><th></th></tr></thead>
-              <tbody>{txShown.slice(0, txLimit).map((tx, i) => (
-                <tr key={tx.id ?? i} className="tx-row">
-                  <td className="tx-asset">{tx.asset}</td>
-                  <td><span className={`tag ${TYPE_TAG[tx.type]??'tag-grey'}`}>{TYPE_LABEL[tx.type]??tx.type}</span></td>
-                  <td className="tx-price">{tx.btcPrice ? `${tx.btcPrice} BTC` : tx.ethPrice ? `${tx.ethPrice.toFixed(4)} ETH` : '\u2014'}</td>
-                  <td className="tx-usd">{tx.usdPrice ? fmtUsd(tx.usdPrice) : '\u2014'}</td>
-                  <td className="tx-addr">{tx.fromShort || tx.from || '\u2014'}</td>
-                  <td className="tx-addr">{tx.toShort || tx.to || '\u2014'}</td>
-                  <td className="tx-hash">{tx.txHash?.slice(0,8)}\u2026</td>
-                  <td className="tx-links"><a href={tx.xcUrl} target="_blank" rel="noreferrer">XChain</a><a href={tx.tsUrl} target="_blank" rel="noreferrer">TokenScan</a>{tx.openseaUrl && <a href={tx.openseaUrl} target="_blank" rel="noreferrer">OpenSea</a>}</td>
-                </tr>))}</tbody></table>
-            {txShown.length > txLimit && <button className="tx-show-more" onClick={() => setTxExpanded(true)}>Show all {txShown.length}</button>}
-          </>)}
-        </div>)}
       </div>
     </div>
   );
