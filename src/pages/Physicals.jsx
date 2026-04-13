@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import './Physicals.css';
 
-const CARD_FRONT = '/djpepe-card-front.jpg';
-const CARD_BACK  = '/djpepe-card-back.jpg';
+const CARD_FRONT = 'https://kkxcp6lss5cxehgu.public.blob.vercel-storage.com/gallery/djpepe10yearfrontfinal9-xFQMnynrPs3YwzXLdsIXZJDdLOvb1z.jpg';
+const CARD_BACK  = 'https://kkxcp6lss5cxehgu.public.blob.vercel-storage.com/gallery/djpepe10yearbackfinal9-LoXpxMwKmq02JiyChRQSsVN2SiSWt4.jpg';
 const X_INTENT   = 'https://x.com/intent/tweet?text=' +
   encodeURIComponent('Just met DJPEPE at @BTCMag Las Vegas 2026 \u{1F438} www.djpepe.wtf @Scrilla_XCP');
 
