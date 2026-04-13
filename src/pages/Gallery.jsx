@@ -41,7 +41,6 @@ export default function Gallery({ onFileCount }) {
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [copied, setCopied]     = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
   const fileInput               = useRef();
 
@@ -201,14 +200,6 @@ export default function Gallery({ onFileCount }) {
     setSelected(file);
   };
 
-  // ── COPY LINK ─────────────────────────────────────────────
-  const copyLink = () => {
-    navigator.clipboard.writeText(selected?.url || window.location.href).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
   // ── UPLOAD ZONE COPY ──────────────────────────────────────
   const isUploading = (counts.uploading || 0) > 0 || (counts.queued || 0) > 0;
   const zoneCopy    = dragging
@@ -319,10 +310,6 @@ export default function Gallery({ onFileCount }) {
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className="cell cell-skeleton">
               <div className="skeleton-thumb"/>
-              <div className="cell-meta">
-                <div className="skeleton-line w80"/>
-                <div className="skeleton-line w50"/>
-              </div>
             </div>
           ))}
         </div>
@@ -343,17 +330,17 @@ export default function Gallery({ onFileCount }) {
               >
                 <div className={`cell-thumb ${file.bg}`}>
                   {file.url && IMAGE_EXTS.has(file.type)
-                    ? <img src={file.url} alt={file.name} loading="lazy"/>
+                    ? <>
+                        <img src={file.url} alt={file.name} loading="lazy"
+                             onError={(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='flex'; }}/>
+                        <span className="cell-icon" style={{ display:'none' }}>{(() => { const Icon = ICON_MAP[file.icon] || ImageIcon; return <Icon />; })()}</span>
+                      </>
                     : <span className="cell-icon">{(() => { const Icon = ICON_MAP[file.icon] || FileIcon; return <Icon />; })()}</span>
                   }
                   {file.isNew                        && <span className="tag tag-new cell-badge">New</span>}
                   {!file.isNew && file.type==='gif'  && <span className="tag tag-red  cell-badge">GIF</span>}
                   {!file.isNew && VIDEO_EXTS.has(file.type) && <span className="tag tag-mp4  cell-badge">{file.type.toUpperCase()}</span>}
                   {!file.isNew && AUDIO_EXTS.has(file.type) && <span className="tag tag-mp3  cell-badge">{file.type.toUpperCase()}</span>}
-                </div>
-                <div className="cell-meta">
-                  <div className="cell-name">{file.name}</div>
-                  <div className="cell-sub">{file.category || file.type?.toUpperCase()} \u00b7 {file.type?.toUpperCase()}</div>
                 </div>
               </div>
             ))}
@@ -394,12 +381,10 @@ export default function Gallery({ onFileCount }) {
               <div className="modal-details">
                 <div className="detail-row"><span>Format</span><span>{selected.type?.toUpperCase()}</span></div>
                 {selected.size && <div className="detail-row"><span>Size</span><span>{(selected.size/1024).toFixed(1)} KB</span></div>}
-                {selected.uploadedAt && <div className="detail-row"><span>Added</span><span>{new Date(selected.uploadedAt).toLocaleDateString()}</span></div>}
                 {selected.url && <div className="detail-row"><span>CDN URL</span><a href={selected.url} target="_blank" rel="noreferrer" className="detail-link">Open</a></div>}
               </div>
               <div className="modal-actions">
                 {selected.url && <a href={selected.url} download={selected.name} className="btn btn-outline">Download</a>}
-                <button className="btn btn-outline" onClick={copyLink}>{copied ? 'Link copied.' : 'Copy link'}</button>
               </div>
             </div>
           </div>
