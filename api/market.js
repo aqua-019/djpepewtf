@@ -98,6 +98,17 @@ async function getOpenSeaSales(assetName, ethUsd) {
   } catch { return []; }
 }
 
+async function fetchPepeWtfHolders(asset) {
+  try {
+    const res = await fetch(`https://pepe.wtf/api/asset/${asset}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.holders ?? null;
+  } catch { return null; }
+}
+
 async function getAssetData(asset, btcUsd) {
   const [info, holdersRes, sendsRes, ordersRes, dispensesRes] = await Promise.all([
     xcp(`/assets/${asset}`), xcp(`/assets/${asset}/holders?limit=100`),
@@ -108,7 +119,12 @@ async function getAssetData(asset, btcUsd) {
   const supply = info?.result?.supply ?? null, locked = info?.result?.locked ?? false;
   const desc = info?.result?.description ?? '', issuer = info?.result?.issuer ?? null;
   const divisible = info?.result?.divisible ?? false, owner = info?.result?.owner ?? null;
-  const holders = holdersRes?.result?.length ?? null;
+  let holders = holdersRes?.result?.length ?? null;
+  let holdersSource = 'tokenscan';
+  if (asset === 'DJPEPE') {
+    const pepeWtfHolders = await fetchPepeWtfHolders('DJPEPE');
+    if (pepeWtfHolders !== null) { holders = pepeWtfHolders; holdersSource = 'pepe.wtf'; }
+  }
   const totalSupplyUnits = divisible && supply ? supply / 1e8 : supply;
   const imageUrl = await resolveImageUrl(asset, desc);
   const withUsd = (btc) => (btc != null && btcUsd != null) ? Math.round(btc * btcUsd * 100) / 100 : null;
@@ -152,7 +168,7 @@ async function getAssetData(asset, btcUsd) {
   const dispensersWithUsd = dispensers.map(d => ({ ...d, usdPrice: withUsd(d.btcPrice) }));
   return {
     ticker: asset, supply: totalSupplyUnits ? Math.round(totalSupplyUnits) : null,
-    holders, locked, divisible, issuer, owner, description: desc, imageUrl,
+    holders, holdersSource, locked, divisible, issuer, owner, description: desc, imageUrl,
     floor: floorBtc, floorUsd: withUsd(floorBtc), floorSats: floorBtc ? Math.round(floorBtc * 1e8) : null,
     floorXcp: floor?.xcpPrice ?? null, dispenserAddr: floor?.dispenser ?? null,
     dispenserCount: dispensersWithUsd.length, dispensers: dispensersWithUsd,
