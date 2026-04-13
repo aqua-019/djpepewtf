@@ -64,11 +64,16 @@
   flex-shrink: 0;
 }
 .header-x-link {
-  display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; color: var(--txt2); text-decoration: none;
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; color: var(--txt2); text-decoration: none;
   border-radius: var(--r4); transition: color 0.15s, background 0.15s;
+  font-size: 10px; font-weight: 600; white-space: nowrap;
 }
 .header-x-link:hover { color: var(--txt); background: var(--bg-hover); }
+.header-x-label { letter-spacing: 0.3px; }
+@media (max-width: 768px) {
+  .header-x-label { display: none; }
+}
 .header-stat.green { color: var(--accent); }
 .header-sep { opacity: 0.3; }
 
