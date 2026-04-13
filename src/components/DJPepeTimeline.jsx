@@ -111,6 +111,8 @@ export default function DJPepeTimeline() {
       </div>
 
       <div className="timeline-grid" ref={gridRef}>
+        <div className="spine-dot-left" />
+        <div className="spine-dot-right" />
         <svg className="convergence-svg" ref={svgRef} />
         {TIMELINE_EVENTS.map((event, index) => (
           <div
