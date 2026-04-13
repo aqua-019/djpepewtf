@@ -1,0 +1,291 @@
+/* DJPepeTimeline.css — Vegas v1.0 */
+/* Scoped under .djpepe-timeline to prevent collisions */
+
+.djpepe-timeline {
+  position: relative;
+  padding: 20px 0 60px;
+}
+
+/* ── SPINE ──────────────────────────────────────── */
+.djpepe-timeline .isolated-spine {
+  position: fixed;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--accent) 15%,
+    var(--accent) 85%,
+    transparent 100%
+  );
+  opacity: 0.18;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.djpepe-timeline .pulsing-dot {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: pulseDotDown 12s linear infinite;
+}
+
+@keyframes pulseDotDown {
+  0% { top: 5%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { top: 95%; opacity: 0; }
+}
+
+/* ── FILTER DOCK ────────────────────────────────── */
+.djpepe-timeline .filter-dock {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 10px 16px;
+  background: oklch(0.11 0.005 260 / 0.95);
+  border: 1px solid var(--border);
+  border-radius: var(--r8);
+  position: sticky;
+  top: var(--header-h);
+  z-index: 10;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  flex-wrap: wrap;
+}
+
+.djpepe-timeline .filter-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--txt2);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.djpepe-timeline .filter-button:hover {
+  color: var(--txt);
+  border-color: rgba(255,255,255,0.15);
+}
+
+.djpepe-timeline .filter-button.active {
+  color: var(--txt);
+  border-color: rgba(255,255,255,0.25);
+}
+
+.djpepe-timeline .filter-button.active.xcp { background: rgba(55, 138, 221, 0.15); border-color: rgba(55, 138, 221, 0.3); }
+.djpepe-timeline .filter-button.active.rare { background: rgba(15, 110, 86, 0.15); border-color: rgba(15, 110, 86, 0.3); }
+.djpepe-timeline .filter-button.active.djpepe { background: rgba(186, 117, 23, 0.15); border-color: rgba(186, 117, 23, 0.3); }
+
+.djpepe-timeline .filter-button.clear {
+  color: var(--txt3);
+  border-color: transparent;
+  font-size: 10px;
+}
+.djpepe-timeline .filter-button.clear:hover { color: var(--txt2); }
+
+.djpepe-timeline .filter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── TIMELINE GRID ──────────────────────────────── */
+.djpepe-timeline .timeline-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.djpepe-timeline .convergence-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── EVENT NODE ─────────────────────────────────── */
+.djpepe-timeline .event-node {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.5s ease, transform 0.5s ease, filter 0.3s ease;
+}
+
+.djpepe-timeline .event-node.reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.djpepe-timeline .event-node.filtered-out {
+  opacity: 0.12;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+
+/* ── EVENT CARD ─────────────────────────────────── */
+.djpepe-timeline .event-card {
+  position: relative;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--r8);
+  padding: 14px 16px;
+  cursor: default;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.djpepe-timeline .event-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.djpepe-timeline .event-card.xcp::before { background: #378ADD; }
+.djpepe-timeline .event-card.rare::before { background: #0F6E56; }
+.djpepe-timeline .event-card.djpepe::before { background: #BA7517; }
+
+.djpepe-timeline .event-card:hover {
+  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* ── CARD CONTENT ───────────────────────────────── */
+.djpepe-timeline .event-header {
+  margin-bottom: 8px;
+}
+
+.djpepe-timeline .event-date {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--txt3);
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.djpepe-timeline .event-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--txt);
+  line-height: 1.3;
+}
+
+.djpepe-timeline .convergence-tag {
+  margin-left: 6px;
+  font-size: 12px;
+}
+
+.djpepe-timeline .event-description {
+  font-size: 12px;
+  color: var(--txt2);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.djpepe-timeline .event-details {
+  font-size: 11px;
+  color: var(--txt3);
+  line-height: 1.5;
+  padding: 8px 10px;
+  background: var(--bg2);
+  border-radius: var(--r4);
+  margin-bottom: 10px;
+}
+
+/* ── TAGS ───────────────────────────────────────── */
+.djpepe-timeline .event-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.djpepe-timeline .event-tags .tag {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: var(--r4);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.djpepe-timeline .event-tags .tag.xcp {
+  background: rgba(55, 138, 221, 0.12);
+  color: #378ADD;
+  border: 1px solid rgba(55, 138, 221, 0.2);
+}
+.djpepe-timeline .event-tags .tag.rare {
+  background: rgba(15, 110, 86, 0.12);
+  color: #0F6E56;
+  border: 1px solid rgba(15, 110, 86, 0.2);
+}
+.djpepe-timeline .event-tags .tag.djpepe {
+  background: rgba(186, 117, 23, 0.12);
+  color: #BA7517;
+  border: 1px solid rgba(186, 117, 23, 0.2);
+}
+
+/* ── SOURCE LINK ────────────────────────────────── */
+.djpepe-timeline .card-source-link {
+  font-size: 10px;
+  color: var(--txt3);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.djpepe-timeline .card-source-link:hover {
+  color: var(--accent);
+}
+
+/* ── MOBILE ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .djpepe-timeline .timeline-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .djpepe-timeline .isolated-spine {
+    left: 20px;
+  }
+
+  .djpepe-timeline .filter-dock {
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  .djpepe-timeline .filter-button {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+
+  .djpepe-timeline .event-card {
+    padding: 12px 14px;
+  }
+
+  .djpepe-timeline .event-title {
+    font-size: 13px;
+  }
+}
