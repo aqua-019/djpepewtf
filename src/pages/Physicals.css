@@ -1,9 +1,80 @@
 .physicals-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  color: var(--txt2);
-  font-family: var(--font-display);
-  font-size: 18px;
+  max-width: 640px; margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 2rem;
+}
+.physicals-badge { text-align: center; }
+.badge-pill {
+  display: inline-block; padding: 0.4rem 1rem;
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  border: 1px solid var(--accent-str); border-radius: 100px;
+  color: var(--accent); background: var(--accent-dim);
+}
+.physicals-card-wrap { width: 100%; max-width: 480px; }
+.physicals-divider { width: 100%; border: none; border-top: 1px solid var(--border); }
+.physicals-bio { text-align: center; max-width: 520px; }
+.physicals-title {
+  font-family: var(--font-display); font-size: 22px; font-weight: 700;
+  letter-spacing: -0.3px; color: var(--txt); margin-bottom: 0.4rem;
+}
+.physicals-sub {
+  font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--txt2); margin-bottom: 1rem;
+}
+.physicals-copy { font-size: 14px; line-height: 1.7; color: var(--txt2); }
+.physicals-challenge { text-align: center; max-width: 520px; }
+.challenge-title {
+  font-family: var(--font-display); font-size: 16px; font-weight: 600;
+  color: var(--txt); margin-bottom: 0.75rem;
+}
+.challenge-copy { font-size: 13px; line-height: 1.7; color: var(--txt2); margin-bottom: 1.5rem; }
+.challenge-copy strong { color: var(--txt); font-weight: 600; }
+.challenge-cta {
+  display: inline-block; padding: 0.75rem 2rem;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  text-decoration: none; color: var(--bg); background: var(--accent);
+  border-radius: var(--r6); transition: opacity 0.15s, transform 0.15s;
+}
+.challenge-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+
+/* Flip Card */
+.flip-card {
+  perspective: 1000px;
+  width: 100%; max-width: 520px;
+  margin: 0 auto; cursor: pointer;
+}
+.flip-card-inner {
+  position: relative; width: 100%;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  aspect-ratio: 2.5 / 3.5;
+}
+.flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+.flip-card-front,
+.flip-card-back {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--r8); overflow: hidden;
+}
+.flip-card-back { transform: rotateY(180deg); }
+.flip-card-front img,
+.flip-card-back img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.flip-card-front {
+  box-shadow:
+    0 0 40px var(--accent-str),
+    0 0 80px var(--accent-dim),
+    0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.flip-hint {
+  text-align: center; font-size: 11px; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--txt3); margin-top: 12px;
+  transition: opacity 0.4s;
+}
+.flip-hint.hidden { opacity: 0; pointer-events: none; }
+
+@media (max-width: 480px) {
+  .physicals-page { padding: 1.5rem 1rem 3rem; }
+  .physicals-title { font-size: 18px; }
 }
