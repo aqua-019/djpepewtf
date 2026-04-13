@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { TIMELINE, TRAITS, DJPEPE_STATS } from '../data/index.js';
+import { TRAITS, DJPEPE_STATS } from '../data/index.js';
+import DJPepeTimeline from '../components/DJPepeTimeline.jsx';
 import './DJPepe.css';
 
 function ExternalLinkIcon({ size = 12 }) {
@@ -12,13 +13,12 @@ function ExternalLinkIcon({ size = 12 }) {
 }
 
 const LINKS = [
-  { label: 'Pepe.WTF Asset Page', url: 'https://pepe.wtf/asset/DJPEPE'      },
-  { label: 'XChain Explorer',     url: 'https://xchain.io/asset/DJPEPE'      },
-  { label: 'Rare Pepe Directory', url: 'https://rarepepedirectory.com'       },
-  { label: 'Counterparty.io',     url: 'https://counterparty.io'             },
-  { label: 'FAKEDJPEPE on XChain',url: 'https://xchain.io/asset/FAKEDJPEPE'  },
-  { label: 'Telegram',            url: 'https://t.me/djpepewtf'              },
-  { label: 'Twitter / X',         url: 'https://x.com/djpepewtf'             },
+  { label: 'Pepe.WTF Asset Page',  url: 'https://pepe.wtf/asset/DJPEPE'    },
+  { label: 'TokenScan Explorer',   url: 'https://tokenscan.io/asset/DJPEPE' },
+  { label: 'Rare Pepe Directory',  url: 'https://rarepepedirectory.com'     },
+  { label: 'Counterparty.io',      url: 'https://counterparty.io'           },
+  { label: 'X / Twitter',          url: 'https://x.com/DJPEPE_'            },
+  { label: 'Telegram',             url: 'PLACEHOLDER — update on receipt'   },
 ];
 
 export default function DJPepe() {
@@ -52,7 +52,7 @@ export default function DJPepe() {
 
       {/* ── HERO ART ──────────────────────────────────────── */}
       <div className="hero-art">
-        <img src="/DJPEPE.jpg" alt="DJ PEPE" className="hero-art-img" />
+        <img src="/DJPEPE.jpg" alt="DJPEPE" className="hero-art-img" />
         <div className="hero-art-overlay">
           <span className="pill pill-green">First Audio NFT</span>
           <span className="pill pill-red">No Requests</span>
@@ -61,13 +61,14 @@ export default function DJPepe() {
 
       {/* ── HERO INFO ─────────────────────────────────────── */}
       <div className="hero-info">
-        <div className="eyebrow">Rare Pepe · Blockchain Asset · 2016</div>
-        <h1 className="asset-title">
-          DJ PEPE <span className="asset-sub">/ DJPEPE</span>
-        </h1>
+        <div className="eyebrow">COUNTERPARTY ASSET · 2016</div>
+        <h1 className="asset-title">DJPEPE</h1>
+        {/* TODO: Replace with Scrilla's official bio — pending confirmation */}
         <p className="asset-desc-compact">
-          The first audio NFT in history — minted on Bitcoin via Counterparty (XCP), Oct 13 2016.
-          169 issued. Hip-Hop Elements series, card 1 of 4. Strong hands only.
+          DJPEPE is the first tokenized blockchain art collectible with unlockable music —
+          a Rare Pepe Series 1 card minted on the Counterparty protocol in October 2016 by
+          artist Rare Scrilla. Recognized as the first audio NFT on any blockchain, DJPEPE
+          pioneered blockchain-native music collectibles two years before the term NFT existed.
         </p>
 
         <div className="stats-row">
@@ -86,7 +87,7 @@ export default function DJPepe() {
           <a href="https://pepe.wtf/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-green">
             Buy on Pepe.WTF <ExternalLinkIcon />
           </a>
-          <a href="https://xchain.io/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-outline">
+          <a href="https://tokenscan.io/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-outline">
             View on Chain <ExternalLinkIcon />
           </a>
         </div>
@@ -102,31 +103,13 @@ export default function DJPepe() {
         </div>
         <p className="audio-desc">
           DJPEPE is the first audio NFT ever minted on any blockchain.
-          Holders got access to exclusive music by RareScrilla.
+          Holders got access to exclusive music by Rare Scrilla.
         </p>
       </div>
 
-      {/* ── HISTORY + TRAITS ─────────────────────────────── */}
+      {/* ── TRAITS + LINKS ──────────────────────────────── */}
       <div className="history-layout">
-
-        {/* Timeline */}
-        <div>
-          <div className="sec-label">Asset lore &amp; history</div>
-          <div className="timeline">
-            {TIMELINE.map((t, i) => (
-              <div key={i} className="timeline-entry">
-                <div className="tl-year">{t.year}</div>
-                <div className="tl-body">
-                  <h4 className="tl-heading">{t.heading}</h4>
-                  <p className="tl-text">{t.body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Traits + Links */}
-        <div className="traits-col">
+        <div className="traits-col" style={{ borderLeft: 'none' }}>
           <div className="sec-label">Traits</div>
           {TRAITS.map(t => (
             <div key={t.name} className="trait-row">
@@ -145,6 +128,12 @@ export default function DJPepe() {
           ))}
         </div>
       </div>
+
+      {/* ── TIMELINE ─────────────────────────────────────── */}
+      <section className="djpepe-timeline-section">
+        <h2 className="sec-label">Timeline</h2>
+        <DJPepeTimeline />
+      </section>
     </div>
   );
 }

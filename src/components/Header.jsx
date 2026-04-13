@@ -1,8 +1,12 @@
 import './Header.css';
+import { XIcon } from './Icons.jsx';
 
 export default function Header({ page, setPage, fileCount, status }) {
-  const tabs = ['gallery', 'djpepe', 'market'];
-  const labels = { gallery: 'Meme Gallery', djpepe: 'DJPEPE', market: 'Asset Market' };
+  const tabs = ['gallery', 'djpepe', 'market', 'physicals'];
+  const labels = {
+    gallery: 'Meme Gallery', djpepe: 'DJPEPE',
+    market: 'Asset Market', physicals: 'Vegas Card',
+  };
 
   return (
     <header className="header">
@@ -23,6 +27,10 @@ export default function Header({ page, setPage, fileCount, status }) {
       </nav>
 
       <div className="header-right">
+        <a href="https://x.com/DJPEPE_" target="_blank" rel="noopener noreferrer"
+           className="header-x-link" aria-label="DJPEPE on X">
+          <XIcon size={14} />
+        </a>
         <span className="live-dot" />
         <span className="header-stat">{status === 'live' ? 'Live' : 'Offline'}</span>
         <span className="header-sep">·</span>

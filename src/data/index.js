@@ -97,12 +97,10 @@ export const TRAITS = [
 ];
 
 export const DJPEPE_STATS = [
-  { label: 'Floor',   value: null,   sub: 'See pepe.wtf'       },
-  { label: 'Supply',  value: '169',  sub: 'Total minted'       },
-  { label: 'Holders', value: null,   sub: 'See xchain.io'      },
-  { label: 'Chain',   value: 'XCP',  sub: 'Counterparty / BTC' },
-  { label: 'Minted',  value: '2016', sub: 'Oct 13th'           },
-  { label: 'Series',  value: 'HH',   sub: 'Hip-Hop, card 1/4'  },
+  { label: 'Floor',   value: null,   sub: 'Live BTC'      },
+  { label: 'Holders', value: null,   sub: 'Live count'    },
+  { label: 'Supply',  value: '169',  sub: '169 minted'    },
+  { label: 'Year',    value: '2016', sub: 'Oct 13th'      },
 ];
 
 export function fmtNum(n) {
