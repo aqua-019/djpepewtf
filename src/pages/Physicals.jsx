@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import './Physicals.css';
 
-const CARD_FRONT = 'REPLACE_WITH_BLOB_URL_FRONT';
-const CARD_BACK  = 'REPLACE_WITH_BLOB_URL_BACK';
+const CARD_FRONT = '/djpepe-card-front.jpg';
+const CARD_BACK  = '/djpepe-card-back.jpg';
 const X_INTENT   = 'https://x.com/intent/tweet?text=' +
   encodeURIComponent('Just met DJPEPE at @BTCMag Las Vegas 2026 \u{1F438} www.djpepe.wtf @Scrilla_XCP');
 

@@ -93,23 +93,22 @@ export default function DJPepe() {
         </div>
       </div>
 
-      {/* ── AUDIO SECTION ────────────────────────────────── */}
-      <div className="audio-section">
-        <div className="audio-label">First Audio NFT</div>
-        <div className="audio-bars">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <span key={i} className="audio-bar" style={{ animationDelay: `${i * 0.12}s` }} />
-          ))}
+      {/* ── AUDIO + TRAITS SIDE-BY-SIDE ─────────────────── */}
+      <div className="info-layout">
+        <div className="audio-section">
+          <div className="audio-label">First Audio NFT</div>
+          <div className="audio-bars">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <span key={i} className="audio-bar" style={{ animationDelay: `${i * 0.12}s` }} />
+            ))}
+          </div>
+          <p className="audio-desc">
+            DJPEPE is the first audio NFT ever minted on any blockchain.
+            Holders got access to exclusive music by Rare Scrilla.
+          </p>
         </div>
-        <p className="audio-desc">
-          DJPEPE is the first audio NFT ever minted on any blockchain.
-          Holders got access to exclusive music by Rare Scrilla.
-        </p>
-      </div>
 
-      {/* ── TRAITS + LINKS ──────────────────────────────── */}
-      <div className="history-layout">
-        <div className="traits-col" style={{ borderLeft: 'none' }}>
+        <div className="traits-col">
           <div className="sec-label">Traits</div>
           {TRAITS.map(t => (
             <div key={t.name} className="trait-row">

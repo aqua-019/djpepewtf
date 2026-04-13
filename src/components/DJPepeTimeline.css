@@ -8,16 +8,16 @@
 
 /* ── SPINE ──────────────────────────────────────── */
 .djpepe-timeline .isolated-spine {
-  position: fixed;
-  left: 50%;
+  position: absolute;
+  left: 24px;
   top: 0;
   bottom: 0;
   width: 2px;
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    var(--accent) 15%,
-    var(--accent) 85%,
+    var(--accent) 10%,
+    var(--accent) 90%,
     transparent 100%
   );
   opacity: 0.18;
@@ -28,8 +28,7 @@
 .djpepe-timeline .pulsing-dot {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: -3px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -112,9 +111,9 @@
 /* ── TIMELINE GRID ──────────────────────────────── */
 .djpepe-timeline .timeline-grid {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   max-width: 900px;
   margin: 0 auto;
   padding: 0 16px;
@@ -262,13 +261,8 @@
 
 /* ── MOBILE ─────────────────────────────────────── */
 @media (max-width: 768px) {
-  .djpepe-timeline .timeline-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
   .djpepe-timeline .isolated-spine {
-    left: 20px;
+    left: 16px;
   }
 
   .djpepe-timeline .filter-dock {
