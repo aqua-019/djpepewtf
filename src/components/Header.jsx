@@ -29,7 +29,7 @@ export default function Header({ page, setPage, fileCount, status }) {
       <div className="header-right">
         <a href="https://x.com/DJPEPE_" target="_blank" rel="noopener noreferrer"
            className="header-x-link" aria-label="DJPEPE on X">
-          <XIcon size={14} />
+          <XIcon size={14} /> <span className="header-x-label">DJPEPE on X</span>
         </a>
         <span className="live-dot" />
         <span className="header-stat">{status === 'live' ? 'Live' : 'Offline'}</span>

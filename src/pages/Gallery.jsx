@@ -335,6 +335,13 @@ export default function Gallery({ onFileCount }) {
                              onError={(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='flex'; }}/>
                         <span className="cell-icon" style={{ display:'none' }}>{(() => { const Icon = ICON_MAP[file.icon] || ImageIcon; return <Icon />; })()}</span>
                       </>
+                    : file.url && VIDEO_EXTS.has(file.type)
+                    ? <>
+                        <video src={file.url} muted preload="metadata"
+                               onLoadedData={(e) => { e.target.currentTime = 0.5; }}
+                               onError={(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='flex'; }}/>
+                        <span className="cell-icon" style={{ display:'none' }}>{(() => { const Icon = ICON_MAP[file.icon] || VideoIcon; return <Icon />; })()}</span>
+                      </>
                     : <span className="cell-icon">{(() => { const Icon = ICON_MAP[file.icon] || FileIcon; return <Icon />; })()}</span>
                   }
                   {file.isNew                        && <span className="tag tag-new cell-badge">New</span>}
