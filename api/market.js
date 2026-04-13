@@ -105,7 +105,10 @@ async function fetchPepeWtfHolders(asset) {
     });
     if (!res.ok) return null;
     const data = await res.json();
-    return data?.holders ?? null;
+    const h = data?.holders;
+    if (typeof h === 'number') return h;
+    if (Array.isArray(h)) return h.length;
+    return null;
   } catch { return null; }
 }
 
@@ -119,11 +122,11 @@ async function getAssetData(asset, btcUsd) {
   const supply = info?.result?.supply ?? null, locked = info?.result?.locked ?? false;
   const desc = info?.result?.description ?? '', issuer = info?.result?.issuer ?? null;
   const divisible = info?.result?.divisible ?? false, owner = info?.result?.owner ?? null;
-  let holders = holdersRes?.result?.length ?? null;
+  let holders = Array.isArray(holdersRes?.result) ? holdersRes.result.length : null;
   let holdersSource = 'tokenscan';
   if (asset === 'DJPEPE') {
     const pepeWtfHolders = await fetchPepeWtfHolders('DJPEPE');
-    if (pepeWtfHolders !== null) { holders = pepeWtfHolders; holdersSource = 'pepe.wtf'; }
+    if (typeof pepeWtfHolders === 'number') { holders = pepeWtfHolders; holdersSource = 'pepe.wtf'; }
   }
   const totalSupplyUnits = divisible && supply ? supply / 1e8 : supply;
   const imageUrl = await resolveImageUrl(asset, desc);
