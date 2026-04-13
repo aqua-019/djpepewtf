@@ -27,7 +27,6 @@ function extFromMime(mime = '') {
 export default function Gallery({ onFileCount }) {
   const [files, setFiles]       = useState([]);
   const [loading, setLoading]   = useState(true);
-  const [sort, setSort]         = useState('new');
   const [selected, setSelected] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
@@ -36,8 +35,6 @@ export default function Gallery({ onFileCount }) {
   });
   const [filterType, setFilterType] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
-  const [filterYear, setFilterYear] = useState('all');
-  const [search, setSearch] = useState('');
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -173,26 +170,16 @@ export default function Gallery({ onFileCount }) {
   const VIDEO_EXTS = new Set(['mp4','webm','mov','avi','ogv']);
   const AUDIO_EXTS = new Set(['mp3','wav','ogg','flac','aac','m4a']);
 
-  const years = [...new Set(files.map(f => f.uploadedAt ? new Date(f.uploadedAt).getFullYear() : null).filter(Boolean))].sort((a,b) => b - a);
-
-  const searchLower = search.toLowerCase().trim();
   const filtered = files.filter(f => {
     if (filterType === 'image' && !IMAGE_EXTS.has(f.type)) return false;
     if (filterType === 'video' && !VIDEO_EXTS.has(f.type)) return false;
     if (filterType === 'audio' && !AUDIO_EXTS.has(f.type)) return false;
-    if (filterYear !== 'all' && f.uploadedAt) {
-      if (new Date(f.uploadedAt).getFullYear() !== Number(filterYear)) return false;
-    }
     if (filterCategory !== 'all' && f.category !== filterCategory) return false;
-    if (searchLower && !(f.name || '').toLowerCase().includes(searchLower)) return false;
     return true;
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    if (sort === 'new') return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
-    if (sort === 'old') return new Date(a.uploadedAt || 0) - new Date(b.uploadedAt || 0);
-    if (sort === 'az')  return (a.name || '').localeCompare(b.name || '');
-    return 0;
+    return new Date(b.uploadedAt || 0) - new Date(a.uploadedAt || 0);
   });
 
   // ── OPEN FILE ──────────────────────────────────────────────
@@ -249,22 +236,6 @@ export default function Gallery({ onFileCount }) {
             {loading ? 'loading…' : `${filtered.length} items`}
           </span>
         </div>
-        <div className="gallery-bar-right">
-          <input
-            type="text"
-            className="gallery-search"
-            placeholder="Search…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          <div className="sort-tabs">
-            {[['new','Newest'],['old','Oldest'],['az','A\u2013Z']].map(([key, label]) => (
-              <button key={key} className={`sort-tab ${sort===key?'active':''}`} onClick={() => setSort(key)}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* ── FILTER BAR ───────────────────────────────────── */}
@@ -275,16 +246,6 @@ export default function Gallery({ onFileCount }) {
               {label}
             </button>
           ))}
-          {years.length > 0 && (
-            <select
-              className="filter-year-select"
-              value={filterYear}
-              onChange={e => setFilterYear(e.target.value)}
-            >
-              <option value="all">All years</option>
-              {years.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          )}
         </div>
         <div className="size-slider-wrap">
           <span className="size-label">Size</span>
