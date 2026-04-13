@@ -1,0 +1,9 @@
+.physicals-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--txt2);
+  font-family: var(--font-display);
+  font-size: 18px;
+}

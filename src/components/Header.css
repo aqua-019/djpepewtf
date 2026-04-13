@@ -63,5 +63,16 @@
   color: var(--txt2);
   flex-shrink: 0;
 }
+.header-x-link {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; color: var(--txt2); text-decoration: none;
+  border-radius: var(--r4); transition: color 0.15s, background 0.15s;
+}
+.header-x-link:hover { color: var(--txt); background: var(--bg-hover); }
 .header-stat.green { color: var(--accent); }
 .header-sep { opacity: 0.3; }
+
+@media (max-width: 720px) {
+  .header-tabs { gap: 2px; }
+  .header-tab  { padding: 6px 10px; font-size: 12px; }
+}

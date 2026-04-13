@@ -126,3 +126,22 @@ export function FileIcon() {
     </svg>
   );
 }
+
+export function XIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor">
+      <path d="M12.6 1H15L9.9 6.9 16 15h-4.5L8 10.1 3.6 15H1.2l5.5-6.3L.4 1H5l3.1 4.6L12.6 1zm-.8 12.5h1.3L4.3 2.4H2.9l9 11.1z"/>
+    </svg>
+  );
+}
+
+export function CardIcon({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none"
+         stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="3" width="14" height="10" rx="1.5"/>
+      <line x1="1" y1="6.5" x2="15" y2="6.5"/>
+      <line x1="4" y1="10" x2="7" y2="10"/>
+    </svg>
+  );
+}

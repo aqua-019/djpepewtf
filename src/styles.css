@@ -61,8 +61,7 @@ html, body, #root { height: 100%; }
   --font-mono:    'IBM Plex Mono', 'JetBrains Mono', monospace;
 
   /* Layout */
-  --sidebar-w:       52px;
-  --sidebar-w-open:  186px;
+  /* sidebar removed in Vegas v1.0 */
   --header-h:        53px;
 }
 
