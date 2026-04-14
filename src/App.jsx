@@ -38,6 +38,17 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  // Per-route document title
+  const PAGE_TITLES = {
+    gallery: 'Meme Gallery \u2014 DJPEPE.WTF',
+    djpepe: 'DJPEPE \u2014 First Audio NFT',
+    market: 'Asset Market \u2014 DJPEPE.WTF',
+    physicals: '10th Anniversary Card \u2014 DJPEPE.WTF',
+  };
+  useEffect(() => {
+    document.title = PAGE_TITLES[page] || 'DJPEPE.WTF';
+  }, [page]);
+
   // Lifted state so Header and Ticker can show real data
   const [fileCount, setFileCount]         = useState(null);
   const [marketSummary, setMarketSummary] = useState({ floor: null, supply: null, status: 'loading' });
@@ -67,7 +78,7 @@ export default function App() {
           { id: 'gallery',   label: 'Gallery',    icon: <GridIcon/> },
           { id: 'djpepe',    label: 'DJPEPE',     icon: <FrogIcon/> },
           { id: 'market',    label: 'Market',     icon: <ChartIcon/> },
-          { id: 'physicals', label: 'Vegas Card', icon: <CardIcon/> },
+          { id: 'physicals', label: '10th Anniversary', icon: <CardIcon/> },
         ].map(item => (
           <button
             key={item.id}

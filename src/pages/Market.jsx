@@ -156,6 +156,7 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
 function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
   const a = asset;
   const [showAllTx, setShowAllTx] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState(null);
   const txList = [...(a.dispenses || []), ...(a.openseaSales || [])];
   const TX_PREVIEW = 8;
   const txVisible = showAllTx ? txList.slice(0, 50) : txList.slice(0, TX_PREVIEW);
@@ -233,7 +234,7 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
     })()}
 
     {a.dispensers.length > 0 && (<div className="ad-dispensers"><div className="ad-section-label">Open Dispensers ({a.dispensers.length})</div>
-      <div className="dispenser-list">{a.dispensers.map((d, i) => (<div key={i} className="dispenser-item"><div className="disp-price">{d.btcPrice} BTC</div>{d.usdPrice != null && <div className="disp-usd">{fmtUsd(d.usdPrice)}</div>}<div className="disp-addr">{d.address}</div>{d.giveRemaining != null && <div className="disp-remaining">{d.giveRemaining} remaining</div>}</div>))}</div>
+      <div className="dispenser-list">{a.dispensers.map((d, i) => (<div key={i} className="dispenser-item"><div className="disp-price">{d.btcPrice} BTC</div>{d.usdPrice != null && <div className="disp-usd">{fmtUsd(d.usdPrice)}</div>}<button className={`disp-addr-btn${copiedIdx === i ? ' copied' : ''}`} title={`Copy: ${d.addressFull}`} onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(d.addressFull); setCopiedIdx(i); setTimeout(() => setCopiedIdx(null), 1500); }}>{copiedIdx === i ? 'Copied!' : d.address}</button>{d.giveRemaining != null && <div className="disp-remaining">{d.giveRemaining} remaining</div>}</div>))}</div>
     </div>)}
 
     {txList.length > 0 && (<div className="ad-tx-section">
