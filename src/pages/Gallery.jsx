@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUploadQueue } from '../components/useUploadQueue.js';
 import UploadQueuePanel  from '../components/UploadQueuePanel.jsx';
 import SubmitModal        from '../components/SubmitModal.jsx';
+import GalleryModal       from '../components/GalleryModal.jsx';
 import { ImageIcon, VideoIcon, AudioIcon, GifIcon, VectorIcon, FileIcon } from '../components/Icons.jsx';
 import './Gallery.css';
 
@@ -28,6 +29,7 @@ export default function Gallery({ onFileCount }) {
   const [files, setFiles]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [selected, setSelected] = useState(null);
+  const [activeIdx, setActiveIdx] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [showQueue, setShowQueue] = useState(false);
   const [cellSize, setCellSize] = useState(() => {
@@ -183,8 +185,9 @@ export default function Gallery({ onFileCount }) {
   });
 
   // ── OPEN FILE ──────────────────────────────────────────────
-  const openFile = (file) => {
+  const openFile = (file, idx) => {
     setSelected(file);
+    setActiveIdx(idx);
   };
 
   // ── UPLOAD ZONE COPY ──────────────────────────────────────
@@ -283,11 +286,11 @@ export default function Gallery({ onFileCount }) {
       ) : (
         <>
           <div className="gallery-grid" style={{ '--cell-min': cellSize + 'px' }}>
-            {sorted.map(file => (
+            {sorted.map((file, idx) => (
               <div
                 key={file.id}
                 className={`cell ${file.isNew ? 'cell-new' : ''}`}
-                onClick={() => openFile(file)}
+                onClick={() => openFile(file, idx)}
               >
                 <div className={`cell-thumb ${file.bg}`}>
                   {file.url && IMAGE_EXTS.has(file.type)
@@ -325,38 +328,16 @@ export default function Gallery({ onFileCount }) {
 
       {/* ── MODAL ────────────────────────────────────────── */}
       {selected && (
-        <div className="modal-overlay" onClick={() => setSelected(null)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title">{selected.name}</div>
-              <button className="modal-close" onClick={() => setSelected(null)} aria-label="Close">✕</button>
-            </div>
-            <div className="modal-preview">
-              {selected.url ? (
-                VIDEO_EXTS.has(selected.type)
-                  ? <video src={selected.url} controls className="modal-media"/>
-                  : AUDIO_EXTS.has(selected.type)
-                  ? <div className="modal-audio-wrap">
-                      <span className="modal-audio-icon">🎵</span>
-                      <audio src={selected.url} controls className="modal-audio"/>
-                    </div>
-                  : <img src={selected.url} alt={selected.name} className="modal-media"/>
-              ) : (
-                <div className="modal-placeholder">{selected.icon}</div>
-              )}
-            </div>
-            <div className="modal-body">
-              <div className="modal-details">
-                <div className="detail-row"><span>Format</span><span>{selected.type?.toUpperCase()}</span></div>
-                {selected.size && <div className="detail-row"><span>Size</span><span>{(selected.size/1024).toFixed(1)} KB</span></div>}
-                {selected.url && <div className="detail-row"><span>CDN URL</span><a href={selected.url} target="_blank" rel="noreferrer" className="detail-link">Open</a></div>}
-              </div>
-              <div className="modal-actions">
-                {selected.url && <a href={selected.url} download={selected.name} className="btn btn-outline">Download</a>}
-              </div>
-            </div>
-          </div>
-        </div>
+        <GalleryModal
+          file={selected}
+          onClose={() => { setSelected(null); setActiveIdx(null); }}
+          onPrev={activeIdx > 0
+            ? () => { setSelected(sorted[activeIdx - 1]); setActiveIdx(activeIdx - 1); }
+            : null}
+          onNext={activeIdx != null && activeIdx < sorted.length - 1
+            ? () => { setSelected(sorted[activeIdx + 1]); setActiveIdx(activeIdx + 1); }
+            : null}
+        />
       )}
 
       {/* ── SUBMIT MODAL ────────────────────────────────── */}
