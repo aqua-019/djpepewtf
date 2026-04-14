@@ -35,15 +35,15 @@ export function useUploadQueue(onFileUploaded) {
   }, []);
 
   const uploadOne = useCallback(async (item, attempt = 0) => {
-    // ── 1. Hash the file client-side ────────────────────────
+    // ── 1. Hash the file client-side (optional — skip on failure) ──
     updateItem(item.id, { status: 'hashing' });
-    let hash;
+    let hash = '';
     try {
       hash = await hashFile(item.file);
       updateItem(item.id, { hash });
     } catch {
-      updateItem(item.id, { status: 'error-net', error: 'Failed to read file', errorDetail: 'Failed to read file' });
-      return;
+      // Hashing failed (e.g. no crypto.subtle on HTTP) — upload without hash
+      console.warn('[upload] client-side hashing failed, uploading without dedup pre-check');
     }
 
     // ── 2. Upload with hash header ──────────────────────────
@@ -52,14 +52,16 @@ export function useUploadQueue(onFileUploaded) {
       const ext = item.file.name.split('.').pop().toLowerCase();
       const contentType = item.file.type || EXT_TO_MIME[ext] || 'application/octet-stream';
 
+      const headers = {
+        'Content-Type': contentType,
+        'x-filename':   encodeURIComponent(item.file.name),
+        'x-filesize':   String(item.file.size),
+      };
+      if (hash) headers['x-hash'] = hash;
+
       const res = await fetch('/api/upload', {
         method:  'POST',
-        headers: {
-          'Content-Type': contentType,
-          'x-filename':   encodeURIComponent(item.file.name),
-          'x-filesize':   String(item.file.size),
-          'x-hash':       hash,
-        },
+        headers,
         body: item.file,
       });
 
