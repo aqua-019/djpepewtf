@@ -2,12 +2,9 @@
 // Share utilities for the 10th Anniversary page.
 
 const TWEET_TEXT = 'Just met DJPEPE at @BTCMag Las Vegas 2026 \u{1F438} www.djpepe.wtf @scrillaventura';
-const ANNIVERSARY_URL = 'https://djpepe.wtf/physicals';
 
 export function buildTweetUrl() {
-  const text = encodeURIComponent(TWEET_TEXT);
-  const url  = encodeURIComponent(ANNIVERSARY_URL);
-  return `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
+  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(TWEET_TEXT)}`;
 }
 
 export function openTweet() {
@@ -25,7 +22,7 @@ export async function shareToInstagram() {
       await navigator.share({
         title: 'DJPEPE \u2014 10th Anniversary',
         text:  IG_CAPTION,
-        url:   ANNIVERSARY_URL,
+        url:   'https://djpepe.wtf',
       });
       return;
     } catch (err) {
@@ -33,14 +30,14 @@ export async function shareToInstagram() {
     }
   }
 
+  // Desktop: copy caption to clipboard, open IG story creation
   try {
     await navigator.clipboard.writeText(IG_CAPTION);
-    // Brief delay then open Instagram
     setTimeout(() => {
-      window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+      window.open('https://www.instagram.com/stories/create/', '_blank', 'noopener,noreferrer');
     }, 500);
   } catch {
     window.prompt('Copy this caption for your Instagram story:', IG_CAPTION);
-    window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+    window.open('https://www.instagram.com/stories/create/', '_blank', 'noopener,noreferrer');
   }
 }
