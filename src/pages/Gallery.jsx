@@ -193,7 +193,7 @@ export default function Gallery({ onFileCount }) {
     ? { h: 'Drop it.', s: 'Release to add to the gallery' }
     : isUploading
     ? { h: `Uploading ${counts.done || 0} / ${queue.length} files…`, s: 'Queue panel bottom-right' }
-    : { h: 'Upload to the archive', s: 'Drop files or click to browse' };
+    : { h: 'Upload to the archive', s: 'Drop files or click — duplicates auto-detected' };
 
   return (
     <div className="gallery-page">

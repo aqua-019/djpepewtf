@@ -3,12 +3,22 @@
  * Manages a queue of files with concurrency-limited uploads to /api/upload.
  * Safe for 300+ files — runs N uploads at a time, never hammers the API.
  * Auto-retries on 429 (rate limit) with exponential backoff.
+ * Computes SHA-256 client-side for dedup — duplicates rejected without full upload.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { MAX_FILE_SIZE, MAX_CONCURRENT_UPLOADS, EXT_TO_MIME, RETRY_BACKOFF_MS, MAX_RETRIES } from '../lib/constants.js';
 
-// Statuses: queued | uploading | done | error-size | error-net
+/** Compute SHA-256 hex string using the Web Crypto API (browser). */
+async function hashFile(file) {
+  const buffer = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest('SHA-256', buffer);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// Statuses: queued | hashing | uploading | done | duplicate | error-size | error-net
 export function useUploadQueue(onFileUploaded) {
   const [queue, setQueue]   = useState([]);
   const [active, setActive] = useState(false);
@@ -25,6 +35,18 @@ export function useUploadQueue(onFileUploaded) {
   }, []);
 
   const uploadOne = useCallback(async (item, attempt = 0) => {
+    // ── 1. Hash the file client-side ────────────────────────
+    updateItem(item.id, { status: 'hashing' });
+    let hash;
+    try {
+      hash = await hashFile(item.file);
+      updateItem(item.id, { hash });
+    } catch {
+      updateItem(item.id, { status: 'error-net', error: 'Failed to read file', errorDetail: 'Failed to read file' });
+      return;
+    }
+
+    // ── 2. Upload with hash header ──────────────────────────
     updateItem(item.id, { status: 'uploading' });
     try {
       const ext = item.file.name.split('.').pop().toLowerCase();
@@ -36,11 +58,25 @@ export function useUploadQueue(onFileUploaded) {
           'Content-Type': contentType,
           'x-filename':   encodeURIComponent(item.file.name),
           'x-filesize':   String(item.file.size),
+          'x-hash':       hash,
         },
         body: item.file,
       });
 
-      // Auto-retry on rate limit (429)
+      // ── Handle 409 duplicate ────────────────────────────
+      if (res.status === 409) {
+        const data = await res.json().catch(() => ({}));
+        updateItem(item.id, {
+          status: 'duplicate',
+          errorDetail: data.existing?.name
+            ? `Already in archive as "${data.existing.name}"`
+            : 'Already in archive',
+          url: data.existing?.url,
+        });
+        return;
+      }
+
+      // ── Auto-retry on rate limit (429) ──────────────────
       if (res.status === 429 && attempt < MAX_RETRIES) {
         const retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10) * 1000;
         const backoff = Math.max(retryAfter, RETRY_BACKOFF_MS * Math.pow(2, attempt));
@@ -89,7 +125,7 @@ export function useUploadQueue(onFileUploaded) {
         status = 'error-size';
         errorDetail = `${fmtSize(file.size)} exceeds ${fmtSize(MAX_FILE_SIZE)} limit`;
       }
-      return { id, file, name: file.name, ext, status, errorDetail };
+      return { id, file, name: file.name, ext, status, errorDetail, hash: null };
     });
 
     queueRef.current = [...queueRef.current, ...items];
@@ -101,13 +137,13 @@ export function useUploadQueue(onFileUploaded) {
   }, []);
 
   const clearDone = useCallback(() => {
-    queueRef.current = queueRef.current.filter(i => i.status === 'queued' || i.status === 'uploading');
+    queueRef.current = queueRef.current.filter(i => i.status === 'queued' || i.status === 'uploading' || i.status === 'hashing');
     setQueue(queueRef.current.slice());
   }, []);
 
   const retryErrors = useCallback(() => {
     queueRef.current = queueRef.current.map(i =>
-      i.status === 'error-net' ? { ...i, status: 'queued', errorDetail: null } : i
+      i.status === 'error-net' ? { ...i, status: 'queued', errorDetail: null, hash: null } : i
     );
     setQueue(queueRef.current.slice());
     for (let i = 0; i < MAX_CONCURRENT_UPLOADS; i++) drainRef.current?.();

@@ -1,11 +1,13 @@
 import './UploadQueuePanel.css';
 
 const STATUS_LABEL = {
-  queued:      { txt: 'Queued',     cls: 'grey'  },
-  uploading:   { txt: 'Uploading…', cls: 'green' },
-  done:        { txt: 'Done',       cls: 'done'  },
-  'error-size':{ txt: 'Too large',  cls: 'red'   },
-  'error-net': { txt: 'Failed',     cls: 'red'   },
+  queued:      { txt: 'Queued',          cls: 'grey'  },
+  hashing:     { txt: 'Checking…',       cls: 'green' },
+  uploading:   { txt: 'Uploading…',      cls: 'green' },
+  done:        { txt: 'Done',            cls: 'done'  },
+  duplicate:   { txt: 'Already exists',  cls: 'dupe'  },
+  'error-size':{ txt: 'Too large',       cls: 'red'   },
+  'error-net': { txt: 'Failed',          cls: 'red'   },
 };
 
 function statusText(item) {
@@ -19,11 +21,13 @@ export default function UploadQueuePanel({ queue, counts, onClear, onRetry, onCl
 
   const total    = queue.length;
   const done     = counts.done       || 0;
+  const dupes    = counts.duplicate  || 0;
   const errors   = (counts['error-net'] || 0) + (counts['error-size'] || 0);
   const uploading= counts.uploading  || 0;
+  const hashing  = counts.hashing    || 0;
   const queued   = counts.queued     || 0;
-  const pct      = total > 0 ? Math.round((done / total) * 100) : 0;
-  const allDone  = done + errors === total;
+  const pct      = total > 0 ? Math.round(((done + dupes) / total) * 100) : 0;
+  const allDone  = done + dupes + errors === total;
 
   return (
     <div className="uqp-panel">
@@ -31,7 +35,7 @@ export default function UploadQueuePanel({ queue, counts, onClear, onRetry, onCl
       <div className="uqp-header">
         <div className="uqp-title">
           {allDone
-            ? `Done — ${done} uploaded${errors ? `, ${errors} failed` : ''}`
+            ? `Done — ${done} uploaded${dupes ? `, ${dupes} duplicate${dupes > 1 ? 's' : ''}` : ''}${errors ? `, ${errors} failed` : ''}`
             : `Uploading ${done} / ${total} files`
           }
         </div>
@@ -55,8 +59,9 @@ export default function UploadQueuePanel({ queue, counts, onClear, onRetry, onCl
       </div>
       <div className="uqp-bar-label">
         <span>{pct}%</span>
-        {uploading > 0 && <span className="uqp-uploading">{uploading} uploading</span>}
+        {(uploading + hashing) > 0 && <span className="uqp-uploading">{uploading + hashing} uploading</span>}
         {queued    > 0 && <span>{queued} queued</span>}
+        {dupes     > 0 && <span className="uqp-dupe-count">{dupes} duplicate{dupes > 1 ? 's' : ''}</span>}
         {errors    > 0 && <span className="uqp-err-count">{errors} failed</span>}
       </div>
 
@@ -69,7 +74,7 @@ export default function UploadQueuePanel({ queue, counts, onClear, onRetry, onCl
               <span className="uqp-dot"/>
               <span className="uqp-name">{item.name}</span>
               <span className="uqp-status">{s.txt}</span>
-              {item.status === 'uploading' && <div className="uqp-spinner"/>}
+              {(item.status === 'uploading' || item.status === 'hashing') && <div className="uqp-spinner"/>}
             </div>
           );
         })}

@@ -1,6 +1,8 @@
 import { put } from '@vercel/blob';
+import { createHash } from 'crypto';
+import { readManifest, writeManifest, findDuplicate, registerFile } from './_manifest.js';
 
-// Tell Vercel not to parse the body — we stream it raw to Blob
+// Tell Vercel not to parse the body — we read it raw
 export const config = {
   api: { bodyParser: false },
 };
@@ -39,7 +41,7 @@ export default async function handler(req, res) {
   // ── CORS headers ─────────────────────────────────────────
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-filename, x-filesize');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-filename, x-filesize, x-hash');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -54,6 +56,7 @@ export default async function handler(req, res) {
   // ── Validate headers ──────────────────────────────────────
   const rawName    = req.headers['x-filename'];
   const rawSize    = req.headers['x-filesize'];
+  const clientHash = req.headers['x-hash'] || null;
   let   mimeType   = req.headers['content-type'] || '';
 
   if (!rawName) return res.status(400).json({ error: 'Missing x-filename header' });
@@ -71,21 +74,79 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "That file's too big. Max size is 150MB." });
   }
 
-  // ── Stream to Vercel Blob ─────────────────────────────────
+  // ── Quick dedup check using client-provided hash ──────────
+  // If the client already hashed the file, we can reject duplicates
+  // without reading the body (saves bandwidth).
+  if (clientHash) {
+    try {
+      const manifest = await readManifest();
+      const existing = findDuplicate(manifest, clientHash);
+      if (existing) {
+        return res.status(409).json({
+          ok: false,
+          duplicate: true,
+          message: 'This file already exists in the archive.',
+          existing: { url: existing.url, name: existing.name, uploadedAt: existing.uploadedAt },
+        });
+      }
+    } catch {
+      // Manifest check failed — proceed with upload (safe fallback)
+    }
+  }
+
+  // ── Buffer request body for hashing + upload ──────────────
   try {
-    const blob = await put(`gallery/${filename}`, req, {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const buffer = Buffer.concat(chunks);
+
+    // ── Compute server-side SHA-256 ─────────────────────────
+    const serverHash = createHash('sha256').update(buffer).digest('hex');
+
+    // Verify client hash if provided
+    if (clientHash && clientHash !== serverHash) {
+      return res.status(400).json({ error: 'Hash mismatch — corrupted upload' });
+    }
+
+    // ── Manifest dedup (authoritative server-side check) ────
+    const manifest = await readManifest();
+    const existing = findDuplicate(manifest, serverHash);
+    if (existing) {
+      return res.status(409).json({
+        ok: false,
+        duplicate: true,
+        message: 'This file already exists in the archive.',
+        existing: { url: existing.url, name: existing.name, uploadedAt: existing.uploadedAt },
+      });
+    }
+
+    // ── Upload to Vercel Blob ───────────────────────────────
+    const blob = await put(`gallery/${filename}`, buffer, {
       access:      'public',
       contentType: mimeType,
       addRandomSuffix: true,
     });
+
+    // ── Register in manifest ────────────────────────────────
+    const record = {
+      url:        blob.url,
+      pathname:   blob.pathname,
+      name:       filename,
+      size:       buffer.length,
+      type:       mimeType,
+      uploadedAt: new Date().toISOString(),
+    };
+    const updated = registerFile(manifest, serverHash, record);
+    await writeManifest(updated);
 
     return res.status(200).json({
       url:         blob.url,
       pathname:    blob.pathname,
       filename:    filename,
       mimeType:    mimeType,
-      size:        filesize,
-      uploadedAt:  new Date().toISOString(),
+      size:        buffer.length,
+      uploadedAt:  record.uploadedAt,
+      isDuplicate: false,
     });
   } catch (err) {
     console.error('[upload]', err);
