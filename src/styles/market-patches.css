@@ -1,0 +1,78 @@
+/* market-patches.css — Scoped overrides for the market page.
+   Import AFTER Market.css. All rules under .market-page to prevent leaking. */
+
+/* ── Asset name ────────────────────────────────────── */
+.market-page .ag-name-main {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ── USD prices: gold → warm red ───────────────────── */
+.market-page .ag-floor-usd,
+.market-page .disp-usd,
+.market-page .ad-hero-sub,
+.market-page .ad-tx-usd {
+  color: oklch(0.62 0.22 22);
+}
+
+/* ── Row padding + min-height ──────────────────────── */
+.market-page .asset-grid-row {
+  padding: 16px 20px;
+  min-height: 96px;
+}
+
+/* ── Dispenser card padding ────────────────────────── */
+.market-page .dispenser-item {
+  padding: 16px;
+}
+.market-page .disp-price {
+  font-size: 20px;
+}
+
+/* ── Section headers ───────────────────────────────── */
+.market-page .series-header {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+.market-page .ad-section-label {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+
+/* ── Action buttons min tap target ─────────────────── */
+.market-page .ad-actions .btn {
+  min-height: 44px;
+}
+
+/* ── Broken image fallback ─────────────────────────── */
+.market-page .img-error {
+  display: none !important;
+}
+.market-page .img-error + .ag-icon-placeholder,
+.market-page .ag-icon:has(.img-error)::after {
+  content: '\1F438';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-elevated);
+  border-radius: var(--r8);
+}
+
+/* Simpler fallback for browsers without :has() */
+.market-page .ag-icon-placeholder {
+  font-size: 14px;
+}
+
+/* ── Mobile adjustments ────────────────────────────── */
+@media (max-width: 768px) {
+  .market-page .ag-name-main {
+    font-size: 16px;
+  }
+  .market-page .asset-grid-row {
+    padding: 12px 16px;
+    min-height: 80px;
+  }
+}
