@@ -5,7 +5,7 @@ export default function Header({ page, setPage, fileCount, status }) {
   const tabs = ['gallery', 'djpepe', 'market', 'physicals'];
   const labels = {
     gallery: 'Meme Gallery', djpepe: 'DJPEPE',
-    market: 'Asset Market', physicals: 'Vegas Card',
+    market: 'Asset Market', physicals: '10th Anniversary',
   };
 
   return (
