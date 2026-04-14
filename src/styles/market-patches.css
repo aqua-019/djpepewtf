@@ -8,14 +8,10 @@
 .market-page .disp-usd,
 .market-page .ad-hero-sub,
 .market-page .ad-tx-usd {
-  color: oklch(0.62 0.22 22);
+  color: oklch(0.72 0.13 22);
 }
 
-/* ── Asset name ────────────────────────────────────────── */
-.market-page .ag-name-main {
-  font-size: 17px;
-  font-weight: 700;
-}
+/* ── Asset name (base is now 18px in Market.css) ──────── */
 
 /* ── Dispenser card padding ────────────────────────────── */
 .market-page .dispenser-item {
@@ -49,6 +45,6 @@
 /* ── Mobile adjustments ────────────────────────────────── */
 @media (max-width: 768px) {
   .market-page .ag-name-main {
-    font-size: 14px;
+    font-size: 15px;
   }
 }
