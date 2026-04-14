@@ -190,7 +190,13 @@
 .dispenser-item:hover { border-color: oklch(0.68 0.16 145 / 0.20); background: var(--accent-dim); }
 .disp-price { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--txt); }
 .disp-usd { font-family: var(--font-display); font-size: 11px; font-weight: 600; color: oklch(0.80 0.14 85); margin-top: 1px; }
-.disp-addr { font-size: 9px; color: var(--txt2); font-family: var(--font-mono, monospace); }
+.disp-addr-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 9px; color: var(--txt2); font-family: var(--font-mono, monospace);
+  padding: 2px 0; transition: color 0.15s; text-align: left;
+}
+.disp-addr-btn:hover { color: var(--accent); }
+.disp-addr-btn.copied { color: var(--accent); font-family: var(--font-body); font-weight: 600; letter-spacing: 0.3px; }
 .disp-remaining { font-size: 8px; color: var(--txt3); margin-top: 2px; }
 
 .ad-tx-section { margin-bottom: 18px; }
