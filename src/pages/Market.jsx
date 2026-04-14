@@ -4,6 +4,7 @@ import { CACHE_TTL } from '../lib/constants.js';
 import PriceChart from '../components/PriceChart.jsx';
 import AssetActions from '../components/AssetActions.jsx';
 import './Market.css';
+import '../styles/market-patches.css';
 
 // Image component with reliable index-based fallback cascade
 function AssetImg({ src, fallbacks = [], alt, className, placeholderClass, placeholderText }) {
