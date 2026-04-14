@@ -83,19 +83,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ── Buffer request body ─────────────────────────────────
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
     const buffer = Buffer.concat(chunks);
 
-    // ── Compute SHA-256 ─────────────────────────────────────
     const serverHash = createHash('sha256').update(buffer).digest('hex');
 
     if (clientHash && clientHash !== serverHash) {
       return res.status(400).json({ error: 'Hash mismatch — corrupted upload' });
     }
 
-    // ── Dedup check (best-effort) ───────────────────────────
+    // Dedup check (best-effort)
     const m = await getManifestModule();
     let manifest = {};
     if (m) {
@@ -114,7 +112,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── Upload to Vercel Blob (this is the critical path) ───
+    // Upload to Vercel Blob (critical path)
     const blob = await put(`gallery/${filename}`, buffer, {
       access:      'public',
       contentType: mimeType,
@@ -123,7 +121,7 @@ export default async function handler(req, res) {
 
     const uploadedAt = new Date().toISOString();
 
-    // ── Register in manifest (best-effort, non-blocking) ────
+    // Register in manifest (best-effort)
     if (m) {
       try {
         const record = {
