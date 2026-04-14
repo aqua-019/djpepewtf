@@ -311,3 +311,41 @@
   .ad-hero-val { font-size: 20px; }
   .ad-title { font-size: 22px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MARKET SCALE OVERRIDES — conference readability
+   ═══════════════════════════════════════════════════════════ */
+.market-page { padding: 1.5rem 2rem; max-width: 1280px; }
+.asset-grid-header { grid-template-columns: 96px 1fr 200px 110px 110px 130px; padding: 10px 24px; font-size: 10px; letter-spacing: 0.12em; }
+.asset-grid-row { grid-template-columns: 96px 1fr 200px 110px 110px 130px; padding: 18px 24px; min-height: 108px; gap: 8px; }
+.ag-icon { width: 96px; height: 96px; min-width: 96px; border-radius: 10px; border-width: 1.5px; }
+.ag-icon-img { border-radius: 9px; }
+.ag-icon-placeholder { font-size: 13px; font-weight: 800; letter-spacing: 0.06em; }
+.ag-name-main { font-size: 20px; }
+.ag-name-sub { font-size: 13px; margin-top: 4px; opacity: 0.7; }
+.ag-floor-val { font-size: 26px; }
+.ag-floor-unit { font-size: 12px; }
+.ag-floor-usd { font-size: 14px; }
+.ag-stat { font-size: 20px; font-weight: 700; }
+.series-header { padding: 14px 24px; font-size: 12px; letter-spacing: 0.14em; }
+.market-status { font-size: 12px; padding: 9px 16px; }
+
+/* Expanded panel scale */
+.ad-card-img { width: 220px; height: 220px; border-radius: 12px; }
+.ad-card-placeholder { width: 220px; height: 220px; }
+.ad-hero-val { font-size: 28px; font-weight: 800; }
+.ad-hero-label { font-size: 11px; letter-spacing: 0.1em; }
+.disp-price { font-size: 22px; font-weight: 700; }
+.ad-kv-k { font-size: 12px; }
+.ad-kv-v { font-size: 13px; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .market-page { padding: 1rem; max-width: 100%; }
+  .asset-grid-row { grid-template-columns: 72px 1fr auto; padding: 14px 16px; min-height: 88px; }
+  .asset-grid-header { display: none; }
+  .ag-icon { width: 72px; height: 72px; min-width: 72px; }
+  .ag-name-main { font-size: 16px; }
+  .ag-floor-val { font-size: 20px; }
+  .ag-stat { font-size: 16px; }
+  .ad-card-img, .ad-card-placeholder { width: 160px; height: 160px; }
+}
