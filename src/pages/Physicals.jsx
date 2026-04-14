@@ -4,7 +4,7 @@ import './Physicals.css';
 const CARD_FRONT = 'https://kkxcp6lss5cxehgu.public.blob.vercel-storage.com/gallery/djpepe10yearfrontfinal9-xFQMnynrPs3YwzXLdsIXZJDdLOvb1z.jpg';
 const CARD_BACK  = 'https://kkxcp6lss5cxehgu.public.blob.vercel-storage.com/gallery/djpepe10yearbackfinal9-LoXpxMwKmq02JiyChRQSsVN2SiSWt4.jpg';
 const X_INTENT   = 'https://x.com/intent/tweet?text=' +
-  encodeURIComponent('Just met DJPEPE at @BTCMag Las Vegas 2026 \u{1F438} www.djpepe.wtf @Scrilla_XCP');
+  encodeURIComponent('Just met DJPEPE at @BTCMag Las Vegas 2026 \u{1F438} www.djpepe.wtf @scrillaventura');
 
 function FlipCard({ frontUrl, backUrl }) {
   const [flipped, setFlipped] = useState(false);
@@ -51,8 +51,10 @@ export default function Physicals() {
         <h3 className="challenge-title">Get a Physical Card</h3>
         <p className="challenge-copy">
           Take a photo of yourself with the DJPEPE cutout and post it to X or Instagram.
-          Tag <strong>@Scrilla</strong> and mention <strong>www.djpepe.wtf</strong> for the
-          chance to purchase a limited physical 10th anniversary card. Supplies extremely limited.
+          Tag <a href="https://x.com/scrillaventura" target="_blank" rel="noopener noreferrer"><strong>@scrillaventura</strong></a> on
+          X or <a href="https://instagram.com/thescrillaionaire" target="_blank" rel="noopener noreferrer"><strong>@thescrillaionaire</strong></a> on
+          Instagram and mention <strong>www.djpepe.wtf</strong> — you could receive a limited
+          physical 10th anniversary card. 300 printed.
         </p>
         <a href={X_INTENT} target="_blank" rel="noopener noreferrer" className="challenge-cta">
           POST TO X →
