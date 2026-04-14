@@ -23,7 +23,7 @@ const MAX_BYTES = 150 * 1024 * 1024; // 150 MB
 
 // Simple in-memory rate limiter (resets on cold start)
 const RATE_WINDOW = 60_000; // 1 minute
-const RATE_LIMIT  = 5;      // 5 uploads per minute per IP
+const RATE_LIMIT  = 30;     // 30 uploads per minute per IP
 const ipLog = new Map();
 
 function isRateLimited(ip) {
@@ -109,15 +109,20 @@ export default async function handler(req, res) {
     }
 
     // ── Manifest dedup (authoritative server-side check) ────
-    const manifest = await readManifest();
-    const existing = findDuplicate(manifest, serverHash);
-    if (existing) {
-      return res.status(409).json({
-        ok: false,
-        duplicate: true,
-        message: 'This file already exists in the archive.',
-        existing: { url: existing.url, name: existing.name, uploadedAt: existing.uploadedAt },
-      });
+    let manifest = {};
+    try {
+      manifest = await readManifest();
+      const existing = findDuplicate(manifest, serverHash);
+      if (existing) {
+        return res.status(409).json({
+          ok: false,
+          duplicate: true,
+          message: 'This file already exists in the archive.',
+          existing: { url: existing.url, name: existing.name, uploadedAt: existing.uploadedAt },
+        });
+      }
+    } catch (e) {
+      console.warn('[upload] manifest read failed, skipping dedup:', e.message);
     }
 
     // ── Upload to Vercel Blob ───────────────────────────────
@@ -127,7 +132,7 @@ export default async function handler(req, res) {
       addRandomSuffix: true,
     });
 
-    // ── Register in manifest ────────────────────────────────
+    // ── Register in manifest (non-blocking) ─────────────────
     const record = {
       url:        blob.url,
       pathname:   blob.pathname,
@@ -136,8 +141,13 @@ export default async function handler(req, res) {
       type:       mimeType,
       uploadedAt: new Date().toISOString(),
     };
-    const updated = registerFile(manifest, serverHash, record);
-    await writeManifest(updated);
+    try {
+      const updated = registerFile(manifest, serverHash, record);
+      await writeManifest(updated);
+    } catch (e) {
+      console.warn('[upload] manifest write failed:', e.message);
+      // Upload already succeeded — don't fail the response
+    }
 
     return res.status(200).json({
       url:         blob.url,
