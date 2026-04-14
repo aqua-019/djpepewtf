@@ -19,7 +19,7 @@
   to { opacity: 1; }
 }
 
-.gm-container {
+.gm-shell {
   position: relative;
   width: min(95vw, 1400px);
   max-height: 90vh;
@@ -36,27 +36,41 @@
   to { opacity: 1; transform: none; }
 }
 
-/* ── Close ──────────────────────────────────────── */
+/* ── Close — green ✕ + BACK label ──────────────── */
 .gm-close {
-  position: fixed;
-  top: 16px;
-  right: 16px;
+  position: absolute;
+  top: -52px;
+  right: 0;
   z-index: 210;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: oklch(0.14 0.006 260 / 0.85);
-  border: 1px solid var(--border);
-  color: var(--txt2);
-  font-size: 18px;
-  cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-  backdrop-filter: blur(8px);
+  gap: 2px;
+  background: none;
+  border: 1px solid var(--accent-mid);
+  border-radius: var(--r8);
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
-.gm-close:hover { color: var(--txt); background: var(--bg-hover); }
+.gm-close:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.gm-close-x {
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+.gm-close-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
 
 /* ── Navigation Arrows ──────────────────────────── */
 .gm-nav {
@@ -70,8 +84,6 @@
   background: oklch(0.14 0.006 260 / 0.75);
   border: 1px solid var(--border);
   color: var(--txt2);
-  font-size: 28px;
-  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -80,8 +92,8 @@
   backdrop-filter: blur(8px);
 }
 .gm-nav:hover { color: var(--txt); background: var(--bg-hover); border-color: var(--border-a); }
-.gm-nav-prev { left: 16px; }
-.gm-nav-next { right: 16px; }
+.gm-nav--prev { left: 16px; }
+.gm-nav--next { right: 16px; }
 
 /* ── Media ──────────────────────────────────────── */
 .gm-media {
@@ -229,7 +241,7 @@
 @media (max-width: 768px) {
   .gm-overlay { padding: 0; }
 
-  .gm-container {
+  .gm-shell {
     width: 100%;
     max-height: 100vh;
     border-radius: 0;
@@ -246,13 +258,22 @@
     border-radius: var(--r4);
   }
 
-  .gm-nav { display: none; }
+  .gm-nav--prev,
+  .gm-nav--next {
+    display: flex;
+    position: fixed;
+    top: auto;
+    bottom: 120px;
+    transform: none;
+  }
+  .gm-nav--prev { left: 8px; }
+  .gm-nav--next { right: 8px; }
 
   .gm-close {
-    top: 8px;
-    right: 8px;
-    width: 36px;
-    height: 36px;
+    top: 12px;
+    right: 12px;
+    position: fixed;
+    z-index: 220;
   }
 
   .gm-actions {

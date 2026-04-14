@@ -9,6 +9,24 @@ const HEIC_TYPES  = new Set(['heic','heif']);
 
 const X_SHARE_TEXT = encodeURIComponent('Found this in the DJPEPE archive \u{1F438} www.djpepe.wtf @scrillaventura');
 
+function ChevronLeft() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function ChevronRight() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="9 6 15 12 9 18" />
+    </svg>
+  );
+}
+
 export default function GalleryModal({ file, onClose, onPrev, onNext }) {
   const ext = (file.type || file.name?.split('.').pop() || '').toLowerCase();
   const isImage = IMAGE_TYPES.has(ext);
@@ -32,18 +50,30 @@ export default function GalleryModal({ file, onClose, onPrev, onNext }) {
   const xIntentUrl = `https://x.com/intent/tweet?text=${X_SHARE_TEXT}${file.url ? '&url=' + encodeURIComponent(file.url) : ''}`;
 
   return (
-    <div className="gm-overlay" onClick={onClose}>
-      <div className="gm-container" onClick={e => e.stopPropagation()}>
+    <div
+      className="gm-overlay"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose?.(); }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="gm-shell" onClick={(e) => e.stopPropagation()}>
 
         {/* Close button */}
-        <button className="gm-close" onClick={onClose} aria-label="Close">\u2715</button>
+        <button className="gm-close" onClick={onClose} aria-label="Back to gallery">
+          <span className="gm-close-x" aria-hidden="true">&#x2715;</span>
+          <span className="gm-close-label">BACK</span>
+        </button>
 
         {/* Nav arrows */}
         {onPrev && (
-          <button className="gm-nav gm-nav-prev" onClick={onPrev} aria-label="Previous">\u2039</button>
+          <button className="gm-nav gm-nav--prev" onClick={onPrev} aria-label="Previous">
+            <ChevronLeft />
+          </button>
         )}
         {onNext && (
-          <button className="gm-nav gm-nav-next" onClick={onNext} aria-label="Next">\u203A</button>
+          <button className="gm-nav gm-nav--next" onClick={onNext} aria-label="Next">
+            <ChevronRight />
+          </button>
         )}
 
         {/* Media */}
