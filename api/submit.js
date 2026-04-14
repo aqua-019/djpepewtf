@@ -44,19 +44,75 @@ export default async function handler(req, res) {
       addRandomSuffix: true,
     });
 
-    // Send notifications (best-effort, don't block response)
+    // Send approval email (best-effort)
     const meta = { title, context, submitter, dateCreated, filename, url: blob.url };
+    sendApprovalEmail(meta).catch(err => console.error('[email] failed:', err.message));
     sendTelegramNotification(meta).catch(err => console.error('[telegram] failed:', err.message));
-    sendEmailNotification(meta).catch(err => console.error('[email] failed:', err.message));
 
     return res.status(200).json({
       ok: true,
-      message: 'Submission received. It will be reviewed before appearing in the gallery.',
+      message: 'Meme submitted! It will be reviewed before appearing in the gallery.',
       url: blob.url,
     });
   } catch (err) {
     console.error('[submit]', err);
     return res.status(500).json({ error: 'Submission failed. Try again.' });
+  }
+}
+
+async function sendApprovalEmail({ title, context, submitter, dateCreated, filename, url }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const adminToken = process.env.ADMIN_TOKEN || '';
+  const siteUrl = process.env.SITE_URL || 'https://djpepe.wtf';
+
+  const approveUrl = `${siteUrl}/api/approve?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}&token=${encodeURIComponent(adminToken)}`;
+  const rejectUrl = `${siteUrl}/api/reject?url=${encodeURIComponent(url)}&token=${encodeURIComponent(adminToken)}`;
+
+  const displayTitle = title || filename;
+  const subject = `New Meme Submission: ${displayTitle}`;
+
+  const html = `
+    <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;background:#111;color:#eee;padding:24px;border-radius:12px;">
+      <h2 style="color:#52b563;margin:0 0 16px;">New Meme Submission</h2>
+      <table style="width:100%;font-size:14px;border-collapse:collapse;">
+        <tr><td style="padding:6px 12px 6px 0;color:#999;">Title</td><td style="padding:6px 0;">${displayTitle}</td></tr>
+        <tr><td style="padding:6px 12px 6px 0;color:#999;">From</td><td style="padding:6px 0;">${submitter}</td></tr>
+        ${dateCreated ? `<tr><td style="padding:6px 12px 6px 0;color:#999;">Date</td><td style="padding:6px 0;">${dateCreated}</td></tr>` : ''}
+        ${context ? `<tr><td style="padding:6px 12px 6px 0;color:#999;">Context</td><td style="padding:6px 0;">${context}</td></tr>` : ''}
+      </table>
+      <div style="margin:20px 0;text-align:center;">
+        <a href="${url}" style="color:#52b563;">View File</a>
+      </div>
+      <div style="margin:24px 0;text-align:center;">
+        <a href="${approveUrl}" style="display:inline-block;padding:12px 32px;background:#52b563;color:#111;font-weight:700;text-decoration:none;border-radius:8px;margin-right:12px;">
+          APPROVE
+        </a>
+        <a href="${rejectUrl}" style="display:inline-block;padding:12px 32px;background:#ff4444;color:#fff;font-weight:700;text-decoration:none;border-radius:8px;">
+          REJECT
+        </a>
+      </div>
+      <p style="color:#666;font-size:11px;margin-top:24px;text-align:center;">DJPEPE.WTF Submission System</p>
+    </div>
+  `;
+
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      from: 'DJPEPE.WTF <onboarding@resend.dev>',
+      to: ['dubsglr@gmail.com'],
+      subject,
+      html,
+    }),
+  });
+  if (!resp.ok) {
+    const errBody = await resp.text().catch(() => '');
+    console.error('[email] Resend error:', resp.status, errBody);
   }
 }
 
@@ -66,7 +122,7 @@ async function sendTelegramNotification({ title, context, submitter, dateCreated
   if (!token || !chatId) return;
 
   const text = [
-    `📥 New DJPEPE.WTF Submission`,
+    '📥 New DJPEPE.WTF Submission',
     `Title: ${title || filename}`,
     submitter !== 'Anonymous' ? `From: ${submitter}` : null,
     dateCreated ? `Date: ${dateCreated}` : null,
@@ -79,41 +135,4 @@ async function sendTelegramNotification({ title, context, submitter, dateCreated
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
   });
-}
-
-async function sendEmailNotification({ title, context, submitter, dateCreated, filename, url }) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const toEmail = process.env.NOTIFICATION_EMAIL;
-  if (!apiKey || !toEmail) return;
-
-  const subject = `New DJPEPE.WTF Submission: ${title || filename}`;
-  const html = [
-    '<h2>New Meme Submission</h2>',
-    `<p><strong>Title:</strong> ${title || filename}</p>`,
-    `<p><strong>Submitted by:</strong> ${submitter}</p>`,
-    dateCreated ? `<p><strong>Date created:</strong> ${dateCreated}</p>` : '',
-    context ? `<p><strong>Context:</strong> ${context}</p>` : '',
-    `<p><strong>File:</strong> <a href="${url}">${filename}</a></p>`,
-    `<br><p style="color:#888;font-size:12px">Sent from DJPEPE.WTF submission system</p>`,
-  ].filter(Boolean).join('\n');
-
-  const resp = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      from: 'DJPEPE.WTF <onboarding@resend.dev>',
-      to: [toEmail],
-      subject,
-      html,
-    }),
-  });
-  if (!resp.ok) {
-    const errBody = await resp.text().catch(() => '');
-    console.error('[email] Resend error:', resp.status, errBody);
-  } else {
-    console.log('[email] sent to', toEmail);
-  }
 }
