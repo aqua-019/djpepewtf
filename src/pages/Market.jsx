@@ -115,7 +115,7 @@ export default function Market({ onMarketUpdate }) {
   }, [liveData]);
 
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
-  const getImgSrc = (a) => a.imgSrc || a.imageUrl || a.imageFallback || null;
+  const getImgSrc = useCallback((a) => a.imgSrc ?? null, []);
 
   return (
     <div className="market-page">
