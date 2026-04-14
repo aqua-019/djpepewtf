@@ -11,7 +11,7 @@
   color: oklch(0.72 0.13 22);
 }
 
-/* ── Asset name (base is now 18px in Market.css) ──────── */
+/* ── Asset name (base is now 20px in Market.css) ──────── */
 
 /* ── Dispenser card padding ────────────────────────────── */
 .market-page .dispenser-item {
@@ -45,6 +45,6 @@
 /* ── Mobile adjustments ────────────────────────────────── */
 @media (max-width: 768px) {
   .market-page .ag-name-main {
-    font-size: 15px;
+    font-size: 16px;
   }
 }
