@@ -65,8 +65,9 @@
   font-size: 9px; color: var(--txt3);
   flex-shrink: 0;
 }
-.uqp-uploading { color: var(--accent); }
-.uqp-err-count { color: var(--red); }
+.uqp-uploading   { color: var(--accent); }
+.uqp-dupe-count  { color: oklch(0.70 0.12 260); }
+.uqp-err-count   { color: var(--red); }
 
 /* FILE LIST */
 .uqp-list {
@@ -90,6 +91,7 @@
 .uqp-row.green  .uqp-dot { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
 .uqp-row.done   .uqp-dot { background: var(--accent); opacity: 0.5; }
 .uqp-row.red    .uqp-dot { background: var(--red); }
+.uqp-row.dupe   .uqp-dot { background: oklch(0.70 0.12 260); opacity: 0.6; }
 
 .uqp-name {
   flex: 1; color: var(--txt2);
@@ -97,12 +99,14 @@
 }
 .uqp-row.done   .uqp-name { color: var(--txt3); }
 .uqp-row.red    .uqp-name { color: var(--txt2); }
+.uqp-row.dupe   .uqp-name { color: var(--txt3); }
 
 .uqp-status {
   color: var(--txt3); flex-shrink: 0; font-size: 8px;
 }
 .uqp-row.green  .uqp-status { color: var(--accent); }
 .uqp-row.red    .uqp-status { color: var(--red); }
+.uqp-row.dupe   .uqp-status { color: oklch(0.70 0.12 260); }
 
 .uqp-spinner {
   width: 10px; height: 10px; flex-shrink: 0;
