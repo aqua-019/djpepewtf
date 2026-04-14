@@ -1,0 +1,48 @@
+/* AssetActions.css — Action buttons for market detail panel */
+
+.asset-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.asset-actions-eth {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: oklch(0.65 0.12 290);
+  letter-spacing: 0.02em;
+}
+
+.asset-actions-btns {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.aa-btn {
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 12px;
+}
+
+.aa-btn-ghost {
+  border-color: var(--border);
+  color: var(--txt2);
+}
+.aa-btn-ghost:hover {
+  border-color: var(--border-a);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+@media (max-width: 480px) {
+  .asset-actions-btns {
+    flex-direction: column;
+  }
+  .aa-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

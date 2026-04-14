@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { MARKET_ASSETS } from '../data/index.js';
 import { CACHE_TTL } from '../lib/constants.js';
 import PriceChart from '../components/PriceChart.jsx';
+import AssetActions from '../components/AssetActions.jsx';
 import './Market.css';
 
 // Image component with reliable index-based fallback cascade
@@ -47,6 +48,7 @@ export default function Market({ onMarketUpdate }) {
   const [expandedId, setExpandedId] = useState(null);
   const [liveData,   setLiveData]   = useState(null);
   const [btcUsd,     setBtcUsd]     = useState(null);
+  const [ethUsd,     setEthUsd]     = useState(null);
   const [status,     setStatus]     = useState('loading');
   const prevFloors = useRef({});
   const [floorDeltas, setFloorDeltas] = useState({});
@@ -86,6 +88,10 @@ export default function Market({ onMarketUpdate }) {
   }, []);
 
   useEffect(() => { fetchMarket(); }, [fetchMarket]);
+  useEffect(() => {
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
+      .then(r => r.json()).then(d => setEthUsd(d?.ethereum?.usd ?? null)).catch(() => {});
+  }, []);
   useEffect(() => { const id = setInterval(() => fetchMarket(true), CACHE_TTL); return () => clearInterval(id); }, [fetchMarket]);
   useEffect(() => {
     const djpepe = liveData?.DJPEPE;
@@ -145,7 +151,7 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
             <div className="ag-actions"><a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-accent" onClick={e => e.stopPropagation()}>Buy</a><span className="ag-expand-arrow">{isOpen ? '\u25be' : '\u25b8'}</span></div>
           </div>
           <div className={`asset-detail ${isOpen ? 'open' : ''}`}>
-            <div className="asset-detail-inner">{isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} btcUsd={btcUsd} />}</div>
+            <div className="asset-detail-inner">{isOpen && <DetailPanel asset={a} imgSrc={imgSrc} onRefresh={() => fetchMarket(true)} btcUsd={btcUsd} ethUsd={ethUsd} />}</div>
           </div>
         </div>);
       })}
@@ -153,7 +159,7 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
   );
 }
 
-function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
+function DetailPanel({ asset, imgSrc, onRefresh, btcUsd, ethUsd }) {
   const a = asset;
   const [showAllTx, setShowAllTx] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(null);
@@ -265,10 +271,8 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd }) {
       </div>
     )}
 
+    <AssetActions symbol={a.ticker} btcFloor={a.floor} btcUsd={btcUsd} ethUsd={ethUsd} />
     <div className="ad-actions">
-      <a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn btn-green">Buy on Pepe.WTF <ExternalLinkIcon /></a>
-      <a href={a.xcUrl} target="_blank" rel="noreferrer" className="btn btn-outline">XChain Explorer <ExternalLinkIcon /></a>
-      <a href={`https://opensea.io/collection/emblem-vault?search[query]=${a.ticker}`} target="_blank" rel="noreferrer" className="btn btn-outline">Emblem Vault <ExternalLinkIcon /></a>
       <button className="btn btn-outline" onClick={onRefresh}>Refresh</button>
     </div>
   </>);
