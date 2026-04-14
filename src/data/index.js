@@ -1,5 +1,5 @@
 // ── MARKET ASSETS ─────────────────────────────────────
-// Hip-Hop Elements series (4 cards) + FAKEDJPEPE
+// imgSrc must point to files that exist in public/assets/
 export const MARKET_ASSETS = [
   {
     id:           'djpepe',
@@ -7,7 +7,6 @@ export const MARKET_ASSETS = [
     ticker:       'DJPEPE',
     chain:        'XCP',
     imgSrc:       '/assets/DJPEPE.jpg',
-    imageFallback: '/assets/DJPEPE.jpg',
     supply:       169,
     holders:      null,
     floor:        null,
@@ -21,7 +20,7 @@ export const MARKET_ASSETS = [
     name:         'MC PEPE',
     ticker:       'MCPEPE',
     chain:        'XCP',
-    imgSrc:       'https://xchain.io/img/cards/MCPEPE.png',
+    imgSrc:       '/assets/MCPEPE.jpg',
     supply:       169,
     holders:      null,
     floor:        null,
@@ -35,7 +34,7 @@ export const MARKET_ASSETS = [
     name:         'BBOY PEPE',
     ticker:       'BBOYPEPE',
     chain:        'XCP',
-    imgSrc:       'https://xchain.io/img/cards/BBOYPEPE.png',
+    imgSrc:       '/assets/BBOYPEPE.jpg',
     supply:       169,
     holders:      null,
     floor:        null,
@@ -49,7 +48,7 @@ export const MARKET_ASSETS = [
     name:         'PEPE ONE',
     ticker:       'PEPEONE',
     chain:        'XCP',
-    imgSrc:       'https://xchain.io/img/cards/PEPEONE.png',
+    imgSrc:       '/assets/PEPEONE.jpg',
     supply:       169,
     holders:      null,
     floor:        null,
@@ -63,11 +62,11 @@ export const MARKET_ASSETS = [
     name:         'FAKE DJ PEPE',
     ticker:       'FAKEDJPEPE',
     chain:        'XCP',
-    imgSrc:       'https://xchain.io/img/cards/FAKEDJPEPE.png',
+    imgSrc:       '/assets/FAKEDJPEPE.gif',
     supply:       169,
     holders:      null,
     floor:        null,
-    subasset:     'FAKEDJPEPE.ENTER_THE_PEPE',
+    series:       'Homage Collection',
     seriesGroup:  'homage',
     buyUrl:       'https://pepe.wtf/asset/FAKEDJPEPE',
     xcUrl:        'https://xchain.io/asset/FAKEDJPEPE',
