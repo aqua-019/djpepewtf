@@ -54,8 +54,8 @@ export default function SubmitModal({ onClose }) {
         <div className="submit-body">
           {status === 'done' ? (
             <div className="submit-success">
-              <div className="submit-success-icon">✓</div>
-              <div className="submit-success-text">Submission received!</div>
+              <div className="submit-success-icon">🐸</div>
+              <div className="submit-success-text">Meme submitted!</div>
               <p className="submit-success-sub">It will be reviewed before appearing in the gallery.</p>
               <button className="btn btn-outline" onClick={onClose}>Close</button>
             </div>
