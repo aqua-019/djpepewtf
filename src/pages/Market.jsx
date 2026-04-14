@@ -115,16 +115,16 @@ export default function Market({ onMarketUpdate }) {
   }, [liveData]);
 
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
-  const getImgSrc = (a) => a.imageUrl || a.imageFallback || null;
+  const getImgSrc = (a) => a.imgSrc || a.imageUrl || a.imageFallback || null;
 
   return (
     <div className="market-page">
       <div className={`market-status ${status}`}>
         <span className="ms-dot"/>
         {status === 'loading' && 'Fetching live data from Counterparty\u2026'}
-        {status === 'live' && <>Live \u00b7 Counterparty API \u00b7 BTC {btcUsd ? `$${btcUsd.toLocaleString()}` : '\u2026'} \u00b7 refreshes every 60s</>}
-        {status === 'stale' && 'Using cached data \u00b7 API unreachable'}
-        {status === 'error' && <>API unreachable \u00b7 <button className="ms-retry" onClick={() => fetchMarket(true)}>retry</button></>}
+        {status === 'live' && <>Live · Counterparty API · BTC {btcUsd ? `$${btcUsd.toLocaleString()}` : '\u2026'} · refreshes every 60s</>}
+        {status === 'stale' && 'Using cached data · API unreachable'}
+        {status === 'error' && <>API unreachable · <button className="ms-retry" onClick={() => fetchMarket(true)}>retry</button></>}
       </div>
       <div className="asset-table">
         <AssetSection label="Hip-Hop Elements Series" assets={hiphopAssets} buildAsset={buildAsset} expandedId={expandedId} toggleExpand={toggleExpand} getImgSrc={getImgSrc} fetchMarket={fetchMarket} btcUsd={btcUsd} ethUsd={ethUsd} floorDeltas={floorDeltas} />
@@ -146,7 +146,7 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
             <div className="ag-icon">
               <AssetImg src={imgSrc} fallbacks={[a.imageFallback].filter(Boolean)} alt={a.name} className="ag-icon-img" placeholderClass="ag-icon-placeholder" placeholderText={a.ticker.slice(0,2)} />
             </div>
-            <div className="ag-name"><span className="ag-name-main">{a.name}</span><span className="ag-name-sub">{a.ticker} \u00b7 {a.series || a.chain}</span></div>
+            <div className="ag-name"><span className="ag-name-main">{a.name}</span><span className="ag-name-sub">{a.ticker} · {a.series || a.chain}</span></div>
             <div className="ag-floor">{a.floor != null ? <><div className="ag-floor-col"><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span>{floorDeltas[a.ticker] && <span className={`ag-floor-delta ${floorDeltas[a.ticker].direction}`}>{floorDeltas[a.ticker].direction === 'up' ? '\u25b2' : '\u25bc'}{floorDeltas[a.ticker].pct}%</span>}</div>{a.floorUsd != null && <span className="ag-floor-usd">{fmtUsd(a.floorUsd)}</span>}</> : <span className="ag-null">\u2014</span>}</div>
             <div className="ag-stat">{displayVal(a.supply)}</div><div className="ag-stat">{displayVal(a.holders)}</div>
             <div className="ag-actions"><a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-accent" onClick={e => e.stopPropagation()}>Buy</a><span className="ag-expand-arrow">{isOpen ? '\u25be' : '\u25b8'}</span></div>
