@@ -1,25 +1,12 @@
 import { useState, useEffect } from 'react';
-import { TRAITS, DJPEPE_STATS } from '../data/index.js';
-import DJPepeTimeline from '../components/DJPepeTimeline.jsx';
+import { djpepeData } from '../constants/djpepeData.js';
+import { HeroSection }       from './djpepe-cells/HeroSection.jsx';
+import { CardArtSection }    from './djpepe-cells/CardArtSection.jsx';
+import { StatsGrid }         from './djpepe-cells/StatsGrid.jsx';
+import { CTAButtons }        from './djpepe-cells/CTAButtons.jsx';
+import { TimelineSection }   from './djpepe-cells/TimelineSection.jsx';
+import { InstitutionalCards } from './djpepe-cells/InstitutionalCards.jsx';
 import './DJPepe.css';
-
-function ExternalLinkIcon({ size = 12 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 12 12" fill="none"
-         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
-      <path d="M4 1h7v7M11 1L4.5 7.5"/>
-    </svg>
-  );
-}
-
-const LINKS = [
-  { label: 'Pepe.WTF Asset Page',  url: 'https://pepe.wtf/asset/DJPEPE'    },
-  { label: 'TokenScan Explorer',   url: 'https://tokenscan.io/asset/DJPEPE' },
-  { label: 'Rare Pepe Directory',  url: 'https://rarepepedirectory.com'     },
-  { label: 'Counterparty.io',      url: 'https://counterparty.io'           },
-  { label: 'X / Twitter',          url: 'https://x.com/DJPEPE_'            },
-  { label: 'Telegram',             url: 'PLACEHOLDER — update on receipt'   },
-];
 
 export default function DJPepe() {
   const [liveStats, setLiveStats] = useState(null);
@@ -36,13 +23,12 @@ export default function DJPepe() {
     fetchLive();
   }, []);
 
-  const stats = DJPEPE_STATS.map(s => {
+  // Merge live data into static stats where available
+  const stats = djpepeData.stats.map((s) => {
     if (!liveStats) return s;
-    if (s.label === 'Floor' && liveStats.floor != null)
-      return { ...s, value: `${liveStats.floor} BTC`, sub: 'Counterparty dispenser' };
-    if (s.label === 'Holders' && liveStats.holders != null)
-      return { ...s, value: String(liveStats.holders), sub: `of ${liveStats.supply ?? 169} minted` };
-    if (s.label === 'Supply' && liveStats.supply != null)
+    if (s.id === 'circulating' && liveStats.supply != null)
+      return { ...s, value: String(liveStats.supply - (liveStats.burned ?? 4)) };
+    if (s.id === 'issued' && liveStats.supply != null)
       return { ...s, value: String(liveStats.supply) };
     return s;
   });
@@ -50,76 +36,30 @@ export default function DJPepe() {
   return (
     <div className="djpepe-page">
 
-      {/* ── HERO ART ──────────────────────────────────────── */}
-      <div className="hero-art">
-        <img src="/DJPEPE.jpg" alt="DJPEPE" className="hero-art-img" />
-        <div className="hero-art-overlay">
-          <span className="pill pill-green">First Audio NFT</span>
-          <span className="pill pill-red">No Requests</span>
+      {/* ── HERO ────────────────────────────────────────────── */}
+      <section className="djpepe-hero-container">
+        <div className="djpepe-hero-grid">
+          <div className="djpepe-hero-left">
+            <HeroSection />
+            <StatsGrid stats={stats} />
+            <CTAButtons />
+          </div>
+          <div className="djpepe-hero-right">
+            <CardArtSection />
+          </div>
         </div>
-      </div>
-
-      {/* ── HERO INFO ─────────────────────────────────────── */}
-      <div className="hero-info">
-        <div className="eyebrow">COUNTERPARTY ASSET · 2016</div>
-        <h1 className="asset-title">DJPEPE</h1>
-        {/* TODO: Replace with Scrilla's official bio — pending confirmation */}
-        <p className="asset-desc-compact">
-          DJPEPE is the first tokenized blockchain art collectible with unlockable music —
-          a Rare Pepe Series 1 card minted on the Counterparty protocol in October 2016 by
-          artist Rare Scrilla. Recognized as the first audio NFT on any blockchain, DJPEPE
-          pioneered blockchain-native music collectibles two years before the term NFT existed.
-        </p>
-
-        <div className="stats-row">
-          {stats.map(s => (
-            <div key={s.label} className="stat-box">
-              <div className="stat-label">{s.label}</div>
-              <div className={`stat-val ${s.value === null ? 'stat-null' : ''}`}>
-                {s.value ?? '—'}
-              </div>
-              <div className="stat-sub">{s.sub}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="btn-row">
-          <a href="https://pepe.wtf/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-green">
-            Buy on Pepe.WTF <ExternalLinkIcon />
-          </a>
-          <a href="https://tokenscan.io/asset/DJPEPE" target="_blank" rel="noreferrer" className="btn btn-outline">
-            View on Chain <ExternalLinkIcon />
-          </a>
-        </div>
-      </div>
-
-      {/* ── TRAITS + LINKS ──────────────────────────────── */}
-      <div className="info-layout">
-        <div className="traits-col">
-          <div className="sec-label">Traits</div>
-          {TRAITS.map(t => (
-            <div key={t.name} className="trait-row">
-              <span className="trait-name">{t.name}</span>
-              <span className={`trait-val ${t.red ? 'red' : ''} ${t.amber ? 'amber' : ''}`}>
-                {t.value}
-              </span>
-            </div>
-          ))}
-
-          <div className="sec-label" style={{ marginTop: 16 }}>Links</div>
-          {LINKS.map(l => (
-            <a key={l.label} href={l.url} target="_blank" rel="noreferrer" className="ext-link">
-              <ExternalLinkIcon /> {l.label}
-            </a>
-          ))}
-        </div>
-      </div>
-
-      {/* ── TIMELINE ─────────────────────────────────────── */}
-      <section className="djpepe-timeline-section">
-        <h2 className="sec-label">Timeline</h2>
-        <DJPepeTimeline />
       </section>
+
+      {/* ── TIMELINE ────────────────────────────────────────── */}
+      <section className="djpepe-section-container">
+        <TimelineSection />
+      </section>
+
+      {/* ── INSTITUTIONAL ───────────────────────────────────── */}
+      <section className="djpepe-section-container">
+        <InstitutionalCards />
+      </section>
+
     </div>
   );
 }
