@@ -26,8 +26,8 @@ export default function DJPepe() {
   // Merge live data into static stats where available
   const stats = djpepeData.stats.map((s) => {
     if (!liveStats) return s;
-    if (s.id === 'circulating' && liveStats.supply != null)
-      return { ...s, value: String(liveStats.supply - (liveStats.burned ?? 4)) };
+    if (s.id === 'holders' && liveStats.holders != null)
+      return { ...s, value: String(liveStats.holders) };
     if (s.id === 'issued' && liveStats.supply != null)
       return { ...s, value: String(liveStats.supply) };
     return s;

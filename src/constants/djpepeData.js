@@ -8,17 +8,18 @@ export const djpepeData = {
 
   bio: "The OG blockchain performance artist. DJ Pepe isn't just art — it's a living on-chain persona born October 13, 2016. Card holders unlock a token-gated music vault with exclusive tracks unavailable anywhere else. Minted by Rare Scrilla (@scrillaventura). Recognized as the first audio NFT on any blockchain.",
 
+  // Holders value is null → live API populates it in DJPepe.jsx
   stats: [
-    { id: 'issued',      label: 'Issued',      value: '169'          },
-    { id: 'circulating', label: 'Circulating',  value: '165'          },
-    { id: 'minted',      label: 'Minted',       value: 'Oct 13, 2016' },
-    { id: 'block',       label: 'Block',        value: '434,102'      },
+    { id: 'issued',  label: 'Issued',  value: '169'          },
+    { id: 'holders', label: 'Holders', value: null            },
+    { id: 'minted',  label: 'Minted',  value: 'Oct 13, 2016' },
+    { id: 'block',   label: 'Block',   value: '434,102'      },
   ],
 
   links: [
-    { id: 'twitter',    label: 'X / Twitter', href: 'https://x.com/scrillaventura'           },
-    { id: 'telegram',   label: 'Telegram',    href: 'https://t.me/+CrS2z4dKw19hOTlh'        },
-    { id: 'soundcloud', label: 'SoundCloud',  href: 'https://soundcloud.com/search?q=djpepe' },
+    { id: 'twitter',  label: 'X / Twitter', href: 'https://x.com/scrillaventura'     },
+    { id: 'telegram', label: 'Telegram',    href: 'https://t.me/+CrS2z4dKw19hOTlh'  },
+    // SoundCloud removed per April 16 corrections
   ],
 
   institutions: [
