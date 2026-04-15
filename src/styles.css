@@ -182,7 +182,7 @@ body {
 }
 .ticker-inner {
   display: inline-block;
-  animation: ticker-scroll 120s linear infinite;
+  animation: ticker-scroll 180s linear infinite;
 }
 @keyframes ticker-scroll {
   from { transform: translateX(100vw); }
