@@ -102,7 +102,7 @@ async function fetchPepeWtfHolders(asset) {
   try {
     const res = await fetch(`https://pepe.wtf/api/asset/${asset}`, {
       headers: { 'Accept': 'application/json', 'User-Agent': 'djpepe.wtf/1.0' },
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) return null;
     const data = await res.json();
