@@ -51,7 +51,7 @@ export default function DJPepe() {
       </section>
 
       {/* ── TIMELINE ────────────────────────────────────────── */}
-      <section className="djpepe-section-container">
+      <section className="djpepe-timeline-section">
         <TimelineSection />
       </section>
 

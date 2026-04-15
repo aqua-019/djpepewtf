@@ -24,7 +24,7 @@
 /* ── HERO GRID ──────────────────────────────────────────────────────────── */
 .djpepe-hero-grid {
   display: grid;
-  grid-template-columns: 1fr 270px;
+  grid-template-columns: 1fr 560px;
   gap: 2.5rem;
   align-items: start;
 }
@@ -150,7 +150,9 @@
   overflow: hidden;
   border: 1px solid oklch(0.68 0.16 145 / 0.20);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px oklch(0.68 0.16 145 / 0.08);
-  aspect-ratio: 270 / 385;
+  aspect-ratio: 560 / 800;
+  max-width: 560px;
+  width: 100%;
   background: var(--bg2);
 }
 
@@ -216,31 +218,11 @@
   color: #ff7777;
 }
 
-/* ── SECTION HEADERS ────────────────────────────────────────────────────── */
-.djpepe-section-header {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.djpepe-section-title {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--txt);
-  margin: 0;
-}
-
-.djpepe-section-sub {
-  font-size: 12px;
-  color: var(--txt3);
-  margin: 0;
-}
-
-/* ── TIMELINE WRAPPER ───────────────────────────────────────────────────── */
-.djpepe-timeline-wrapper {
-  /* DJPepeTimeline handles its own internal layout */
+/* ── TIMELINE SECTION ───────────────────────────────────────────────────── */
+.djpepe-timeline-section {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 22px 40px;
 }
 
 /* ── INSTITUTIONAL CARDS ────────────────────────────────────────────────── */
@@ -319,12 +301,12 @@
   .djpepe-hero-right {
     order: -1;
     position: static;
-    max-width: 240px;
-    margin: 0 auto;
+    max-width: 100%;
   }
 
   .djpepe-card-art {
-    aspect-ratio: 240 / 340;
+    aspect-ratio: 560 / 800;
+    max-width: 100%;
   }
 
   .djpepe-title {
