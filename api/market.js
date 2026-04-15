@@ -101,11 +101,13 @@ async function getOpenSeaSales(assetName, ethUsd) {
 async function fetchPepeWtfHolders(asset) {
   try {
     const res = await fetch(`https://pepe.wtf/api/asset/${asset}`, {
-      headers: { 'Accept': 'application/json' }
+      headers: { 'Accept': 'application/json', 'User-Agent': 'djpepe.wtf/1.0' },
+      signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) return null;
     const data = await res.json();
-    const h = data?.holders;
+    // Try all known field names pepe.wtf may return
+    const h = data?.owners ?? data?.holders ?? data?.holder_count ?? data?.owner_count ?? null;
     if (typeof h === 'number') return h;
     if (Array.isArray(h)) return h.length;
     return null;
@@ -113,21 +115,19 @@ async function fetchPepeWtfHolders(asset) {
 }
 
 async function getAssetData(asset, btcUsd) {
-  const [info, holdersRes, sendsRes, ordersRes, dispensesRes] = await Promise.all([
+  const [info, holdersRes, sendsRes, ordersRes, dispensesRes, pepeWtfHolders] = await Promise.all([
     xcp(`/assets/${asset}`), xcp(`/assets/${asset}/holders?limit=100`),
     xcp(`/assets/${asset}/sends?limit=20`), xcp(`/assets/${asset}/orders?status=open&limit=10`),
     xcp(`/assets/${asset}/dispenses?limit=50`),
+    fetchPepeWtfHolders(asset),
   ]);
   const { floor, dispensers } = await getFloor(asset);
   const supply = info?.result?.supply ?? null, locked = info?.result?.locked ?? false;
   const desc = info?.result?.description ?? '', issuer = info?.result?.issuer ?? null;
   const divisible = info?.result?.divisible ?? false, owner = info?.result?.owner ?? null;
   let holders = Array.isArray(holdersRes?.result) ? holdersRes.result.length : null;
-  let holdersSource = 'tokenscan';
-  if (asset === 'DJPEPE') {
-    const pepeWtfHolders = await fetchPepeWtfHolders('DJPEPE');
-    if (typeof pepeWtfHolders === 'number') { holders = pepeWtfHolders; holdersSource = 'pepe.wtf'; }
-  }
+  let holdersSource = 'xcp';
+  if (typeof pepeWtfHolders === 'number') { holders = pepeWtfHolders; holdersSource = 'pepe.wtf'; }
   const totalSupplyUnits = divisible && supply ? supply / 1e8 : supply;
   const imageUrl = await resolveImageUrl(asset, desc);
   const withUsd = (btc) => (btc != null && btcUsd != null) ? Math.round(btc * btcUsd * 100) / 100 : null;

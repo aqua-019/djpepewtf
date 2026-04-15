@@ -12,10 +12,6 @@ export function CardArtSection() {
         onLoad={() => setLoaded(true)}
       />
       {!loaded && <div className="djpepe-card-placeholder">Loading…</div>}
-      <div className="djpepe-card-badges">
-        <span className="pill pill-green">First Audio NFT</span>
-        <span className="pill pill-red">No Requests</span>
-      </div>
     </div>
   );
 }

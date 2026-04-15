@@ -6,7 +6,7 @@ export const djpepeData = {
   title: 'DJPEPE',
   subtitle: 'Series 4, Card 29 · Bitcoin · Counterparty XCP',
 
-  bio: "The OG blockchain performance artist. DJ Pepe isn't just art — it's a living on-chain persona born October 13, 2016. Card holders unlock a token-gated music vault with exclusive tracks unavailable anywhere else. Minted by Rare Scrilla (@scrillaventura). Recognized as the first audio NFT on any blockchain.",
+  bio: "The OG blockchain performance artist. DJ Pepe isn't just art — it's a living on-chain persona born October 13, 2016. Card holders unlock a token-gated music vault with exclusive tracks unavailable anywhere else. Minted by Rare Scrilla (@scrillaventura).",
 
   // Holders value is null → live API populates it in DJPepe.jsx
   stats: [
@@ -17,9 +17,8 @@ export const djpepeData = {
   ],
 
   links: [
-    { id: 'twitter',  label: 'X / Twitter', href: 'https://x.com/scrillaventura'     },
-    { id: 'telegram', label: 'Telegram',    href: 'https://t.me/+CrS2z4dKw19hOTlh'  },
-    // SoundCloud removed per April 16 corrections
+    { id: 'twitter',  label: 'X / Twitter', href: 'https://x.com/DJPEPE_'               },
+    { id: 'telegram', label: 'Telegram',    href: 'https://t.me/+CrS2z4dKw19hOTlh'      },
   ],
 
   institutions: [

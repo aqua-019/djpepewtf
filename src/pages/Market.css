@@ -80,6 +80,12 @@
 .ag-floor-delta.down { color: var(--red); }
 .ag-null { font-size: 18px; color: var(--txt3); }
 .ag-stat { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--txt); }
+.ag-holders { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.ag-holders-src {
+  font-family: var(--font-mono, monospace);
+  font-size: 7px; font-weight: 400;
+  color: var(--txt3); text-transform: uppercase; letter-spacing: 0.8px;
+}
 .ag-actions { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
 .ag-expand-arrow { font-size: 14px; color: var(--txt3); transition: transform 0.2s; }
 

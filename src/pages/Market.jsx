@@ -60,6 +60,7 @@ export default function Market({ onMarketUpdate }) {
       ...staticAsset,
       floor: live?.floor ?? staticAsset.floor, floorUsd: live?.floorUsd ?? null, floorSats: live?.floorSats ?? null,
       supply: live?.supply ?? staticAsset.supply, holders: live?.holders ?? staticAsset.holders,
+      holdersSource: live?.holdersSource ?? null,
       description: live?.description ?? '', locked: live?.locked ?? false, divisible: live?.divisible ?? false,
       issuer: live?.issuer ?? null, owner: live?.owner ?? null, imageUrl: live?.imageUrl ?? null,
       dispensers: live?.dispensers ?? [], dispenserCount: live?.dispenserCount ?? 0,
@@ -148,7 +149,15 @@ function AssetSection({ label, className, assets, buildAsset, expandedId, toggle
             </div>
             <div className="ag-name"><span className="ag-name-main">{a.name}</span><span className="ag-name-sub">{a.ticker} · {a.series || a.chain}</span></div>
             <div className="ag-floor">{a.floor != null ? <><div className="ag-floor-col"><span className="ag-floor-val">{a.floor}</span><span className="ag-floor-unit">BTC</span>{floorDeltas[a.ticker] && <span className={`ag-floor-delta ${floorDeltas[a.ticker].direction}`}>{floorDeltas[a.ticker].direction === 'up' ? '\u25b2' : '\u25bc'}{floorDeltas[a.ticker].pct}%</span>}</div>{a.floorUsd != null && <span className="ag-floor-usd">{fmtUsd(a.floorUsd)}</span>}</> : <span className="ag-null">\u2014</span>}</div>
-            <div className="ag-stat">{displayVal(a.supply)}</div><div className="ag-stat">{displayVal(a.holders)}</div>
+            <div className="ag-stat">{displayVal(a.supply)}</div>
+            <div className="ag-stat ag-holders">
+              {displayVal(a.holders)}
+              {a.holders != null && (
+                <span className="ag-holders-src">
+                  {a.holdersSource === 'pepe.wtf' ? 'pepe.wtf' : 'xcp'}
+                </span>
+              )}
+            </div>
             <div className="ag-actions"><a href={a.buyUrl} target="_blank" rel="noreferrer" className="btn-sm btn-sm-accent" onClick={e => e.stopPropagation()}>Buy</a><span className="ag-expand-arrow">{isOpen ? '\u25be' : '\u25b8'}</span></div>
           </div>
           <div className={`asset-detail ${isOpen ? 'open' : ''}`}>
@@ -199,7 +208,9 @@ function DetailPanel({ asset, imgSrc, onRefresh, btcUsd, ethUsd }) {
       <div className="ad-hero-stat">
         <div className="ad-hero-label">Holders</div>
         <div className="ad-hero-val">{displayVal(a.holders)}</div>
-        <div className="ad-hero-sub">wallets</div>
+        <div className="ad-hero-sub dim">
+          {a.holders != null ? `via ${a.holdersSource ?? 'xcp'}` : 'wallets'}
+        </div>
       </div>
       {a.openseaSales.length > 0 && (() => {
         const ethPrices = a.openseaSales.map(s => s.ethPrice).filter(Boolean);
