@@ -50,10 +50,14 @@ export default function DJPepe() {
         </div>
       </section>
 
+      <div className="djpepe-divider" />
+
       {/* ── TIMELINE ────────────────────────────────────────── */}
       <section className="djpepe-timeline-section">
-        <TimelineSection />
+        <TimelineSection fullWidth />
       </section>
+
+      <div className="djpepe-divider" />
 
       {/* ── INSTITUTIONAL ───────────────────────────────────── */}
       <section className="djpepe-section-container">

@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { TIMELINE_EVENTS } from '../data/timelineEvents.js';
 import './DJPepeTimeline.css';
 
-export default function DJPepeTimeline() {
+export default function DJPepeTimeline({ fullWidth = false }) {
   const scrollRef = useRef(null);
   const canvasRef = useRef(null);
   const ptsRef   = useRef([]);
@@ -124,7 +124,7 @@ export default function DJPepeTimeline() {
   let globalIdx = 0;
 
   return (
-    <div className="tl-wrap">
+    <div className={`tl-wrap${fullWidth ? ' djpepe-timeline--full' : ''}`}>
       {/* Particle canvas */}
       <canvas ref={canvasRef} className="tl-canvas" aria-hidden="true" />
 

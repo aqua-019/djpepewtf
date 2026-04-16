@@ -11,19 +11,6 @@ const ICON_MAP = { image: ImageIcon, video: VideoIcon, audio: AudioIcon, gif: Gi
 // ── HELPERS ───────────────────────────────────────────────
 const BG_CLASSES = ['g1','g2','g3','g4','g5','g6'];
 
-function extFromMime(mime = '') {
-  const map = {
-    'image/png':'png','image/jpeg':'jpg','image/gif':'gif',
-    'image/svg+xml':'svg','image/webp':'webp','image/tiff':'tiff',
-    'image/bmp':'bmp','image/avif':'avif','image/heic':'heic','image/heif':'heif',
-    'video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov',
-    'video/x-msvideo':'avi','video/ogg':'ogv',
-    'audio/mpeg':'mp3','audio/mp3':'mp3','audio/wav':'wav',
-    'audio/ogg':'ogg','audio/flac':'flac','audio/aac':'aac','audio/x-m4a':'m4a',
-  };
-  return map[mime] || mime.split('/').pop();
-}
-
 // ── COMPONENT ─────────────────────────────────────────────
 export default function Gallery({ onFileCount }) {
   const [files, setFiles]       = useState([]);
@@ -43,83 +30,13 @@ export default function Gallery({ onFileCount }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const fileInput               = useRef();
 
-  // ── UPLOAD QUEUE ──────────────────────────────────────────
-  const onFileUploaded = useCallback((data) => {
-    const newItem = {
-      id:         data.url,
-      name:       data.filename,
-      type:       extFromMime(data.mimeType),
-      url:        data.url,
-      size:       data.size,
-      uploadedAt: data.uploadedAt,
-      bg:         BG_CLASSES[Math.floor(Math.random() * BG_CLASSES.length)],
-      icon:       'file',
-      isNew: true,
-    };
-    setFiles(prev => {
-      const next = [newItem, ...prev.map(f => ({ ...f, isNew: false }))];
-      onFileCount?.(next.length);
-      return next;
-    });
-  }, [onFileCount]);
+  // ── UPLOAD QUEUE (kept for queue panel display) ───────────
+  const { queue, counts, clearDone, retryErrors } = useUploadQueue(null);
 
-  const { queue, counts, enqueue, clearDone, retryErrors } = useUploadQueue(onFileUploaded);
-
-  const handleFiles = useCallback((incoming) => {
-    const list = [...incoming];
-    if (!list.length) return;
-    setShowQueue(true);
-    enqueue(list);
-  }, [enqueue]);
-
-  // Recursively extract files from dropped folders
-  const getFilesFromEntry = (entry) => {
-    return new Promise((resolve) => {
-      if (entry.isFile) {
-        entry.file(f => resolve([f]), (err) => {
-          console.warn('[folder-reader] skipped file:', entry.fullPath, err);
-          resolve([]);
-        });
-      } else if (entry.isDirectory) {
-        const reader = entry.createReader();
-        const allEntries = [];
-        const readBatch = () => {
-          reader.readEntries(entries => {
-            if (entries.length === 0) {
-              Promise.all(allEntries.map(getFilesFromEntry)).then(arrs => resolve(arrs.flat()));
-            } else {
-              allEntries.push(...entries);
-              readBatch();
-            }
-          }, (err) => {
-            console.warn('[folder-reader] directory read error:', entry.fullPath, err);
-            resolve([]);
-          });
-        };
-        readBatch();
-      } else {
-        resolve([]);
-      }
-    });
-  };
-
-  const onDrop = async (e) => {
+  const onDrop = (e) => {
     e.preventDefault();
     setDragging(false);
-
-    // Check for folder drops via webkitGetAsEntry
-    const items = e.dataTransfer.items;
-    if (items && items.length > 0 && items[0].webkitGetAsEntry) {
-      const entries = [...items].map(i => i.webkitGetAsEntry()).filter(Boolean);
-      const hasDir = entries.some(e => e.isDirectory);
-      if (hasDir) {
-        const allFiles = await Promise.all(entries.map(getFilesFromEntry));
-        handleFiles(allFiles.flat());
-        return;
-      }
-    }
-
-    handleFiles(e.dataTransfer.files);
+    setShowSubmit(true);
   };
 
   // ── FETCH GALLERY FROM API ─────────────────────────────────
@@ -190,45 +107,20 @@ export default function Gallery({ onFileCount }) {
     setActiveIdx(idx);
   };
 
-  // ── UPLOAD ZONE COPY ──────────────────────────────────────
-  const isUploading = (counts.uploading || 0) > 0 || (counts.queued || 0) > 0;
-  const zoneCopy    = dragging
-    ? { h: 'Drop it.', s: 'Release to add to the gallery' }
-    : isUploading
-    ? { h: `Uploading ${counts.done || 0} / ${queue.length} files…`, s: 'Queue panel bottom-right' }
-    : { h: 'Upload to the archive', s: 'Drop files or click — duplicates auto-detected' };
-
   return (
     <div className="gallery-page">
 
-      {/* ── UPLOAD ZONE ──────────────────────────────────── */}
+      {/* ── UPLOAD ZONE (gated — opens SubmitModal) ──────── */}
       <div
-        className={['upload-zone', dragging ? 'drag-over' : '', isUploading ? 'uploading' : ''].join(' ')}
+        className={['upload-zone', dragging ? 'drag-over' : ''].join(' ')}
         onDragOver={e => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        onClick={() => !isUploading && fileInput.current.click()}
+        onClick={() => setShowSubmit(true)}
       >
-        <div className="upload-icon-wrap">
-          {isUploading ? <div className="upload-spinner"/> : <UpArrow/>}
-        </div>
-        <div className="upload-heading">{zoneCopy.h}</div>
-        <div className="upload-sub">{zoneCopy.s}</div>
-        {!isUploading && (
-          <div className="upload-formats">
-            <span className="format-pill">All file types accepted</span>
-          </div>
-        )}
-        <input
-          ref={fileInput} type="file" multiple
-          accept="*/*"
-          style={{ display:'none' }}
-          onChange={e => handleFiles(e.target.files)}
-        />
-      </div>
-
-      <div className="submit-cta-row">
-        <button className="btn btn-green" onClick={() => setShowSubmit(true)}>Submit a Meme</button>
+        <div className="upload-heading">Submit a Meme →</div>
+        <div className="upload-sub">All submissions reviewed before publishing</div>
+        <input ref={fileInput} type="file" style={{ display: 'none' }} />
       </div>
 
       {/* ── GALLERY BAR ──────────────────────────────────── */}
@@ -354,15 +246,5 @@ export default function Gallery({ onFileCount }) {
         />
       )}
     </div>
-  );
-}
-
-function UpArrow() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-      <polyline points="17 8 12 3 7 8"/>
-      <line x1="12" y1="3" x2="12" y2="15"/>
-    </svg>
   );
 }

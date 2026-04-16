@@ -365,6 +365,17 @@
 .tl-card.tl-open .tl-arrow,
 .tl-card:hover   .tl-arrow { opacity: 1; transform: none; }
 
+/* ─── FULL-WIDTH MODE ────────────────────────────────────── */
+.djpepe-timeline--full {
+  max-width: 100% !important;
+  width: 100%;
+}
+
+.djpepe-timeline--full .tl-spine,
+.djpepe-timeline--full [class*="spine"] {
+  background: #4caf6e !important;
+}
+
 /* ─── MOBILE ─────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .tl-scroll { height: 460px; }
