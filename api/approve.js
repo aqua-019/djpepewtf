@@ -1,4 +1,8 @@
-import { put, del } from '@vercel/blob';
+import { put, del, list } from '@vercel/blob';
+
+// Vercel Blob addRandomSuffix:true appends 15-25 alphanumeric chars before the extension
+const BLOB_SUFFIX_RE = /-[A-Za-z0-9]{15,25}(\.[^.]+)$/;
+const stripSuffix = (name) => name.replace(BLOB_SUFFIX_RE, '$1');
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -34,8 +38,27 @@ export default async function handler(req, res) {
     const contentType = fileRes.headers.get('content-type') || 'application/octet-stream';
     const fileBuffer = await fileRes.arrayBuffer();
 
-    // Re-upload to gallery/ prefix
+    // Deduplicate: check if a blob with the same stem already exists in gallery/
     const name = filename || url.split('/').pop() || 'approved-file';
+    const { blobs: existing } = await list({ prefix: `gallery/${name}` });
+    if (existing.some(b => !b.pathname.endsWith('manifest.json') && stripSuffix(b.pathname.split('/').pop()) === name)) {
+      await del(url); // clean up the submission
+      if (req.method === 'GET') {
+        return res.status(200).send(`
+          <!DOCTYPE html><html><head><meta charset="utf-8"><title>Already Exists</title></head>
+          <body style="background:#111;color:#eee;font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
+            <div style="text-align:center;padding:40px;">
+              <div style="font-size:48px;margin-bottom:16px;">ℹ️</div>
+              <h1 style="color:#52b563;margin:0 0 8px;">Already in Gallery</h1>
+              <p style="color:#999;">This file already exists. <a href="https://djpepe.wtf" style="color:#52b563;">View site</a></p>
+            </div>
+          </body></html>
+        `);
+      }
+      return res.status(409).json({ ok: false, message: 'File already exists in gallery.' });
+    }
+
+    // Re-upload to gallery/ prefix
     const blob = await put(`gallery/${name}`, Buffer.from(fileBuffer), {
       access: 'public',
       contentType,

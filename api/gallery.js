@@ -1,5 +1,12 @@
 import { list } from '@vercel/blob';
 
+// Vercel Blob addRandomSuffix:true appends exactly 21 alphanumeric chars before the extension
+const BLOB_SUFFIX_RE = /-[A-Za-z0-9]{15,25}(\.[^.]+)$/;
+
+function stripSuffix(basename) {
+  return basename.replace(BLOB_SUFFIX_RE, '$1');
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -17,13 +24,30 @@ export default async function handler(req, res) {
       cursor,
     });
 
-    const files = blobs.map((b, i) => {
-      const ext      = b.pathname.split('.').pop().toLowerCase();
+    // Filter out the manifest metadata file
+    const mediaBlobs = blobs.filter(b => !b.pathname.endsWith('manifest.json'));
+
+    // Deduplicate: group by stem (filename with Vercel random suffix stripped).
+    // If the same logical file was uploaded multiple times with different suffixes,
+    // only the newest blob survives.
+    const stemMap = new Map(); // stem → blob
+    for (const b of mediaBlobs) {
       const basename = b.pathname.split('/').pop();
+      const stem = stripSuffix(basename);
+      const existing = stemMap.get(stem);
+      if (!existing || new Date(b.uploadedAt) > new Date(existing.uploadedAt)) {
+        stemMap.set(stem, b);
+      }
+    }
+
+    const files = [...stemMap.values()].map((b, i) => {
+      const basename    = b.pathname.split('/').pop();
+      const displayName = decodeURIComponent(stripSuffix(basename));
+      const ext         = displayName.split('.').pop().toLowerCase();
 
       return {
         id:         b.url,
-        name:       decodeURIComponent(basename),
+        name:       displayName,
         type:       ext,
         url:        b.url,
         size:       b.size,
