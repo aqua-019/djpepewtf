@@ -159,6 +159,8 @@
   -webkit-appearance: none; appearance: none;
   width: 100px; height: 3px;
   background: var(--border); border-radius: 2px; outline: none;
+  touch-action: none;
+  cursor: pointer;
 }
 .size-slider::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
@@ -168,6 +170,11 @@
 }
 .size-slider::-webkit-slider-thumb:hover {
   box-shadow: 0 0 8px oklch(0.68 0.16 145 / 0.3);
+}
+.size-slider::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--bg);
+  cursor: pointer;
 }
 
 /* ── GRID ────────────────────────────────────────────────── */
@@ -212,6 +219,16 @@
 
 .cell-badge {
   position: absolute; top: 7px; right: 7px;
+}
+
+/* ── AUDIO COMING SOON ───────────────────────────────────── */
+.audio-coming-soon {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 20px; margin-bottom: 16px;
+  background: oklch(0.68 0.16 145 / 0.06);
+  border: 1px solid oklch(0.68 0.16 145 / 0.18);
+  border-radius: var(--r8);
+  font-size: 13px; color: var(--txt2);
 }
 
 /* ── EMPTY STATE ─────────────────────────────────────────── */

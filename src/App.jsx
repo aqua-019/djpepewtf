@@ -6,7 +6,7 @@ import Gallery from './pages/Gallery.jsx';
 import DJPepe  from './pages/DJPepe.jsx';
 import Market  from './pages/Market.jsx';
 import Physicals from './pages/Physicals.jsx';
-import { GridIcon, FrogIcon, ChartIcon, CardIcon } from './components/Icons.jsx';
+import { GridIcon, FrogIcon, ChartIcon } from './components/Icons.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 const PAGES = ['gallery', 'djpepe', 'market', 'physicals'];
@@ -78,7 +78,7 @@ export default function App() {
           { id: 'gallery',   label: 'Gallery',    icon: <GridIcon/> },
           { id: 'djpepe',    label: 'DJPEPE',     icon: <FrogIcon/> },
           { id: 'market',    label: 'Market',     icon: <ChartIcon/> },
-          { id: 'physicals', label: '10th Anniversary', icon: <CardIcon/> },
+          { id: 'physicals', label: '10th Anniversary', icon: <span style={{fontWeight:800,fontSize:'14px',letterSpacing:'-1px',fontFamily:'var(--font-display)'}}>10</span> },
         ].map(item => (
           <button
             key={item.id}

@@ -72,6 +72,7 @@
 .header-x-link:hover { color: var(--txt); background: var(--bg-hover); }
 .header-x-label { letter-spacing: 0.3px; }
 @media (max-width: 768px) {
+  .header-tabs { display: none !important; }
   .header-x-label { display: none; }
 }
 .header-stat.green { color: var(--accent); }

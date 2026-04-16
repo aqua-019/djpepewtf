@@ -39,9 +39,10 @@ export default async function handler(req, res) {
     const fileBuffer = await fileRes.arrayBuffer();
 
     // Deduplicate: check if a blob with the same stem already exists in gallery/
-    const name = filename || url.split('/').pop() || 'approved-file';
-    const { blobs: existing } = await list({ prefix: `gallery/${name}` });
-    if (existing.some(b => !b.pathname.endsWith('manifest.json') && stripSuffix(b.pathname.split('/').pop()) === name)) {
+    const rawName = filename || url.split('/').pop() || 'approved-file';
+    const cleanName = rawName.replace(/_[a-zA-Z0-9]{6,8}(\.[^.]+)$/, '$1');
+    const { blobs: existing } = await list({ prefix: `gallery/${cleanName}` });
+    if (existing.some(b => !b.pathname.endsWith('manifest.json') && stripSuffix(b.pathname.split('/').pop()) === cleanName)) {
       await del(url); // clean up the submission
       if (req.method === 'GET') {
         return res.status(200).send(`
@@ -58,11 +59,11 @@ export default async function handler(req, res) {
       return res.status(409).json({ ok: false, message: 'File already exists in gallery.' });
     }
 
-    // Re-upload to gallery/ prefix
-    const blob = await put(`gallery/${name}`, Buffer.from(fileBuffer), {
+    // Re-upload to gallery/ prefix with deterministic name (no random suffix)
+    const blob = await put(`gallery/${cleanName}`, Buffer.from(fileBuffer), {
       access: 'public',
       contentType,
-      addRandomSuffix: true,
+      addRandomSuffix: false,
     });
 
     // Delete the original submission

@@ -156,9 +156,18 @@ export default function Gallery({ onFileCount }) {
               setCellSize(v);
               try { localStorage.setItem('gallery-cell-size', String(v)); } catch {}
             }}
+            onTouchStart={e => e.stopPropagation()}
           />
         </div>
       </div>
+
+      {/* ── AUDIO COMING SOON ───────────────────────────── */}
+      {filterCategory === 'audio' && (
+        <div className="audio-coming-soon">
+          <span>🎵</span>
+          <span>Audio tracks coming soon — stay tuned.</span>
+        </div>
+      )}
 
       {/* ── GRID ─────────────────────────────────────────── */}
       {loading ? (
@@ -185,16 +194,18 @@ export default function Gallery({ onFileCount }) {
                 onClick={() => openFile(file, idx)}
               >
                 <div className={`cell-thumb ${file.bg}`}>
-                  {file.url && IMAGE_EXTS.has(file.type)
+                  {file.url && IMAGE_EXTS.has(file.type) && !['heic','heif'].includes(file.type)
                     ? <>
                         <img src={file.url} alt={file.name} loading="lazy"
                              onError={(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='flex'; }}/>
                         <span className="cell-icon" style={{ display:'none' }}>{(() => { const Icon = ICON_MAP[file.icon] || ImageIcon; return <Icon />; })()}</span>
                       </>
+                    : file.url && ['heic','heif'].includes(file.type)
+                    ? <span className="cell-icon">{(() => { const Icon = ICON_MAP[file.icon] || ImageIcon; return <Icon />; })()}</span>
                     : file.url && VIDEO_EXTS.has(file.type)
                     ? <>
-                        <video src={file.url} muted preload="metadata"
-                               onLoadedData={(e) => { e.target.currentTime = 0.5; }}
+                        <video src={file.url} muted playsInline preload="metadata"
+                               onLoadedMetadata={(e) => { e.target.currentTime = 1; }}
                                onError={(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='flex'; }}/>
                         <span className="cell-icon" style={{ display:'none' }}>{(() => { const Icon = ICON_MAP[file.icon] || VideoIcon; return <Icon />; })()}</span>
                       </>
