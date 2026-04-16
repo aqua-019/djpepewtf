@@ -376,6 +376,11 @@
   background: #4caf6e !important;
 }
 
+.djpepe-timeline--full .timeline-dot,
+.djpepe-timeline--full [class*="dot"] {
+  background: #4caf6e !important;
+}
+
 /* ─── MOBILE ─────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .tl-scroll { height: 460px; }

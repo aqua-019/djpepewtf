@@ -173,7 +173,7 @@ export default function Gallery({ onFileCount }) {
         <div className="empty-state">
           <div className="empty-heading">Nothing here yet.</div>
           <div className="empty-sub">Be the first to upload something.</div>
-          <button className="btn btn-outline" onClick={() => fileInput.current.click()}>Upload a file</button>
+          <button className="btn btn-outline" onClick={() => setShowSubmit(true)}>Submit a Meme</button>
         </div>
       ) : (
         <>

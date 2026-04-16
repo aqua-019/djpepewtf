@@ -104,7 +104,7 @@ async function sendApprovalEmail({ title, context, submitter, dateCreated, filen
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      from: 'DJPEPE.WTF <onboarding@resend.dev>',
+      from: 'DJPEPE.WTF <noreply@djpepe.wtf>',
       to: ['dubsglr@gmail.com'],
       subject,
       html,
