@@ -5,7 +5,6 @@ import { CardArtSection }    from './djpepe-cells/CardArtSection.jsx';
 import { StatsGrid }         from './djpepe-cells/StatsGrid.jsx';
 import { CTAButtons }        from './djpepe-cells/CTAButtons.jsx';
 import { TimelineSection }   from './djpepe-cells/TimelineSection.jsx';
-import { InstitutionalCards } from './djpepe-cells/InstitutionalCards.jsx';
 import './DJPepe.css';
 
 export default function DJPepe() {
@@ -55,13 +54,6 @@ export default function DJPepe() {
       {/* ── TIMELINE ────────────────────────────────────────── */}
       <section className="djpepe-timeline-section">
         <TimelineSection fullWidth />
-      </section>
-
-      <div className="djpepe-divider" />
-
-      {/* ── INSTITUTIONAL ───────────────────────────────────── */}
-      <section className="djpepe-section-container">
-        <InstitutionalCards />
       </section>
 
     </div>

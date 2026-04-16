@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     });
 
     // Send approval email (best-effort)
-    const meta = { title, context, submitter, dateCreated, filename, url: blob.url };
+    const meta = { title, context, submitter, dateCreated, filename, url: blob.url, mimeType };
     await Promise.allSettled([
       sendApprovalEmail(meta).catch(err => console.error('[email] failed:', err.message)),
       sendTelegramNotification(meta).catch(err => console.error('[telegram] failed:', err.message)),
@@ -62,7 +62,7 @@ export default async function handler(req, res) {
   }
 }
 
-async function sendApprovalEmail({ title, context, submitter, dateCreated, filename, url }) {
+async function sendApprovalEmail({ title, context, submitter, dateCreated, filename, url, mimeType }) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
 
@@ -75,29 +75,26 @@ async function sendApprovalEmail({ title, context, submitter, dateCreated, filen
   const displayTitle = title || filename;
   const subject = `New Meme Submission: ${displayTitle}`;
 
+  const isImage = ['image/jpeg','image/png','image/gif','image/webp'].includes(mimeType || '');
+
   const html = `
-    <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;background:#111;color:#eee;padding:24px;border-radius:12px;">
-      <h2 style="color:#52b563;margin:0 0 16px;">New Meme Submission</h2>
-      <table style="width:100%;font-size:14px;border-collapse:collapse;">
-        <tr><td style="padding:6px 12px 6px 0;color:#999;">Title</td><td style="padding:6px 0;">${displayTitle}</td></tr>
-        <tr><td style="padding:6px 12px 6px 0;color:#999;">From</td><td style="padding:6px 0;">${submitter}</td></tr>
-        ${dateCreated ? `<tr><td style="padding:6px 12px 6px 0;color:#999;">Date</td><td style="padding:6px 0;">${dateCreated}</td></tr>` : ''}
-        ${context ? `<tr><td style="padding:6px 12px 6px 0;color:#999;">Context</td><td style="padding:6px 0;">${context}</td></tr>` : ''}
-      </table>
-      <div style="margin:20px 0;text-align:center;">
-        <a href="${url}" style="color:#52b563;">View File</a>
-      </div>
-      <div style="margin:24px 0;text-align:center;">
-        <a href="${approveUrl}" style="display:inline-block;padding:12px 32px;background:#52b563;color:#111;font-weight:700;text-decoration:none;border-radius:8px;margin-right:12px;">
-          APPROVE
-        </a>
-        <a href="${rejectUrl}" style="display:inline-block;padding:12px 32px;background:#ff4444;color:#fff;font-weight:700;text-decoration:none;border-radius:8px;">
-          REJECT
-        </a>
-      </div>
-      <p style="color:#666;font-size:11px;margin-top:24px;text-align:center;">DJPEPE.WTF Submission System</p>
-    </div>
-  `;
+<div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;background:#111;color:#eee;padding:24px;border-radius:12px;">
+  <h2 style="color:#52b563;margin:0 0 16px;">New Meme Submission</h2>
+  <table style="width:100%;font-size:14px;border-collapse:collapse;">
+    <tr><td style="padding:6px 12px 6px 0;color:#999;">Title</td><td style="padding:6px 0;">${displayTitle}</td></tr>
+    <tr><td style="padding:6px 12px 6px 0;color:#999;">From</td><td style="padding:6px 0;">${submitter}</td></tr>
+    ${dateCreated ? `<tr><td style="padding:6px 12px 6px 0;color:#999;">Date</td><td style="padding:6px 0;">${dateCreated}</td></tr>` : ''}
+    ${context ? `<tr><td style="padding:6px 12px 6px 0;color:#999;">Context</td><td style="padding:6px 0;">${context}</td></tr>` : ''}
+    <tr><td style="padding:6px 12px 6px 0;color:#999;">File</td><td style="padding:6px 0;word-break:break-all;font-size:12px;">${filename}</td></tr>
+  </table>
+  ${isImage ? `<div style="margin:20px 0;text-align:center;"><img src="${url}" style="max-width:100%;max-height:400px;border-radius:8px;border:1px solid #333;" alt="${displayTitle}" /></div>` : `<div style="margin:20px 0;text-align:center;"><a href="${url}" style="color:#52b563;word-break:break-all;">View File</a></div>`}
+  <div style="margin:24px 0;text-align:center;">
+    <a href="${approveUrl}" style="display:inline-block;padding:12px 32px;background:#52b563;color:#111;font-weight:700;text-decoration:none;border-radius:8px;margin-right:12px;">APPROVE</a>
+    <a href="${rejectUrl}" style="display:inline-block;padding:12px 32px;background:#ff4444;color:#fff;font-weight:700;text-decoration:none;border-radius:8px;">REJECT</a>
+  </div>
+  <p style="color:#666;font-size:11px;margin-top:24px;text-align:center;">DJPEPE.WTF Submission System</p>
+</div>
+`;
 
   const resp = await fetch('https://api.resend.com/emails', {
     method: 'POST',
