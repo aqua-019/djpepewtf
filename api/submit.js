@@ -46,8 +46,10 @@ export default async function handler(req, res) {
 
     // Send approval email (best-effort)
     const meta = { title, context, submitter, dateCreated, filename, url: blob.url };
-    sendApprovalEmail(meta).catch(err => console.error('[email] failed:', err.message));
-    sendTelegramNotification(meta).catch(err => console.error('[telegram] failed:', err.message));
+    await Promise.allSettled([
+      sendApprovalEmail(meta).catch(err => console.error('[email] failed:', err.message)),
+      sendTelegramNotification(meta).catch(err => console.error('[telegram] failed:', err.message)),
+    ]);
 
     return res.status(200).json({
       ok: true,
