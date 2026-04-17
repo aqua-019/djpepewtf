@@ -1,19 +1,23 @@
 #!/usr/bin/env node
 /**
  * DJPEPE.WTF — Gallery Dedup (stem-based)
- * Run: BLOB_READ_WRITE_TOKEN=xxx node scripts/dedup-gallery.mjs
+ * Run: BLOB_READ_WRITE_TOKEN=xxx node scripts/dedup-gallery.mjs [--dry-run]
  *
  * Groups gallery blobs by normalized stem (strips Vercel random suffix).
  * Keeps the OLDEST copy of each logical file, deletes the rest.
+ * Pass --dry-run to preview without deleting.
  */
 
 import { list, del } from '@vercel/blob';
 
+const DRY_RUN = process.argv.includes('--dry-run');
 const SUFFIX_RE = /-[A-Za-z0-9]{15,25}(\.[^.]+)$/;
 const stem = (name) => name.replace(SUFFIX_RE, '$1');
 
 async function dedup() {
+  console.log(`Mode: ${DRY_RUN ? 'DRY RUN (no deletions)' : 'LIVE'}`);
   console.log('Fetching all gallery blobs...');
+
   let allBlobs = [], cursor;
   do {
     const r = await list({ prefix: 'gallery/', limit: 1000, cursor });
@@ -43,6 +47,13 @@ async function dedup() {
   console.log(`Unique files to keep: ${media.length - toDelete.length}`);
 
   if (!toDelete.length) { console.log('\nNo duplicates found!'); return; }
+
+  if (DRY_RUN) {
+    console.log('\nWould delete:');
+    for (const b of toDelete) console.log(`  - ${b.pathname}`);
+    console.log('\nRe-run without --dry-run to delete.');
+    return;
+  }
 
   let deleted = 0;
   for (let i = 0; i < toDelete.length; i += 20) {
