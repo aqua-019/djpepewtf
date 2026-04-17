@@ -5,6 +5,7 @@
   ],
   "functions": {
     "api/upload.js": { "maxDuration": 60, "memory": 1024 },
-    "api/submit.js": { "maxDuration": 60 }
+    "api/submit.js": { "maxDuration": 60 },
+    "api/submit-upload.js": { "maxDuration": 60 }
   }
 }

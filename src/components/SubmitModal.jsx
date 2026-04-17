@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { upload } from '@vercel/blob/client';
 import './SubmitModal.css';
 
 export default function SubmitModal({ onClose }) {
@@ -17,18 +18,25 @@ export default function SubmitModal({ onClose }) {
     setErrorMsg('');
 
     try {
+      // Step 1: upload file directly to Vercel Blob (bypasses function body limit)
+      const blob = await upload(`submissions/${file.name}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/submit-upload',
+      });
+
+      // Step 2: notify server with blob URL + metadata (tiny JSON payload)
       const res = await fetch('/api/submit', {
         method: 'POST',
-        headers: {
-          'Content-Type': file.type || 'application/octet-stream',
-          'x-filename': encodeURIComponent(file.name),
-          'x-filesize': String(file.size),
-          'x-title': encodeURIComponent(title),
-          'x-context': encodeURIComponent(context),
-          'x-submitter': encodeURIComponent(submitter || 'Anonymous'),
-          'x-date-created': dateCreated,
-        },
-        body: file,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: blob.url,
+          filename: file.name,
+          mimeType: file.type,
+          title,
+          context,
+          submitter: submitter || 'Anonymous',
+          dateCreated,
+        }),
       });
 
       if (!res.ok) {
@@ -39,7 +47,9 @@ export default function SubmitModal({ onClose }) {
       setStatus('done');
     } catch (err) {
       setStatus('error');
-      setErrorMsg(err.message || 'Something went wrong');
+      setErrorMsg(err.name === 'AbortError'
+        ? 'Upload timed out — try a smaller file or faster connection.'
+        : err.message || 'Something went wrong');
     }
   };
 

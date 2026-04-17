@@ -1,51 +1,28 @@
-import { put } from '@vercel/blob';
-
-export const config = { api: { bodyParser: false } };
-
-const ALLOWED_TYPES = new Set([
-  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'image/svg+xml',
-  'video/mp4', 'video/webm', 'video/quicktime',
-  'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/aac',
-]);
-const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+export const config = {};
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-filename, x-filesize, x-title, x-context, x-submitter, x-date-created');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const rawName  = req.headers['x-filename'];
-  const rawSize  = req.headers['x-filesize'];
-  const title    = decodeURIComponent(req.headers['x-title'] || '');
-  const context  = decodeURIComponent(req.headers['x-context'] || '');
-  const submitter = decodeURIComponent(req.headers['x-submitter'] || 'Anonymous');
-  const dateCreated = req.headers['x-date-created'] || '';
-  const mimeType = req.headers['content-type'] || 'application/octet-stream';
+  const { url, filename, mimeType, title, context, submitter, dateCreated } = req.body || {};
 
-  if (!rawName) return res.status(400).json({ error: 'Missing x-filename header' });
+  if (!url) return res.status(400).json({ error: 'Missing blob URL' });
 
-  const filename = decodeURIComponent(rawName).replace(/[^a-zA-Z0-9._-]/g, '_');
-  const filesize = rawSize ? parseInt(rawSize, 10) : 0;
-
-  if (filesize > MAX_SIZE) {
-    return res.status(400).json({ error: 'File too large. Max 100MB for submissions.' });
-  }
-  if (!ALLOWED_TYPES.has(mimeType) && mimeType !== 'application/octet-stream') {
-    return res.status(400).json({ error: 'File type not allowed.' });
-  }
+  const meta = {
+    url,
+    filename: filename || url.split('/').pop() || 'submission',
+    mimeType: mimeType || 'application/octet-stream',
+    title: title || '',
+    context: context || '',
+    submitter: submitter || 'Anonymous',
+    dateCreated: dateCreated || '',
+  };
 
   try {
-    const blob = await put(`submissions/${filename}`, req, {
-      access: 'public',
-      contentType: mimeType,
-      addRandomSuffix: true,
-    });
-
-    // Send approval email (best-effort)
-    const meta = { title, context, submitter, dateCreated, filename, url: blob.url, mimeType };
     await Promise.allSettled([
       sendApprovalEmail(meta).catch(err => console.error('[email] failed:', err.message)),
       sendTelegramNotification(meta).catch(err => console.error('[telegram] failed:', err.message)),
@@ -54,7 +31,6 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       message: 'Meme submitted! It will be reviewed before appearing in the gallery.',
-      url: blob.url,
     });
   } catch (err) {
     console.error('[submit]', err);
@@ -70,11 +46,10 @@ async function sendApprovalEmail({ title, context, submitter, dateCreated, filen
   const siteUrl = process.env.SITE_URL || 'https://djpepe.wtf';
 
   const approveUrl = `${siteUrl}/api/approve?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}&token=${encodeURIComponent(adminToken)}`;
-  const rejectUrl = `${siteUrl}/api/reject?url=${encodeURIComponent(url)}&token=${encodeURIComponent(adminToken)}`;
+  const rejectUrl  = `${siteUrl}/api/reject?url=${encodeURIComponent(url)}&token=${encodeURIComponent(adminToken)}`;
 
   const displayTitle = title || filename;
   const subject = `New Meme Submission: ${displayTitle}`;
-
   const isImage = ['image/jpeg','image/png','image/gif','image/webp'].includes(mimeType || '');
 
   const html = `
@@ -87,7 +62,10 @@ async function sendApprovalEmail({ title, context, submitter, dateCreated, filen
     ${context ? `<tr><td style="padding:6px 12px 6px 0;color:#999;">Context</td><td style="padding:6px 0;">${context}</td></tr>` : ''}
     <tr><td style="padding:6px 12px 6px 0;color:#999;">File</td><td style="padding:6px 0;word-break:break-all;font-size:12px;">${filename}</td></tr>
   </table>
-  ${isImage ? `<div style="margin:20px 0;text-align:center;"><img src="${url}" style="max-width:100%;max-height:400px;border-radius:8px;border:1px solid #333;" alt="${displayTitle}" /></div>` : `<div style="margin:20px 0;text-align:center;"><a href="${url}" style="color:#52b563;word-break:break-all;">View File</a></div>`}
+  ${isImage
+    ? `<div style="margin:20px 0;text-align:center;"><img src="${url}" style="max-width:100%;max-height:400px;border-radius:8px;border:1px solid #333;" alt="${displayTitle}" /></div>`
+    : `<div style="margin:20px 0;text-align:center;"><a href="${url}" style="color:#52b563;word-break:break-all;">View File</a></div>`
+  }
   <div style="margin:24px 0;text-align:center;">
     <a href="${approveUrl}" style="display:inline-block;padding:12px 32px;background:#52b563;color:#111;font-weight:700;text-decoration:none;border-radius:8px;margin-right:12px;">APPROVE</a>
     <a href="${rejectUrl}" style="display:inline-block;padding:12px 32px;background:#ff4444;color:#fff;font-weight:700;text-decoration:none;border-radius:8px;">REJECT</a>
@@ -98,10 +76,7 @@ async function sendApprovalEmail({ title, context, submitter, dateCreated, filen
 
   const resp = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
     body: JSON.stringify({
       from: 'DJPEPE.WTF <noreply@djpepe.wtf>',
       to: ['dubsglr@gmail.com'],
@@ -116,7 +91,7 @@ async function sendApprovalEmail({ title, context, submitter, dateCreated, filen
 }
 
 async function sendTelegramNotification({ title, context, submitter, dateCreated, filename, url }) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token  = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) return;
 
