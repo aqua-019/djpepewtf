@@ -70,7 +70,7 @@ export default function SubmitModal({ onClose }) {
                   {file ? (
                     <span className="submit-file-name">{file.name} ({(file.size / 1024).toFixed(0)} KB)</span>
                   ) : (
-                    <span className="submit-file-prompt">Click to choose a file (max 25MB)</span>
+                    <span className="submit-file-prompt">Click to choose a file (max 100MB)</span>
                   )}
                   <input
                     ref={fileRef}

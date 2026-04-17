@@ -7,7 +7,7 @@ const ALLOWED_TYPES = new Set([
   'video/mp4', 'video/webm', 'video/quicktime',
   'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/aac',
 ]);
-const MAX_SIZE = 25 * 1024 * 1024; // 25MB
+const MAX_SIZE = 100 * 1024 * 1024; // 100MB
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
   const filesize = rawSize ? parseInt(rawSize, 10) : 0;
 
   if (filesize > MAX_SIZE) {
-    return res.status(400).json({ error: 'File too large. Max 25MB for submissions.' });
+    return res.status(400).json({ error: 'File too large. Max 100MB for submissions.' });
   }
   if (!ALLOWED_TYPES.has(mimeType) && mimeType !== 'application/octet-stream') {
     return res.status(400).json({ error: 'File type not allowed.' });
