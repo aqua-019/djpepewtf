@@ -20,7 +20,13 @@ async function dedup() {
 
   let allBlobs = [], cursor;
   do {
-    const r = await list({ prefix: 'gallery/', limit: 1000, cursor });
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('list() timed out after 15s')), 15000)
+    );
+    const r = await Promise.race([
+      list({ prefix: 'gallery/', limit: 1000, cursor }),
+      timeout,
+    ]);
     allBlobs = allBlobs.concat(r.blobs);
     cursor = r.cursor;
     console.log(`  Fetched ${allBlobs.length} blobs so far...`);
