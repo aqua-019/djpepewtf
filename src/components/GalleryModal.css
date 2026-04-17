@@ -36,40 +36,36 @@
   to { opacity: 1; transform: none; }
 }
 
-/* ── Close — green ✕ + BACK label ──────────────── */
+/* ── Close — absolute inside shell ──────────────── */
 .gm-close {
   position: absolute;
-  top: -52px;
-  right: 0;
+  top: 12px;
+  right: 12px;
   z-index: 210;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  background: none;
-  border: 1px solid var(--accent-mid);
-  border-radius: var(--r8);
-  padding: 6px 14px;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 50%;
   cursor: pointer;
+  color: #fff;
   transition: background 0.15s, border-color 0.15s;
 }
 .gm-close:hover {
-  background: var(--accent-dim);
-  border-color: var(--accent);
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.3);
 }
 .gm-close-x {
-  color: var(--accent);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 400;
   line-height: 1;
+  color: #fff;
 }
 .gm-close-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--accent);
-  text-transform: uppercase;
+  display: none;
 }
 
 /* ── Navigation Arrows ──────────────────────────── */
@@ -268,13 +264,6 @@
   }
   .gm-nav--prev { left: 8px; }
   .gm-nav--next { right: 8px; }
-
-  .gm-close {
-    top: 12px;
-    right: 12px;
-    position: fixed;
-    z-index: 220;
-  }
 
   .gm-actions {
     width: 100%;
