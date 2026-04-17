@@ -13,11 +13,13 @@ export function GridIcon() {
 
 export function FrogIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9"/>
-      <circle cx="9" cy="10" r="1.5" fill="currentColor"/>
-      <circle cx="15" cy="10" r="1.5" fill="currentColor"/>
-      <path d="M9 15s1 2 3 2 3-2 3-2"/>
+    <svg viewBox="0 0 32 28" fill="none">
+      <circle cx="8" cy="8" r="6" fill="currentColor" opacity="0.9"/>
+      <circle cx="24" cy="8" r="6" fill="currentColor" opacity="0.9"/>
+      <circle cx="8" cy="7" r="2.5" fill="#111"/>
+      <circle cx="24" cy="7" r="2.5" fill="#111"/>
+      <ellipse cx="16" cy="18" rx="13" ry="9" fill="currentColor"/>
+      <path d="M10 21 Q16 25 22 21" stroke="#111" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
     </svg>
   );
 }
