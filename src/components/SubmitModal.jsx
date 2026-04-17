@@ -75,7 +75,7 @@ export default function SubmitModal({ onClose }) {
                   <input
                     ref={fileRef}
                     type="file"
-                    accept="image/*,video/mp4,video/webm,audio/mpeg,audio/wav,audio/ogg"
+                    accept="image/*,image/gif,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/flac,audio/aac"
                     style={{ display: 'none' }}
                     onChange={e => setFile(e.target.files?.[0] || null)}
                   />

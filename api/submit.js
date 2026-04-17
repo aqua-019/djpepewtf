@@ -3,9 +3,9 @@ import { put } from '@vercel/blob';
 export const config = { api: { bodyParser: false } };
 
 const ALLOWED_TYPES = new Set([
-  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-  'video/mp4', 'video/webm',
-  'audio/mpeg', 'audio/wav', 'audio/ogg',
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'image/svg+xml',
+  'video/mp4', 'video/webm', 'video/quicktime',
+  'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac', 'audio/aac',
 ]);
 const MAX_SIZE = 25 * 1024 * 1024; // 25MB
 

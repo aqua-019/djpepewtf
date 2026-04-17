@@ -18,7 +18,7 @@ const EXT_MIME = {
   avif: 'image/avif', pdf: 'application/pdf',
 };
 
-const MAX_BYTES = 150 * 1024 * 1024;
+const MAX_BYTES = 200 * 1024 * 1024;
 
 // Rate limiter (resets on cold start)
 const RATE_WINDOW = 60_000;
@@ -79,7 +79,7 @@ export default async function handler(req, res) {
   }
 
   if (filesize > MAX_BYTES) {
-    return res.status(400).json({ error: "That file's too big. Max size is 150MB." });
+    return res.status(400).json({ error: "That file's too big. Max size is 200MB." });
   }
 
   try {
