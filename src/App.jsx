@@ -8,6 +8,8 @@ import Market  from './pages/Market.jsx';
 import Physicals from './pages/Physicals.jsx';
 import { GridIcon, FrogIcon, ChartIcon } from './components/Icons.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import DevCredit from './components/DevCredit.jsx';
+import './components/DevCredit.css';
 
 const PAGES = ['gallery', 'djpepe', 'market', 'physicals'];
 const PAGE_PATHS = {
@@ -91,6 +93,8 @@ export default function App() {
           </button>
         ))}
       </nav>
+
+      <DevCredit />
     </>
   );
 }
